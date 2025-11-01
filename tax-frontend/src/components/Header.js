@@ -33,10 +33,10 @@ const Header = () => {
           <Link href="/" className="hover:text-lime-400 transition">
             Home
           </Link>
-          <Link href="/paye" className="hover:text-lime-400 transition">
+          <Link href="/paye-calculator" className="hover:text-lime-400 transition">
             Pay As You Earn
           </Link>
-          <Link href="/tax-planning" className="hover:text-lime-400 transition">
+          <Link href="/income-tax-calculator" className="hover:text-lime-400 transition">
             Tax Planning
           </Link>
           <Link href="/contact" className="hover:text-lime-400 transition">

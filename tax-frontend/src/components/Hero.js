@@ -159,7 +159,7 @@ export default function Hero() {
           className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-24"
         >
           <motion.a
-            href="/tax-planning"
+            href="/income-tax-calculator"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="group bg-lime-400 text-gray-900 px-8 py-4 rounded-2xl font-bold 

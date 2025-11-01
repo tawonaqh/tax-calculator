@@ -114,7 +114,7 @@ export default function CallToAction() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
             <motion.a
-              href="/tax-planning"
+              href="/income-tax-calculator"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="group bg-gray-900 text-lime-400 px-8 py-4 rounded-2xl font-bold 

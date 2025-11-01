@@ -96,7 +96,7 @@ export default function Home() {
   // Featured calculators (prominent display)
   const featuredCalculators = [
     { 
-      href: "/tax-planning", 
+      href: "/income-tax-calculator", 
       label: "Tax Planning Suite", 
       description: "Comprehensive tax planning with AI assistance",
       icon: FaChartLine,
@@ -104,7 +104,7 @@ export default function Home() {
       featured: true
     },
     { 
-      href: "/paye", 
+      href: "/paye-calculator", 
       label: "PAYE Calculator", 
       description: "Employee income tax calculation",
       icon: FaUsers,
@@ -112,7 +112,7 @@ export default function Home() {
       featured: true
     },
     { 
-      href: "/individual-income-tax", 
+      href: "/self-employment-tax-calculator", 
       label: "Individual Income Tax", 
       description: "Personal tax computation",
       icon: FaFileInvoiceDollar,
@@ -124,14 +124,14 @@ export default function Home() {
   // All general calculators (complete list)
   const allCalculators = [
     { 
-      href: "/corporate-income-tax", 
+      href: "/corporate-tax-calculator", 
       label: "Corporate Tax", 
       description: "Business tax calculations",
       icon: FaShieldAlt,
       color: "from-orange-500 to-red-400"
     },
     { 
-      href: "/vat-taxable-supplies", 
+      href: "/vat-tax-calculator", 
       label: "VAT Calculator", 
       description: "Value Added Tax computations",
       icon: FaCalculator,
@@ -145,56 +145,56 @@ export default function Home() {
       color: "from-teal-500 to-cyan-400"
     },
     { 
-      href: "/withholding-royalties", 
+      href: "/withholding-tax-royalties", 
       label: "Withholding Tax - Royalties", 
       description: "Tax on royalty payments",
       icon: FaHandHoldingUsd,
       color: "from-yellow-500 to-orange-400"
     },
     { 
-      href: "/withholding-fees", 
+      href: "/withholding-tax-fees", 
       label: "Withholding Tax - Fees", 
       description: "Tax on professional fees",
       icon: FaFileInvoiceDollar,
       color: "from-pink-500 to-rose-400"
     },
     { 
-      href: "/withholding-interest", 
+      href: "/withholding-tax-interest", 
       label: "Withholding Tax - Interest", 
       description: "Tax on interest payments",
       icon: FaChartLine,
       color: "from-cyan-500 to-blue-400"
     },
     { 
-      href: "/withholding-tenders", 
+      href: "/withholding-tax-tenders", 
       label: "Withholding Tax - Tenders", 
       description: "Tax on tender payments",
       icon: FaShieldAlt,
       color: "from-emerald-500 to-green-400"
     },
     { 
-      href: "/agriculture", 
+      href: "/agriculture-tax", 
       label: "Agriculture Tax", 
       description: "Agricultural sector taxation",
       icon: FaSeedling,
       color: "from-lime-500 to-green-400"
     },
     { 
-      href: "/insurance", 
+      href: "/insurance-tax", 
       label: "Insurance Tax", 
       description: "Insurance premium taxes",
       icon: FaUmbrella,
       color: "from-violet-500 to-purple-400"
     },
     { 
-      href: "/financial", 
+      href: "/banking-finance-taxes", 
       label: "Financial Sector Tax", 
       description: "Banking and financial taxes",
       icon: FaHandHoldingUsd,
       color: "from-amber-500 to-yellow-400"
     },
     { 
-      href: "/healthcare", 
+      href: "/health-care-tax", 
       label: "Healthcare Tax", 
       description: "Medical and healthcare taxes",
       icon: FaHeartbeat,

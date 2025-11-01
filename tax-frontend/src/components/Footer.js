@@ -19,10 +19,10 @@ const Footer = () => {
   const currentYear = new Date().getFullYear()
 
   const quickLinks = [
-    { name: 'Tax Planning', href: '/tax-planning' },
-    { name: 'PAYE Calculator', href: '/paye' },
-    { name: 'Corporate Tax', href: '/corporate-income-tax' },
-    { name: 'VAT Calculator', href: '/vat-taxable-supplies' },
+    { name: 'Tax Planning', href: '/income-tax-calculator' },
+    { name: 'PAYE Calculator', href: '/paye-calculator' },
+    { name: 'Corporate Tax', href: '/corporate-tax-calculator' },
+    { name: 'VAT Calculator', href: '/vat-tax-calculator' },
   ]
 
   const supportLinks = [
