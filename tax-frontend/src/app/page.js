@@ -245,7 +245,8 @@ export default function Home() {
         </section>
 
         {/* Stats Section */}
-        <AnimatedSection className="py-16 bg-gray-800/30">
+        {/* will uncomment when not in beta version mode */}
+        {/* <AnimatedSection className="py-16 bg-gray-800/30">
           <div className="max-w-6xl mx-auto px-6">
             <StaggerGrid className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
@@ -262,7 +263,7 @@ export default function Home() {
               ))}
             </StaggerGrid>
           </div>
-        </AnimatedSection>
+        </AnimatedSection> */}
 
         {/* Quick Features */}
         <AnimatedSection className="py-16">

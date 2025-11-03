@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaxCalculatorController;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\FeedbackController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -33,4 +34,7 @@ Route::post('/chatbot', [ChatbotController::class, 'chat']);
 
 //paye
 Route::post('/calculate/paye', [TaxCalculatorController::class, 'calculatePAYE']);
+
+// feedback
+Route::post('/feedback', [FeedbackController::class, 'store']);
 

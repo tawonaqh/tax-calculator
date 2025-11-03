@@ -55,9 +55,16 @@ const Footer = () => {
             transition={{ duration: 0.5 }}
             className="lg:col-span-1"
           >
-            <Link href="/" className="flex items-center gap-3 mb-4 group">
+            <div className="flex items-center gap-2 mb-4">
+              <Link href="/" className="flex items-center gap-3 group">
                 <img src="/img/taxcul.svg" alt="Tax Portal Logo" className="w-auto h-[28px]" />
-            </Link>
+              </Link>
+              {/* Beta pill */}
+              <span className="bg-yellow-300 text-gray-900 text-xs font-bold px-2 py-0.5 ml-1 mb-1 rounded-full uppercase">
+                Beta
+              </span>
+            </div>
+
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
               Professional tax calculation tools powered by AI. 
               Simplify your tax workflow with accurate, real-time computations.

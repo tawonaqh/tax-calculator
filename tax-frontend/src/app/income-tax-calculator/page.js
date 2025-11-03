@@ -31,6 +31,24 @@ function cleanAIText(text) {
       .trim();
 }
 
+function formatAIExplanation(text) {
+  if (!text) return "";
+  
+  // Convert text to bullet points
+  const sentences = text.split('. ').filter(sentence => sentence.trim().length > 10);
+  
+  return (
+    <ul className="space-y-2">
+      {sentences.map((sentence, index) => (
+        <li key={index} className="flex items-start">
+          <span className="text-lime-400 mr-2 mt-1">•</span>
+          <span>{sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /* ---------- Enhanced Export Components ---------- */
 const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) => {
   const [companyName, setCompanyName] = useState("");
@@ -345,8 +363,36 @@ const exportComprehensivePDF = (results, formState, options) => {
 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
+      
+      // Format AI text with bullet points
       const aiText = cleanAIText(results.comprehensive.aiExplanation);
-      yPosition = addTextWithBreaks(aiText, 20, yPosition, pageWidth - 40);
+      const sentences = aiText.split('. ').filter(sentence => sentence.trim().length > 10);
+      
+      sentences.forEach((sentence, index) => {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        const bulletPoint = `• ${sentence.trim()}${sentence.trim().endsWith('.') ? '' : '.'}`;
+        yPosition = addTextWithBreaks(bulletPoint, 25, yPosition, pageWidth - 45);
+        yPosition += 2; // Add spacing between points
+      });
+
+      // Add disclaimer
+      if (yPosition > pageHeight - 30) {
+        doc.addPage();
+        yPosition = 20;
+      } else {
+        yPosition += 10;
+      }
+      
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.setFont('helvetica', 'italic');
+      const disclaimer = "AI guidance is for informational purposes only.";
+      yPosition = addTextWithBreaks(disclaimer, 20, yPosition, pageWidth - 40);
+      doc.setFont('helvetica', 'normal');
     }
 
     // Footer on all pages
@@ -509,11 +555,15 @@ const EnhancedExportButtons = ({ results, formState }) => {
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-3 mt-6 p-4 bg-gradient-to-r from-lime-900/20 to-green-900/20 rounded-lg border border-lime-700/30">
+        {/* In the EnhancedExportButtons component, you can add: */}
         <div className="flex-1">
           <h4 className="text-lg font-semibold text-lime-300 mb-2">Professional Reports</h4>
-          <p className="text-sm text-gray-300">
-            Generate comprehensive PDF reports and Excel workbooks for tax filing and planning
-          </p>
+            <p className="text-sm text-gray-300">
+             Generate comprehensive PDF reports and Excel workbooks for tax filing and planning
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Includes AI-powered tax optimization suggestions (for guidance purposes)
+            </p>
         </div>
         <div className="flex gap-3">
           <button
@@ -709,6 +759,13 @@ const InputField = ({ label, value, onChange, type = "number", className = "" })
       className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 
                  focus:border-lime-400 focus:ring focus:ring-lime-400/40 outline-none"
     />
+  </div>
+);
+
+// Add this component near the top with other components
+const AIDisclaimer = ({ className = "" }) => (
+  <div className={`text-xs text-gray-500 mt-2 ${className}`}>
+    ⚠️ AI guidance is for informational purposes only. Consult a qualified tax professional for specific advice.
   </div>
 );
 
@@ -1310,8 +1367,10 @@ export default function TaxPlanningPage() {
                     <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
                       <h4 className="text-md font-semibold text-lime-300 mb-2">AI Tax Guidance</h4>
                       <div className="text-sm text-gray-200 leading-relaxed">
-                        {cleanAIText(results.comprehensive.aiExplanation)}
+                        {formatAIExplanation(cleanAIText(results.comprehensive.aiExplanation))}
                       </div>
+                      {/* Add disclaimer */}
+                      <AIDisclaimer className="mt-3" />
                     </div>
                   )}
                 </div>
@@ -1468,6 +1527,12 @@ export default function TaxPlanningPage() {
                     <div className="w-3 h-3 bg-gray-600/30 rounded"></div>
                     <span>Single Allowance</span>
                   </div>
+                </div>
+              </div>
+              {/* Disclaimer */}
+              <div className="mt-4 pt-3 border-t border-gray-700">
+                <div className="text-xs text-gray-500 text-center">
+                  Rates based on current Zimbabwe tax legislation. Subject to change.
                 </div>
               </div>
             </div>
@@ -1751,6 +1816,9 @@ function ChatAssistant({ aiHistory, setAIHistory }) {
           {sending ? "..." : "Ask"}
         </button>
       </div>
+
+      {/* Add disclaimer below the input */}
+      <AIDisclaimer />
 
       <div className="mt-3 max-h-40 overflow-auto space-y-2">
         {aiHistory.map((h, i) => (

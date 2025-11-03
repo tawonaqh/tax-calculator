@@ -77,7 +77,8 @@ export default function CallToAction() {
           </motion.p>
 
           {/* Feature Highlights */}
-          <motion.div
+          {/* put back after beta version */}
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -103,7 +104,7 @@ export default function CallToAction() {
                 </motion.div>
               )
             })}
-          </motion.div>
+          </motion.div> */}
 
           {/* CTA Buttons */}
           <motion.div

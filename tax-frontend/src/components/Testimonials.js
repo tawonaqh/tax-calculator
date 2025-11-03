@@ -245,7 +245,8 @@ export default function Testimonials() {
         </div>
 
         {/* Stats */}
-        <motion.div
+        {/* will put back stats after beta version */}
+        {/* <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -268,7 +269,7 @@ export default function Testimonials() {
             <div className="text-3xl font-bold text-lime-400 mb-2">24/7</div>
             <div className="text-gray-400 text-sm">AI Support</div>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   )
