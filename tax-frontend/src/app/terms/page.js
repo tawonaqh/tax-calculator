@@ -1,13 +1,13 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FileText, Scale, AlertTriangle, Shield, UserCheck, CreditCard, Copyright, Globe } from 'lucide-react'
+import { FileText, Scale, AlertTriangle, Shield, UserCheck, CreditCard, Copyright, Globe, Mail, MapPin } from 'lucide-react'
 
 export default function TermsAndConditions() {
-  const effectiveDate = "December 1, 2024"
-  const companyName = "TaxPortal"
-  const companyAddress = "123 Tax Street, Harare, Zimbabwe"
-  const contactEmail = "legal@taxportal.com"
+  const effectiveDate = "November 10, 2025"
+  const companyName = "TaxCul"
+  const companyAddress = "Harare, Zimbabwe"
+  const contactEmail = "info@taxcul.com"
 
   const sections = [
     {
@@ -46,17 +46,20 @@ export default function TermsAndConditions() {
     {
       icon: AlertTriangle,
       title: "No Professional Tax Advice",
-      description: "Our services provide calculation tools only and do not constitute professional tax advice. Always consult with a qualified tax professional for specific tax situations."
+      description: "Our services provide calculation tools only and do not constitute professional tax advice. Always consult with a qualified tax professional for specific tax situations.",
+      color: "from-orange-500 to-red-500"
     },
     {
       icon: Shield,
       title: "Accuracy Disclaimer",
-      description: "While we strive for accuracy, tax laws change frequently. We are not responsible for calculation errors resulting from outdated tax rates or legislative changes."
+      description: "While we strive for accuracy, tax laws change frequently. We are not responsible for calculation errors resulting from outdated tax rates or legislative changes.",
+      color: "from-blue-500 to-cyan-500"
     },
     {
       icon: CreditCard,
       title: "Service Availability",
-      description: "We do not guarantee uninterrupted service availability. Maintenance, updates, or unforeseen circumstances may temporarily disrupt access to our services."
+      description: "We do not guarantee uninterrupted service availability. Maintenance, updates, or unforeseen circumstances may temporarily disrupt access to our services.",
+      color: "from-purple-500 to-pink-500"
     }
   ]
 
@@ -88,7 +91,7 @@ export default function TermsAndConditions() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white py-16">
+    <div className="min-h-screen bg-gradient-to-br from-[#0F2F4E] via-[#1a3d63] to-[#0F2F4E] text-white py-16">
       <div className="max-w-6xl mx-auto px-6">
         {/* Header */}
         <motion.div
@@ -97,23 +100,37 @@ export default function TermsAndConditions() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="flex items-center justify-center mt-4 gap-4 mb-6">
-            <div className="p-3 bg-lime-400/10 rounded-2xl">
-              <FileText className="w-8 h-8 text-lime-400" />
+          <motion.div
+            className="flex items-center justify-center mt-4 gap-6 mb-8"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, type: "spring" }}
+          >
+            <div className="p-4 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-3xl shadow-2xl shadow-[#1ED760]/25">
+              <FileText className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-lime-400">
+            <h1 className="text-5xl md:text-6xl font-bold text-white">
               Terms & Conditions
             </h1>
-          </div>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-4">
+          </motion.div>
+          <motion.p 
+            className="text-xl text-white/80 max-w-3xl mx-auto mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Please read these terms carefully before using our tax calculation services. 
             These terms govern your access to and use of {companyName}.
-          </p>
-          <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm 
-                         px-4 py-2 rounded-full text-gray-300 text-sm border border-gray-700">
+          </motion.p>
+          <motion.div 
+            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm 
+                         px-6 py-3 rounded-2xl text-white/90 border border-[#FFD700]/30"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
             <span>Effective Date:</span>
-            <span className="text-lime-400 font-medium">{effectiveDate}</span>
-          </div>
+            <span className="text-[#1ED760] font-semibold">{effectiveDate}</span>
+          </motion.div>
         </motion.div>
 
         {/* Important Notice */}
@@ -121,20 +138,26 @@ export default function TermsAndConditions() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-orange-500/10 border border-orange-400/30 rounded-3xl p-8 mb-12"
+          className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-400/30 rounded-3xl p-8 mb-12"
         >
-          <div className="flex items-start gap-4">
-            <AlertTriangle className="w-6 h-6 text-orange-400 mt-1 flex-shrink-0" />
+          <motion.div 
+            className="flex items-start gap-6"
+            whileHover={{ x: 5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="p-3 bg-orange-500/20 rounded-2xl border border-orange-400/50">
+              <AlertTriangle className="w-8 h-8 text-orange-400" />
+            </div>
             <div>
-              <h2 className="text-xl font-bold text-orange-400 mb-3">Important Legal Notice</h2>
-              <p className="text-orange-300 leading-relaxed">
+              <h2 className="text-2xl font-bold text-orange-400 mb-4">Important Legal Notice</h2>
+              <p className="text-orange-300/90 leading-relaxed text-lg">
                 {companyName} provides tax calculation tools for informational purposes only. 
                 Our services do not constitute professional tax advice, legal advice, or financial advice. 
                 You should consult with qualified tax professionals for specific tax situations. 
                 By using our services, you acknowledge this important distinction.
               </p>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Key Points Grid */}
@@ -142,23 +165,24 @@ export default function TermsAndConditions() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
         >
           {importantPoints.map((point, index) => {
             const IconComponent = point.icon
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
-                className="bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 text-center"
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-white/10 backdrop-blur-sm rounded-2xl border border-[#FFD700]/30 p-6 text-center hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
               >
-                <div className="w-12 h-12 bg-lime-400/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <IconComponent className="w-6 h-6 text-lime-400" />
+                <div className={`w-16 h-16 bg-gradient-to-r ${point.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <IconComponent className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="font-semibold text-white mb-2">{point.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{point.description}</p>
+                <h3 className="font-bold text-white mb-3 text-lg">{point.title}</h3>
+                <p className="text-white/70 text-sm leading-relaxed">{point.description}</p>
               </motion.div>
             )
           })}
@@ -174,21 +198,26 @@ export default function TermsAndConditions() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 * index }}
-                className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8"
+                whileHover={{ y: -2 }}
+                className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
               >
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-lime-400/10 rounded-xl flex-shrink-0">
-                    <IconComponent className="w-6 h-6 text-lime-400" />
+                <motion.div 
+                  className="flex items-start gap-6"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="p-4 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl shadow-lg flex-shrink-0">
+                    <IconComponent className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-lime-400 mb-4">
+                    <h2 className="text-2xl font-bold text-white mb-4">
                       {section.title}
                     </h2>
-                    <p className="text-gray-300 leading-relaxed">
+                    <p className="text-white/80 leading-relaxed text-lg">
                       {section.content}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               </motion.section>
             )
           })}
@@ -201,22 +230,32 @@ export default function TermsAndConditions() {
           transition={{ duration: 0.6, delay: 0.7 }}
           className="space-y-8"
         >
-          <h2 className="text-3xl font-bold text-lime-400 text-center mb-8">
+          <motion.h2 
+            className="text-4xl font-bold text-white text-center mb-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
             Additional Legal Provisions
-          </h2>
+          </motion.h2>
 
           {legalSections.map((section, index) => (
-            <div
+            <motion.div
               key={index}
-              className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
+              whileHover={{ x: 5 }}
+              className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 hover:shadow-lg hover:shadow-[#1ED760]/10 transition-all duration-300"
             >
-              <h3 className="text-xl font-bold text-white mb-4">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#1ED760] rounded-full" />
                 {section.title}
               </h3>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-white/80 leading-relaxed text-lg">
                 {section.content}
               </p>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
 
@@ -224,87 +263,117 @@ export default function TermsAndConditions() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8 mt-12"
+          transition={{ duration: 0.6, delay: 1.1 }}
+          whileHover={{ y: -2 }}
+          className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 mt-12 hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
         >
-          <h2 className="text-2xl font-bold text-lime-400 mb-6">Payment Terms</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl">
+              <CreditCard className="w-6 h-6 text-white" />
+            </div>
+            Payment Terms
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-semibold text-white mb-3">Free Services</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>Basic tax calculations available at no cost</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>Standard features accessible without payment</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>No hidden fees for basic functionality</span>
-                </li>
+              <h3 className="text-lg font-semibold text-white mb-4">Free Services</h3>
+              <ul className="space-y-3 text-white/80">
+                {[
+                  "Basic tax calculations available at no cost",
+                  "Standard features accessible without payment",
+                  "No hidden fees for basic functionality"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-300"
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="w-2 h-2 bg-[#1ED760] rounded-full mt-2 flex-shrink-0" />
+                    <span>{item}</span>
+                  </motion.li>
+                ))}
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-white mb-3">Premium Services</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>Clear pricing for advanced features</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>Automatic renewal with opt-out option</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                  <span>Refund policy as per Zimbabwean consumer law</span>
-                </li>
+              <h3 className="text-lg font-semibold text-white mb-4">Premium Services</h3>
+              <ul className="space-y-3 text-white/80">
+                {[
+                  "Clear pricing for advanced features",
+                  "Automatic renewal with opt-out option",
+                  "Refund policy as per Zimbabwean consumer law"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-300"
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="w-2 h-2 bg-[#FFD700] rounded-full mt-2 flex-shrink-0" />
+                    <span>{item}</span>
+                  </motion.li>
+                ))}
               </ul>
             </div>
           </div>
         </motion.div>
 
-        {/* Data Usage Section */}
+        {/* Contact Information */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
-          className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8 mt-8"
+          transition={{ duration: 0.6, delay: 1.2 }}
+          className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 mt-8"
         >
-          <h2 className="text-2xl font-bold text-lime-400 mb-6">Data & Privacy</h2>
-          <div className="space-y-4 text-gray-300">
-            <p>
-              Your use of {companyName} is also governed by our Privacy Policy, which explains how we collect, 
-              use, and protect your personal information. By using our services, you consent to the practices 
-              described in our Privacy Policy.
-            </p>
-            <p>
-              We implement reasonable security measures to protect your data, but cannot guarantee absolute 
-              security. You are responsible for maintaining the confidentiality of your account credentials.
-            </p>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            Contact Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center gap-4 p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-[#1ED760] transition-all duration-300"
+            >
+              <Mail className="w-8 h-8 text-[#1ED760]" />
+              <div>
+                <p className="text-white/60 text-sm">Email</p>
+                <p className="text-white font-semibold text-lg">{contactEmail}</p>
+              </div>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center gap-4 p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-[#1ED760] transition-all duration-300"
+            >
+              <MapPin className="w-8 h-8 text-[#1ED760]" />
+              <div>
+                <p className="text-white/60 text-sm">Address</p>
+                <p className="text-white font-semibold text-lg">{companyAddress}</p>
+              </div>
+            </motion.div>
           </div>
         </motion.div>
 
         {/* Final Acknowledgment */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="text-center mt-16 pt-8 border-t border-gray-700/50"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 1.3 }}
+          className="text-center mt-16 pt-12 border-t border-white/20"
         >
-          <div className="bg-lime-400/10 rounded-2xl p-6 max-w-2xl mx-auto">
-            <FileText className="w-8 h-8 text-lime-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-lime-400 mb-2">
+          <motion.div 
+            className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/10 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto border border-[#1ED760]/30"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FileText className="w-12 h-12 text-[#1ED760] mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-[#1ED760] mb-4">
               Agreement to Terms
             </h3>
-            <p className="text-gray-300 text-sm">
+            <p className="text-white/80 text-lg leading-relaxed">
               By accessing or using {companyName}'s services, you acknowledge that you have read, 
               understood, and agree to be bound by these Terms and Conditions. If you do not agree 
               to these terms, please discontinue use of our services immediately.
             </p>
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>

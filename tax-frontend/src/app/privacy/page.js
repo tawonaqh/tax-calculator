@@ -1,214 +1,97 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Shield, Lock, Eye, User, Database, Cookie, Mail, Phone } from 'lucide-react'
+import { FileText, Scale, AlertTriangle, Shield, UserCheck, CreditCard, Copyright, Globe, Mail, MapPin } from 'lucide-react'
 
-export default function PrivacyPolicy() {
-  const lastUpdated = "October 1, 2025"
+export default function TermsAndConditions() {
+  const effectiveDate = "November 10, 2025"
+  const companyName = "TaxCul"
+  const companyAddress = "Harare, Zimbabwe"
+  const contactEmail = "info@taxcul.com"
 
   const sections = [
     {
-      icon: User,
-      title: "Information We Collect",
-      content: [
-        {
-          subtitle: "Personal Information",
-          items: [
-            "Name, email address, and contact details",
-            "Company information and tax identification numbers",
-            "Payment and billing information",
-            "Communication preferences"
-          ]
-        },
-        {
-          subtitle: "Tax Calculation Data",
-          items: [
-            "Income and expense information",
-            "Business financial data",
-            "Tax deduction details",
-            "Asset and investment information"
-          ]
-        },
-        {
-          subtitle: "Technical Information",
-          items: [
-            "IP address and device information",
-            "Browser type and version",
-            "Usage patterns and preferences",
-            "Cookies and similar technologies"
-          ]
-        }
-      ]
+      icon: UserCheck,
+      title: "Acceptance of Terms",
+      content: `By accessing and using ${companyName}'s tax calculation services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must immediately discontinue use of our services.`
     },
     {
-      icon: Eye,
-      title: "How We Use Your Information",
-      content: [
-        {
-          subtitle: "Service Provision",
-          items: [
-            "Process and calculate tax obligations",
-            "Generate tax reports and documentation",
-            "Provide personalized tax recommendations",
-            "Maintain and improve our services"
-          ]
-        },
-        {
-          subtitle: "Communication",
-          items: [
-            "Respond to your inquiries and support requests",
-            "Send important service updates and notifications",
-            "Provide tax law updates and compliance information",
-            "Share educational content about tax optimization"
-          ]
-        },
-        {
-          subtitle: "Legal Compliance",
-          items: [
-            "Comply with applicable tax laws and regulations",
-            "Prevent fraud and unauthorized access",
-            "Enforce our terms of service",
-            "Protect our rights and property"
-          ]
-        }
-      ]
+      icon: Scale,
+      title: "Service Description",
+      content: `${companyName} provides AI-powered tax calculation tools, tax planning assistance, and related financial computation services. Our platform is designed to assist with tax calculations but does not replace professional tax advice. Users are responsible for verifying calculations with qualified tax professionals.`
     },
     {
-      icon: Database,
-      title: "Data Storage & Security",
-      content: [
-        {
-          subtitle: "Data Protection",
-          items: [
-            "Bank-level 256-bit SSL encryption",
-            "Regular security audits and penetration testing",
-            "Secure data centers with 24/7 monitoring",
-            "Role-based access control systems"
-          ]
-        },
-        {
-          subtitle: "Data Retention",
-          items: [
-            "Tax calculation data: 7 years (legal requirement)",
-            "User account information: Until deletion request",
-            "Backup data: 30 days rolling retention",
-            "Analytics data: 26 months maximum"
-          ]
-        },
-        {
-          subtitle: "International Transfers",
-          items: [
-            "Data primarily stored in secure Zimbabwean servers",
-            "Some analytics processed through EU-compliant services",
-            "Adequate safeguards for all international transfers",
-            "Your explicit consent obtained where required"
-          ]
-        }
-      ]
-    },
-    {
-      icon: Cookie,
-      title: "Cookies & Tracking",
-      content: [
-        {
-          subtitle: "Essential Cookies",
-          items: [
-            "Session management and user authentication",
-            "Security and fraud prevention",
-            "Load balancing and performance optimization",
-            "Required for core functionality"
-          ]
-        },
-        {
-          subtitle: "Analytical Cookies",
-          items: [
-            "Website usage and performance analytics",
-            "Feature adoption and user behavior tracking",
-            "Service improvement and optimization",
-            "Opt-out available in user settings"
-          ]
-        },
-        {
-          subtitle: "Third-Party Services",
-          items: [
-            "Google Analytics for website analytics",
-            "Stripe for secure payment processing",
-            "AWS for secure cloud infrastructure",
-            "All partners are GDPR and CCPA compliant"
-          ]
-        }
-      ]
+      icon: CreditCard,
+      title: "User Accounts & Registration",
+      content: `To access certain features, you must register for an account. You agree to provide accurate, current, and complete information during registration and to update such information to keep it accurate. You are responsible for safeguarding your password and for all activities that occur under your account.`
     },
     {
       icon: Shield,
-      title: "Your Rights & Choices",
-      content: [
-        {
-          subtitle: "Access and Control",
-          items: [
-            "Access your personal information anytime",
-            "Correct inaccurate or incomplete data",
-            "Request deletion of your personal data",
-            "Export your data in machine-readable format"
-          ]
-        },
-        {
-          subtitle: "Communication Preferences",
-          items: [
-            "Opt-out of marketing communications",
-            "Choose notification frequency",
-            "Set communication channel preferences",
-            "Manage email subscription settings"
-          ]
-        },
-        {
-          subtitle: "Legal Rights",
-          items: [
-            "Right to be informed about data usage",
-            "Right to restrict processing in certain cases",
-            "Right to data portability between services",
-            "Right to lodge complaints with authorities"
-          ]
-        }
-      ]
+      title: "User Responsibilities",
+      content: `You agree to use our services only for lawful purposes and in accordance with these Terms. You must not use our services to engage in any fraudulent, illegal, or unauthorized activities. You are solely responsible for the accuracy of the information you provide for tax calculations.`
     },
     {
-      icon: Lock,
-      title: "Data Sharing & Disclosure",
-      content: [
-        {
-          subtitle: "Service Providers",
-          items: [
-            "Cloud hosting and infrastructure partners",
-            "Payment processing services",
-            "Customer support and communication tools",
-            "Analytics and monitoring services"
-          ]
-        },
-        {
-          subtitle: "Legal Requirements",
-          items: [
-            "When required by law or legal process",
-            "To protect our rights and property",
-            "In emergency situations involving safety",
-            "As part of business transfers or mergers"
-          ]
-        },
-        {
-          subtitle: "Third Parties",
-          items: [
-            "Only with your explicit consent",
-            "Anonymized and aggregated data for research",
-            "Compliance with lawful requests",
-            "Never sold to third-party advertisers"
-          ]
-        }
-      ]
+      icon: Copyright,
+      title: "Intellectual Property",
+      content: `All content, features, and functionality available on ${companyName}, including but not limited to text, graphics, logos, icons, images, audio clips, and software, are the exclusive property of ${companyName} and are protected by international copyright, trademark, and other intellectual property laws.`
+    },
+    {
+      icon: Globe,
+      title: "Prohibited Activities",
+      content: `You may not: attempt to reverse engineer any software; use the service for any illegal purpose; harass, abuse, or harm another person; upload viruses or malicious code; interfere with the proper working of the service; or attempt to bypass any security measures.`
+    }
+  ]
+
+  const importantPoints = [
+    {
+      icon: AlertTriangle,
+      title: "No Professional Tax Advice",
+      description: "Our services provide calculation tools only and do not constitute professional tax advice. Always consult with a qualified tax professional for specific tax situations.",
+      color: "from-orange-500 to-red-500"
+    },
+    {
+      icon: Shield,
+      title: "Accuracy Disclaimer",
+      description: "While we strive for accuracy, tax laws change frequently. We are not responsible for calculation errors resulting from outdated tax rates or legislative changes.",
+      color: "from-blue-500 to-cyan-500"
+    },
+    {
+      icon: CreditCard,
+      title: "Service Availability",
+      description: "We do not guarantee uninterrupted service availability. Maintenance, updates, or unforeseen circumstances may temporarily disrupt access to our services.",
+      color: "from-purple-500 to-pink-500"
+    }
+  ]
+
+  const legalSections = [
+    {
+      title: "Limitation of Liability",
+      content: `To the fullest extent permitted by applicable law, ${companyName} shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the services.`
+    },
+    {
+      title: "Indemnification",
+      content: `You agree to defend, indemnify, and hold harmless ${companyName} and its affiliates, officers, agents, and employees from and against any claims, disputes, demands, liabilities, damages, losses, and costs arising from your violation of these Terms or your use of the services.`
+    },
+    {
+      title: "Termination",
+      content: `We may terminate or suspend your account and bar access to the service immediately, without prior notice or liability, under our sole discretion, for any reason whatsoever, including but not limited to a breach of the Terms.`
+    },
+    {
+      title: "Governing Law",
+      content: `These Terms shall be governed and construed in accordance with the laws of Zimbabwe, without regard to its conflict of law provisions. Any disputes shall be resolved in the courts of Harare, Zimbabwe.`
+    },
+    {
+      title: "Changes to Terms",
+      content: `We reserve the right, at our sole discretion, to modify or replace these Terms at any time. By continuing to access or use our service after those revisions become effective, you agree to be bound by the revised terms.`
+    },
+    {
+      title: "Contact Information",
+      content: `For any questions about these Terms and Conditions, please contact us at ${contactEmail} or write to us at ${companyAddress}.`
     }
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white py-16">
+    <div className="min-h-screen bg-gradient-to-br from-[#0F2F4E] via-[#1a3d63] to-[#0F2F4E] text-white py-16">
       <div className="max-w-6xl mx-auto px-6">
         {/* Header */}
         <motion.div
@@ -217,180 +100,280 @@ export default function PrivacyPolicy() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="flex items-center justify-center gap-4 mt-4 mb-6">
-            <div className="p-3 bg-lime-400/10 rounded-2xl">
-              <Shield className="w-8 h-8 text-lime-400" />
+          <motion.div
+            className="flex items-center justify-center mt-4 gap-6 mb-8"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, type: "spring" }}
+          >
+            <div className="p-4 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-3xl shadow-2xl shadow-[#1ED760]/25">
+              <FileText className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-lime-400">
-              Privacy Policy
+            <h1 className="text-5xl md:text-6xl font-bold text-white">
+              Terms & Conditions
             </h1>
-          </div>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-4">
-            Your privacy and data security are our top priority. Learn how we protect 
-            and handle your tax information with the highest standards of security.
-          </p>
-          <div className="inline-flex items-center gap-2 bg-gray-800/60 backdrop-blur-sm 
-                         px-4 py-2 rounded-full text-gray-300 text-sm border border-gray-700">
-            <span>Last Updated:</span>
-            <span className="text-lime-400 font-medium">{lastUpdated}</span>
-          </div>
+          </motion.div>
+          <motion.p 
+            className="text-xl text-white/80 max-w-3xl mx-auto mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Please read these terms carefully before using our tax calculation services. 
+            These terms govern your access to and use of {companyName}.
+          </motion.p>
+          <motion.div 
+            className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm 
+                         px-6 py-3 rounded-2xl text-white/90 border border-[#FFD700]/30"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span>Effective Date:</span>
+            <span className="text-[#1ED760] font-semibold">{effectiveDate}</span>
+          </motion.div>
         </motion.div>
 
-        {/* Quick Summary */}
+        {/* Important Notice */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8 mb-12"
+          className="bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-400/30 rounded-3xl p-8 mb-12"
         >
-          <h2 className="text-2xl font-bold text-lime-400 mb-6">At a Glance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-lime-400/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Lock className="w-6 h-6 text-lime-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Bank-Level Security</h3>
-              <p className="text-gray-400 text-sm">
-                256-bit encryption and regular security audits
+          <motion.div 
+            className="flex items-start gap-6"
+            whileHover={{ x: 5 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="p-3 bg-orange-500/20 rounded-2xl border border-orange-400/50">
+              <AlertTriangle className="w-8 h-8 text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-orange-400 mb-4">Important Legal Notice</h2>
+              <p className="text-orange-300/90 leading-relaxed text-lg">
+                {companyName} provides tax calculation tools for informational purposes only. 
+                Our services do not constitute professional tax advice, legal advice, or financial advice. 
+                You should consult with qualified tax professionals for specific tax situations. 
+                By using our services, you acknowledge this important distinction.
               </p>
             </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-lime-400/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Eye className="w-6 h-6 text-lime-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Transparent Practices</h3>
-              <p className="text-gray-400 text-sm">
-                Clear data usage and no hidden tracking
-              </p>
-            </div>
-            <div className="text-center p-4">
-              <div className="w-12 h-12 bg-lime-400/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <User className="w-6 h-6 text-lime-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-2">Your Control</h3>
-              <p className="text-gray-400 text-sm">
-                Full control over your data and preferences
-              </p>
-            </div>
-          </div>
+          </motion.div>
         </motion.div>
 
-        {/* Main Content */}
-        <div className="space-y-12">
-          {sections.map((section, sectionIndex) => {
+        {/* Key Points Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+        >
+          {importantPoints.map((point, index) => {
+            const IconComponent = point.icon
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-white/10 backdrop-blur-sm rounded-2xl border border-[#FFD700]/30 p-6 text-center hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
+              >
+                <div className={`w-16 h-16 bg-gradient-to-r ${point.color} rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <IconComponent className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-white mb-3 text-lg">{point.title}</h3>
+                <p className="text-white/70 text-sm leading-relaxed">{point.description}</p>
+              </motion.div>
+            )
+          })}
+        </motion.div>
+
+        {/* Main Terms Sections */}
+        <div className="space-y-8 mb-12">
+          {sections.map((section, index) => {
             const IconComponent = section.icon
             return (
               <motion.section
-                key={sectionIndex}
+                key={index}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 * sectionIndex }}
-                className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8"
+                transition={{ duration: 0.6, delay: 0.1 * index }}
+                whileHover={{ y: -2 }}
+                className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
               >
-                {/* Section Header */}
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 bg-lime-400/10 rounded-xl">
-                    <IconComponent className="w-6 h-6 text-lime-400" />
+                <motion.div 
+                  className="flex items-start gap-6"
+                  whileHover={{ x: 5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="p-4 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl shadow-lg flex-shrink-0">
+                    <IconComponent className="w-8 h-8 text-white" />
                   </div>
-                  <h2 className="text-2xl font-bold text-lime-400">
-                    {section.title}
-                  </h2>
-                </div>
-
-                {/* Section Content */}
-                <div className="space-y-8">
-                  {section.content.map((subsection, subsectionIndex) => (
-                    <div key={subsectionIndex} className="border-l-2 border-lime-400/30 pl-6">
-                      <h3 className="text-lg font-semibold text-white mb-4">
-                        {subsection.subtitle}
-                      </h3>
-                      <ul className="space-y-2">
-                        {subsection.items.map((item, itemIndex) => (
-                          <li key={itemIndex} className="flex items-start gap-3 text-gray-300">
-                            <div className="w-1.5 h-1.5 bg-lime-400 rounded-full mt-2 flex-shrink-0" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-4">
+                      {section.title}
+                    </h2>
+                    <p className="text-white/80 leading-relaxed text-lg">
+                      {section.content}
+                    </p>
+                  </div>
+                </motion.div>
               </motion.section>
             )
           })}
         </div>
 
-        {/* Additional Legal Sections */}
+        {/* Legal Sections */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="mt-12 space-y-8"
+          transition={{ duration: 0.6, delay: 0.7 }}
+          className="space-y-8"
         >
-          {/* Children's Privacy */}
-          <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8">
-            <h2 className="text-2xl font-bold text-lime-400 mb-4">Children's Privacy</h2>
-            <p className="text-gray-300 leading-relaxed">
-              Our services are not directed to individuals under the age of 18. We do not 
-              knowingly collect personal information from children. If you become aware 
-              that a child has provided us with personal information, please contact us 
-              immediately.
-            </p>
-          </div>
+          <motion.h2 
+            className="text-4xl font-bold text-white text-center mb-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            Additional Legal Provisions
+          </motion.h2>
 
-          {/* Changes to Policy */}
-          <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8">
-            <h2 className="text-2xl font-bold text-lime-400 mb-4">Policy Updates</h2>
-            <p className="text-gray-300 leading-relaxed mb-4">
-              We may update this privacy policy from time to time to reflect changes in 
-              our practices, technology, legal requirements, or other factors. When we do, 
-              we will update the "Last Updated" date at the top of this policy.
-            </p>
-            <p className="text-gray-300 leading-relaxed">
-              For significant changes, we will notify you through email or prominent 
-              notices on our website. We encourage you to periodically review this page 
-              for the latest information on our privacy practices.
-            </p>
-          </div>
+          {legalSections.map((section, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
+              whileHover={{ x: 5 }}
+              className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 hover:shadow-lg hover:shadow-[#1ED760]/10 transition-all duration-300"
+            >
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-3">
+                <div className="w-2 h-2 bg-[#1ED760] rounded-full" />
+                {section.title}
+              </h3>
+              <p className="text-white/80 leading-relaxed text-lg">
+                {section.content}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
 
-          {/* Contact Information */}
-          <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8">
-            <h2 className="text-2xl font-bold text-lime-400 mb-6">Contact Us</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-xl">
-                <Mail className="w-5 h-5 text-lime-400" />
-                <div>
-                  <p className="text-gray-400 text-sm">Email</p>
-                  <p className="text-white font-medium">info@taxcul.com</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-xl">
-                <Phone className="w-5 h-5 text-lime-400" />
-                <div>
-                  <p className="text-gray-400 text-sm">Phone</p>
-                  <p className="text-white font-medium">+263 71 488 9981</p>
-                </div>
-              </div>
+        {/* Payment Terms Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.1 }}
+          whileHover={{ y: -2 }}
+          className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 mt-12 hover:shadow-2xl hover:shadow-[#1ED760]/10 transition-all duration-500"
+        >
+          <h2 className="text-2xl font-bold text-white mb-8 flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl">
+              <CreditCard className="w-6 h-6 text-white" />
             </div>
-            <p className="text-gray-300 mt-6">
-              If you have any questions, concerns, or requests regarding this privacy policy 
-              or our data practices, please don't hesitate to contact our privacy team.
-            </p>
+            Payment Terms
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Free Services</h3>
+              <ul className="space-y-3 text-white/80">
+                {[
+                  "Basic tax calculations available at no cost",
+                  "Standard features accessible without payment",
+                  "No hidden fees for basic functionality"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-300"
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="w-2 h-2 bg-[#1ED760] rounded-full mt-2 flex-shrink-0" />
+                    <span>{item}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Premium Services</h3>
+              <ul className="space-y-3 text-white/80">
+                {[
+                  "Clear pricing for advanced features",
+                  "Automatic renewal with opt-out option",
+                  "Refund policy as per Zimbabwean consumer law"
+                ].map((item, index) => (
+                  <motion.li 
+                    key={index}
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors duration-300"
+                    whileHover={{ x: 5 }}
+                  >
+                    <div className="w-2 h-2 bg-[#FFD700] rounded-full mt-2 flex-shrink-0" />
+                    <span>{item}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
           </div>
         </motion.div>
 
-        {/* Footer Note */}
+        {/* Contact Information */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="text-center mt-16 pt-8 border-t border-gray-700/50"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.2 }}
+          className="bg-white/10 backdrop-blur-sm rounded-3xl border border-[#FFD700]/30 p-8 mt-8"
         >
-          <p className="text-gray-400 text-sm">
-            This privacy policy is designed to be transparent and easy to understand. 
-            We are committed to protecting your privacy and being clear about how we 
-            handle your tax information.
-          </p>
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#1ED760] to-[#0F2F4E] rounded-2xl">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            Contact Information
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center gap-4 p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-[#1ED760] transition-all duration-300"
+            >
+              <Mail className="w-8 h-8 text-[#1ED760]" />
+              <div>
+                <p className="text-white/60 text-sm">Email</p>
+                <p className="text-white font-semibold text-lg">{contactEmail}</p>
+              </div>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="flex items-center gap-4 p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-[#1ED760] transition-all duration-300"
+            >
+              <MapPin className="w-8 h-8 text-[#1ED760]" />
+              <div>
+                <p className="text-white/60 text-sm">Address</p>
+                <p className="text-white font-semibold text-lg">{companyAddress}</p>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Final Acknowledgment */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 1.3 }}
+          className="text-center mt-16 pt-12 border-t border-white/20"
+        >
+          <motion.div 
+            className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/10 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto border border-[#1ED760]/30"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FileText className="w-12 h-12 text-[#1ED760] mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-[#1ED760] mb-4">
+              Agreement to Terms
+            </h3>
+            <p className="text-white/80 text-lg leading-relaxed">
+              By accessing or using {companyName}'s services, you acknowledge that you have read, 
+              understood, and agree to be bound by these Terms and Conditions. If you do not agree 
+              to these terms, please discontinue use of our services immediately.
+            </p>
+          </motion.div>
         </motion.div>
       </div>
     </div>
