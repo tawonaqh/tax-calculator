@@ -26,7 +26,7 @@ export default function CallToAction() {
   return (
     <section className="relative py-16 px-6 rounded-3xl mb-20 overflow-hidden">
       {/* Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-lime-400 via-lime-500 to-green-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#1ED760] via-[#1ED760] to-[#0F2F4E]" />
       
       {/* Animated Background Elements */}
       <div className="absolute inset-0 opacity-10">
@@ -49,17 +49,17 @@ export default function CallToAction() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="inline-flex items-center gap-2 bg-gray-900/10 backdrop-blur-sm border border-gray-900/20 
-                       px-4 py-2 rounded-full text-gray-900 text-sm font-medium mb-8"
+            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm border border-white/30 
+                       px-4 py-2 rounded-full text-white text-sm font-medium mb-8"
           >
             <Sparkles className="w-4 h-4" />
             Trusted by Tax Professionals
           </motion.div>
 
           {/* Main Heading */}
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
             Ready to Transform Your
-            <span className="block bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
               Tax Workflow?
             </span>
           </h2>
@@ -70,7 +70,7 @@ export default function CallToAction() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl md:text-2xl text-gray-800 mb-8 max-w-3xl mx-auto leading-relaxed"
+            className="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed"
           >
             Join thousands of professionals who trust our platform for accurate, 
             AI-powered tax calculations and comprehensive planning tools.
@@ -97,8 +97,8 @@ export default function CallToAction() {
                   className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-3 
                              rounded-2xl border border-white/30"
                 >
-                  <IconComponent className="w-5 h-5 text-gray-900" />
-                  <span className="text-gray-900 font-medium text-sm">
+                  <IconComponent className="w-5 h-5 text-white" />
+                  <span className="text-white font-medium text-sm">
                     {feature.text}
                   </span>
                 </motion.div>
@@ -118,7 +118,7 @@ export default function CallToAction() {
               href="/income-tax-calculator"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="group bg-gray-900 text-lime-400 px-8 py-4 rounded-2xl font-bold 
+              className="group bg-white text-[#0F2F4E] px-8 py-4 rounded-2xl font-bold 
                          text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 
                          flex items-center gap-3 min-w-[200px] justify-center"
             >
@@ -130,13 +130,13 @@ export default function CallToAction() {
               href="/demo"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="group bg-white/20 backdrop-blur-sm text-gray-900 border border-gray-900/30 
+              className="group bg-white/20 backdrop-blur-sm text-white border border-white/30 
                          px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/30 
                          transition-all duration-300 flex items-center gap-3 min-w-[200px] justify-center"
             >
               Watch Demo
-              <div className="w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 bg-lime-400 rounded-full" />
+              <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-[#1ED760] rounded-full" />
               </div>
             </motion.a>
           </motion.div>
@@ -149,30 +149,30 @@ export default function CallToAction() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="space-y-4"
           >
-            <p className="text-gray-700 text-sm font-medium">
+            <p className="text-gray-300 text-sm font-medium">
               No credit card required • Free forever plan • Setup in 2 minutes
             </p>
 
             {/* Social Proof */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-700">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-300">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 bg-gray-900 rounded-full border-2 border-lime-400"
+                      className="w-8 h-8 bg-white rounded-full border-2 border-[#1ED760]"
                     />
                   ))}
                 </div>
                 <span className="text-sm font-medium">Join 2,500+ tax professionals</span>
               </div>
 
-              <div className="hidden sm:block w-px h-6 bg-gray-900/20" />
+              <div className="hidden sm:block w-px h-6 bg-white/20" />
 
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="w-4 h-4 bg-gray-900 rounded-sm" />
+                    <div key={i} className="w-4 h-4 bg-white rounded-sm" />
                   ))}
                 </div>
                 <span className="text-sm font-medium">4.9/5 rating</span>
@@ -194,7 +194,7 @@ export default function CallToAction() {
         }}
         className="absolute top-8 right-8 opacity-20"
       >
-        <Calculator className="w-12 h-12 text-gray-900" />
+        <Calculator className="w-12 h-12 text-white" />
       </motion.div>
 
       <motion.div
@@ -209,7 +209,7 @@ export default function CallToAction() {
         }}
         className="absolute bottom-8 left-8 opacity-20"
       >
-        <Zap className="w-10 h-10 text-gray-900" />
+        <Zap className="w-10 h-10 text-white" />
       </motion.div>
     </section>
   )

@@ -8,12 +8,12 @@ import { Calculator, Receipt, DollarSign, ArrowRight, AlertCircle, TrendingUp, Z
 // Move InputField component OUTSIDE to prevent recreation
 const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = 'number', step = "any" }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-300">
+    <label className="block text-sm font-medium text-[#0F2F4E]">
       {label}
     </label>
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon className="w-5 h-5 text-gray-400" />
+        <Icon className="w-5 h-5 text-[#0F2F4E]/60" />
       </div>
       <input
         type={type}
@@ -21,9 +21,9 @@ const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = 'n
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-3 bg-gray-800/60 border border-gray-600 rounded-xl 
-                   text-white placeholder-gray-400 focus:outline-none focus:border-lime-400 
-                   focus:ring-2 focus:ring-lime-400/50 transition-all duration-300"
+        className="w-full pl-10 pr-4 py-3 bg-white border border-[#EEEEEE] rounded-xl 
+                   text-[#0F2F4E] placeholder-[#0F2F4E]/40 focus:outline-none focus:border-[#1ED760] 
+                   focus:ring-2 focus:ring-[#1ED760]/50 transition-all duration-300 shadow-sm"
       />
     </div>
   </div>
@@ -89,8 +89,8 @@ const FinancialTax = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white py-12">
-      <div className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen bg-[#EEEEEE] py-12">
+      <div className="max-w-6xl mx-auto px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -98,93 +98,99 @@ const FinancialTax = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="flex items-center justify-center gap-4 mt-4 mb-6">
-            <div className="p-3 bg-lime-400/10 rounded-2xl">
-              <TrendingUp className="w-8 h-8 text-lime-400" />
+          <div className="bg-white rounded-3xl p-8 border border-[#FFD700] shadow-2xl">
+            <div className="flex items-center justify-center gap-4 mt-4 mb-6">
+              <div className="p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#1ED760]/5 rounded-3xl shadow-lg">
+                <TrendingUp className="w-12 h-12 text-[#1ED760]" />
+              </div>
+              <div>
+                <h1 className="text-5xl md:text-6xl font-bold text-[#0F2F4E] mb-2">
+                  Financial Tax
+                </h1>
+                <div className="w-24 h-1 bg-gradient-to-r from-[#1ED760] to-[#FFD700] rounded-full mx-auto"></div>
+              </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-lime-400">
-              Financial Tax
-            </h1>
+            <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto leading-relaxed">
+              Calculate financial sector taxes including banking levies, transaction taxes, and capital gains. Estimate tax obligations for financial institutions and transactions in Zimbabwe.
+            </p>
           </div>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Calculate financial sector taxes including banking levies, transaction taxes, and capital gains. Estimate tax obligations for financial institutions and transactions in Zimbabwe.
-          </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Calculator Card */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          {/* Calculator Card - Main Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-2"
+            className="xl:col-span-3"
           >
-            <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Calculator className="w-6 h-6 text-lime-400" />
-                <h2 className="text-2xl font-bold text-lime-400">
-                  Financial Tax Calculation
+            <div className="bg-white rounded-3xl border border-[#FFD700] shadow-2xl p-8">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-[#1ED760]/10 rounded-xl">
+                  <Calculator className="w-8 h-8 text-[#1ED760]" />
+                </div>
+                <h2 className="text-3xl font-bold text-[#0F2F4E]">
+                  Financial Tax Calculator
                 </h2>
               </div>
 
-              <form onSubmit={handleCalculate} className="space-y-6">
+              <form onSubmit={handleCalculate} className="space-y-8">
                 {/* Financial Value Input */}
-                <InputField
-                  label="Financial Transaction/Asset Value"
-                  icon={DollarSign}
-                  value={formData.value}
-                  onChange={handleChange('value')}
-                  placeholder="Enter financial transaction or asset value"
-                />
+                <div className="bg-gradient-to-r from-[#1ED760]/5 to-transparent p-6 rounded-2xl border border-[#1ED760]/10">
+                  <InputField
+                    label="Financial Transaction/Asset Value"
+                    icon={DollarSign}
+                    value={formData.value}
+                    onChange={handleChange('value')}
+                    placeholder="Enter financial transaction or asset value"
+                  />
+                </div>
 
                 {/* Financial Tax Types */}
-                <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-300">
+                <div className="space-y-4">
+                  <label className="block text-lg font-semibold text-[#0F2F4E]">
                     Financial Tax Types
                   </label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {financialTaxTypes.map((taxType, index) => (
-                      <div
+                      <motion.div
                         key={index}
-                        className="p-3 bg-gray-700/30 rounded-xl border border-gray-600/30"
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        className="p-4 bg-white border border-[#EEEEEE] rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 text-center"
                       >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-semibold text-lime-400 text-sm">
-                              {taxType.type}
-                            </div>
-                            <div className="text-xs text-gray-400 mt-1">
-                              {taxType.description}
-                            </div>
-                          </div>
-                          <div className="text-lime-400 font-bold text-sm">
-                            {taxType.rate}
-                          </div>
+                        <div className="font-bold text-[#1ED760] text-lg mb-2">
+                          {taxType.type}
                         </div>
-                      </div>
+                        <div className="text-2xl font-bold text-[#0F2F4E] mb-2">
+                          {taxType.rate}
+                        </div>
+                        <div className="text-sm text-[#0F2F4E]/70">
+                          {taxType.description}
+                        </div>
+                      </motion.div>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">
+                  <p className="text-sm text-[#0F2F4E]/60 mt-4 text-center">
                     * The actual rate applied depends on the specific financial transaction type
                   </p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex gap-4 pt-4">
                   <motion.button
                     type="submit"
                     disabled={loading || !formData.value}
                     whileHover={{ scale: loading ? 1 : 1.02 }}
                     whileTap={{ scale: loading ? 1 : 0.98 }}
-                    className={`flex-1 py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 
+                    className={`flex-1 py-5 px-8 rounded-2xl font-bold text-lg transition-all duration-300 
                                flex items-center justify-center gap-3 shadow-lg
                                ${loading || !formData.value
-                                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                                 : 'bg-lime-400 text-gray-900 hover:bg-lime-500 hover:shadow-lime-400/25'
+                                 ? 'bg-[#EEEEEE] text-[#0F2F4E]/40 cursor-not-allowed' 
+                                 : 'bg-[#1ED760] text-white hover:bg-[#1ED760]/90 hover:shadow-[#1ED760]/25'
                                }`}
                   >
                     {loading ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Calculating...
                       </>
                     ) : (
@@ -199,8 +205,8 @@ const FinancialTax = () => {
                   <button
                     type="button"
                     onClick={resetCalculator}
-                    className="px-6 py-4 bg-gray-700/50 text-gray-300 rounded-xl font-semibold 
-                               hover:bg-gray-600/50 transition-all duration-300"
+                    className="px-8 py-5 bg-white text-[#0F2F4E] rounded-2xl font-semibold 
+                               hover:bg-[#0F2F4E]/5 transition-all duration-300 border border-[#EEEEEE] shadow-lg"
                   >
                     Reset
                   </button>
@@ -212,11 +218,11 @@ const FinancialTax = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 p-4 bg-red-500/10 border border-red-400/30 rounded-xl"
+                  className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl"
                 >
                   <div className="flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-400" />
-                    <p className="text-red-400 text-sm">{error}</p>
+                    <AlertCircle className="w-5 h-5 text-red-500" />
+                    <p className="text-red-700 text-sm">{error}</p>
                   </div>
                 </motion.div>
               )}
@@ -237,39 +243,38 @@ const FinancialTax = () => {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="bg-gradient-to-br from-lime-400/10 to-green-400/5 rounded-3xl 
-                             border border-lime-400/20 p-6"
+                  className="bg-white rounded-3xl border border-[#1ED760]/30 p-6 shadow-2xl"
                 >
-                  <h3 className="text-xl font-bold text-lime-400 mb-4 text-center">
+                  <h3 className="text-xl font-bold text-[#0F2F4E] mb-4 text-center">
                     Tax Calculation Results
                   </h3>
                   
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Financial Value:</span>
-                      <span className="text-white font-semibold">
+                      <span className="text-[#0F2F4E]">Financial Value:</span>
+                      <span className="text-[#0F2F4E] font-semibold">
                         ${(results.financialValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Applied Rate:</span>
-                      <span className="text-lime-400 font-semibold">
+                      <span className="text-[#0F2F4E]">Applied Rate:</span>
+                      <span className="text-[#1ED760] font-semibold">
                         {results.taxRate.toFixed(2)}%
                       </span>
                     </div>
                     
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-300">Financial Tax:</span>
-                      <span className="text-lime-400 font-bold">
+                      <span className="text-[#0F2F4E]">Financial Tax:</span>
+                      <span className="text-[#1ED760] font-bold">
                         ${(results.taxDue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                     
-                    <div className="border-t border-gray-600 pt-3">
+                    <div className="border-t border-[#EEEEEE] pt-3">
                       <div className="flex justify-between items-center text-lg">
-                        <span className="text-gray-300 font-semibold">Net Amount:</span>
-                        <span className="text-white font-bold text-xl">
+                        <span className="text-[#0F2F4E] font-semibold">Net Amount:</span>
+                        <span className="text-[#0F2F4E] font-bold text-xl">
                           ${(results.netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </div>
@@ -280,72 +285,140 @@ const FinancialTax = () => {
             </AnimatePresence>
 
             {/* Financial Tax Information */}
-            <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-6">
-              <h3 className="text-lg font-bold text-lime-400 mb-4">
+            <div className="bg-white rounded-3xl border border-[#FFD700] p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">
                 Financial Tax Info
               </h3>
-              <div className="space-y-3 text-sm text-gray-300">
+              <div className="space-y-3 text-sm text-[#0F2F4E]">
                 <div className="flex justify-between">
                   <span>Banking Levy:</span>
-                  <span className="text-lime-400 font-semibold">0.05%</span>
+                  <span className="text-[#1ED760] font-semibold">0.05%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Corporate Tax:</span>
-                  <span className="text-gray-400">24.72%</span>
+                  <span className="text-[#0F2F4E]/70">24.72%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Capital Gains:</span>
-                  <span className="text-gray-400">20%</span>
+                  <span className="text-[#0F2F4E]/70">20%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Filing Frequency:</span>
-                  <span className="text-gray-400">Monthly/Quarterly</span>
+                  <span className="text-[#0F2F4E]/70">Monthly/Quarterly</span>
                 </div>
               </div>
             </div>
 
             {/* Quick Tips */}
-            <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-6">
-              <h3 className="text-lg font-bold text-lime-400 mb-4">
+            <div className="bg-white rounded-3xl border border-[#FFD700] p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">
                 Financial Tax Tips
               </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
+              <ul className="space-y-3 text-sm text-[#0F2F4E]">
                 <li className="flex items-start gap-2">
-                  <Zap className="w-4 h-4 text-lime-400 mt-0.5 flex-shrink-0" />
+                  <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
                   <span>Banking levy applies to total banking assets</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Zap className="w-4 h-4 text-lime-400 mt-0.5 flex-shrink-0" />
+                  <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
                   <span>Transaction taxes vary by transaction type and size</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Zap className="w-4 h-4 text-lime-400 mt-0.5 flex-shrink-0" />
+                  <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
                   <span>Capital gains tax applies to investment profits</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Zap className="w-4 h-4 text-lime-400 mt-0.5 flex-shrink-0" />
+                  <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
                   <span>Maintain detailed financial transaction records</span>
                 </li>
               </ul>
             </div>
 
             {/* Financial Institutions */}
-            <div className="bg-gray-800/40 backdrop-blur-sm rounded-3xl border border-gray-700/50 p-6">
+            <div className="bg-white rounded-3xl border border-[#FFD700] p-6 shadow-lg">
               <div className="flex items-center gap-2 mb-3">
-                <PieChart className="w-4 h-4 text-lime-400" />
-                <h3 className="text-lg font-bold text-lime-400">
+                <PieChart className="w-4 h-4 text-[#1ED760]" />
+                <h3 className="text-lg font-bold text-[#0F2F4E]">
                   Applicable Institutions
                 </h3>
               </div>
-              <div className="text-sm text-gray-300 space-y-2">
-                <p>Financial taxes apply to:</p>
-                <div className="grid grid-cols-1 gap-1 text-xs">
-                  <span>• Commercial banks</span>
-                  <span>• Investment banks</span>
-                  <span>• Microfinance institutions</span>
-                  <span>• Insurance companies</span>
-                  <span>• Pension funds</span>
-                  <span>• Securities firms</span>
+              <div className="text-sm text-[#0F2F4E] space-y-3">
+                <p className="text-[#0F2F4E]/80">Financial taxes apply to:</p>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Commercial banks</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Investment banks</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Microfinance institutions</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Insurance companies</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Pension funds</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full flex-shrink-0"></div>
+                    <span>Securities firms</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Compliance Requirements */}
+            <div className="bg-white rounded-3xl border border-[#FFD700] p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">
+                Compliance Requirements
+              </h3>
+              <ul className="space-y-2 text-sm text-[#0F2F4E]">
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full mt-1.5 flex-shrink-0" />
+                  <span>Register with relevant regulatory authorities</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full mt-1.5 flex-shrink-0" />
+                  <span>Submit regular financial tax returns</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full mt-1.5 flex-shrink-0" />
+                  <span>Maintain detailed transaction records</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="w-1.5 h-1.5 bg-[#1ED760] rounded-full mt-1.5 flex-shrink-0" />
+                  <span>Comply with anti-money laundering regulations</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Tax Rates Breakdown */}
+            <div className="bg-white rounded-3xl border border-[#FFD700] p-6 shadow-lg">
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">
+                Tax Rates Breakdown
+              </h3>
+              <div className="space-y-3 text-sm text-[#0F2F4E]">
+                <div className="flex justify-between items-center">
+                  <span>Banking Assets:</span>
+                  <span className="text-[#1ED760] font-semibold">0.05%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Corporate Profits:</span>
+                  <span className="text-[#1ED760] font-semibold">24.72%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Capital Gains:</span>
+                  <span className="text-[#1ED760] font-semibold">20%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Transaction Tax:</span>
+                  <span className="text-[#0F2F4E]/70">Varies by type</span>
                 </div>
               </div>
             </div>

@@ -19,7 +19,16 @@ import {
 } from "recharts";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-const COLORS = ["#84cc16", "#f97316", "#60a5fa", "#a78bfa", "#f472b6"];
+const COLORS = ["#1ED760", "#FFD700", "#0F2F4E", "#84cc16", "#f97316"];
+
+// Color constants based on design system
+const COLORS_DESIGN = {
+  primaryNavy: "#0F2F4E",
+  accentGreen: "#1ED760",
+  goldAccent: "#FFD700",
+  neutralWhite: "#FFFFFF",
+  secondaryGrey: "#EEEEEE"
+};
 
 function cleanAIText(text) {
     if (!text) return "";
@@ -34,14 +43,13 @@ function cleanAIText(text) {
 function formatAIExplanation(text) {
   if (!text) return "";
   
-  // Convert text to bullet points
   const sentences = text.split('. ').filter(sentence => sentence.trim().length > 10);
   
   return (
     <ul className="space-y-2">
       {sentences.map((sentence, index) => (
         <li key={index} className="flex items-start">
-          <span className="text-lime-400 mr-2 mt-1">•</span>
+          <span className="text-[#1ED760] mr-2 mt-1">•</span>
           <span>{sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}</span>
         </li>
       ))}
@@ -71,14 +79,14 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl p-6 w-full max-w-md border border-lime-400/30">
-        <h3 className="text-xl font-bold text-lime-400 mb-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md border border-[#FFD700] shadow-xl">
+        <h3 className="text-xl font-bold text-[#0F2F4E] mb-4">
           {type === 'pdf' ? '📄 Export PDF Report' : '📊 Export Excel Workbook'}
         </h3>
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-2">
               Company Name *
             </label>
             <input
@@ -86,22 +94,24 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               placeholder="Enter company name"
-              className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 
-                         focus:border-lime-400 focus:ring focus:ring-lime-400/40 outline-none"
+              className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                         placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                         focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-2">
               Tax Year
             </label>
             <input
               type="number"
               value={taxYear}
               onChange={(e) => setTaxYear(e.target.value)}
-              className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 
-                         focus:border-lime-400 focus:ring focus:ring-lime-400/40 outline-none"
+              className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                         placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                         focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
             />
           </div>
 
@@ -113,9 +123,9 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
                   id="includeCharts"
                   checked={includeCharts}
                   onChange={(e) => setIncludeCharts(e.target.checked)}
-                  className="w-4 h-4 text-lime-400 bg-gray-700 border-gray-600 rounded focus:ring-lime-400"
+                  className="w-4 h-4 text-[#1ED760] bg-white border-[#EEEEEE] rounded focus:ring-[#1ED760]"
                 />
-                <label htmlFor="includeCharts" className="text-sm text-gray-300">
+                <label htmlFor="includeCharts" className="text-sm text-[#0F2F4E]">
                   Include charts and visualizations
                 </label>
               </div>
@@ -126,9 +136,9 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
                   id="includeAI"
                   checked={includeAI}
                   onChange={(e) => setIncludeAI(e.target.checked)}
-                  className="w-4 h-4 text-lime-400 bg-gray-700 border-gray-600 rounded focus:ring-lime-400"
+                  className="w-4 h-4 text-[#1ED760] bg-white border-[#EEEEEE] rounded focus:ring-[#1ED760]"
                 />
-                <label htmlFor="includeAI" className="text-sm text-gray-300">
+                <label htmlFor="includeAI" className="text-sm text-[#0F2F4E]">
                   Include AI tax optimization recommendations
                 </label>
               </div>
@@ -139,14 +149,14 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-700 text-gray-300 rounded-lg font-medium hover:bg-gray-600 transition"
+            className="flex-1 px-4 py-3 bg-[#EEEEEE] text-[#0F2F4E] rounded-lg font-medium hover:bg-[#EEEEEE]/80 transition"
           >
             Cancel
           </button>
           <button
             onClick={handleExport}
             disabled={!companyName.trim()}
-            className="flex-1 px-4 py-3 bg-lime-400 text-gray-900 rounded-lg font-medium hover:bg-lime-300 transition disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition disabled:opacity-50"
           >
             Export {type === 'pdf' ? 'PDF' : 'Excel'}
           </button>
@@ -158,7 +168,6 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
 
 /* ---------- Professional PDF Export (Manual Table Implementation) ---------- */
 const exportComprehensivePDF = (results, formState, options) => {
-  // Dynamically import jsPDF to avoid SSR issues
   import('jspdf').then(({ jsPDF }) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -167,7 +176,6 @@ const exportComprehensivePDF = (results, formState, options) => {
     const lineHeight = 7;
     const sectionSpacing = 15;
 
-    // Helper function to add text with automatic page breaks
     const addTextWithBreaks = (text, x, y, maxWidth) => {
       const lines = doc.splitTextToSize(text, maxWidth);
       doc.text(lines, x, y);
@@ -175,15 +183,14 @@ const exportComprehensivePDF = (results, formState, options) => {
     };
 
     // Header with Company Info
-    doc.setFillColor(32, 32, 32);
+    doc.setFillColor(15, 47, 78); // Primary Navy
     doc.rect(0, 0, pageWidth, 60, 'F');
     
-    doc.setTextColor(132, 204, 22); // Lime color
+    doc.setTextColor(255, 255, 255); // White text
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('TAX COMPUTATION REPORT', pageWidth / 2, 25, { align: 'center' });
     
-    doc.setTextColor(255, 255, 255);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     doc.text(`Company: ${options.companyName}`, 20, 40);
@@ -194,11 +201,10 @@ const exportComprehensivePDF = (results, formState, options) => {
 
     // Executive Summary
     doc.setFontSize(16);
-    doc.setTextColor(132, 204, 22);
+    doc.setTextColor(15, 47, 78); // Primary Navy
     doc.text('EXECUTIVE SUMMARY', 20, yPosition);
     yPosition += sectionSpacing;
 
-    // Manual table implementation for Executive Summary
     const summaryData = [
       { label: "Gross Profit", value: `$${(results.comprehensive?.grossProfit || 0).toLocaleString()}` },
       { label: "Operating Profit", value: `$${(results.comprehensive?.operatingProfit || 0).toLocaleString()}` },
@@ -221,7 +227,6 @@ const exportComprehensivePDF = (results, formState, options) => {
       doc.text(item.value, pageWidth - 30, yPosition, { align: 'right' });
       yPosition += lineHeight;
       
-      // Add separator line
       if (index < summaryData.length - 1) {
         doc.setDrawColor(200, 200, 200);
         doc.line(20, yPosition + 2, pageWidth - 20, yPosition + 2);
@@ -238,7 +243,7 @@ const exportComprehensivePDF = (results, formState, options) => {
     }
     
     doc.setFontSize(14);
-    doc.setTextColor(132, 204, 22);
+    doc.setTextColor(15, 47, 78);
     doc.text('PROFIT & LOSS DETAILS', 20, yPosition);
     yPosition += 10;
 
@@ -275,7 +280,7 @@ const exportComprehensivePDF = (results, formState, options) => {
     }
     
     doc.setFontSize(14);
-    doc.setTextColor(132, 204, 22);
+    doc.setTextColor(15, 47, 78);
     doc.text('TAX ADJUSTMENTS', 20, yPosition);
     yPosition += 10;
 
@@ -314,7 +319,7 @@ const exportComprehensivePDF = (results, formState, options) => {
     }
     
     doc.setFontSize(14);
-    doc.setTextColor(132, 204, 22);
+    doc.setTextColor(15, 47, 78);
     doc.text('CAPITAL ALLOWANCES', 20, yPosition);
     yPosition += 10;
 
@@ -334,7 +339,6 @@ const exportComprehensivePDF = (results, formState, options) => {
         yPosition = 20;
       }
       
-      // Make total row bold
       if (index === capitalAllowances.length - 1) {
         doc.setFont('helvetica', 'bold');
       }
@@ -343,7 +347,6 @@ const exportComprehensivePDF = (results, formState, options) => {
       doc.text(item.value, pageWidth - 30, yPosition, { align: 'right' });
       yPosition += lineHeight;
       
-      // Reset font
       doc.setFont('helvetica', 'normal');
     });
 
@@ -357,14 +360,13 @@ const exportComprehensivePDF = (results, formState, options) => {
       }
       
       doc.setFontSize(16);
-      doc.setTextColor(132, 204, 22);
+      doc.setTextColor(15, 47, 78);
       doc.text('TAX OPTIMIZATION RECOMMENDATIONS', 20, yPosition);
       yPosition += 15;
 
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       
-      // Format AI text with bullet points
       const aiText = cleanAIText(results.comprehensive.aiExplanation);
       const sentences = aiText.split('. ').filter(sentence => sentence.trim().length > 10);
       
@@ -376,10 +378,9 @@ const exportComprehensivePDF = (results, formState, options) => {
         
         const bulletPoint = `• ${sentence.trim()}${sentence.trim().endsWith('.') ? '' : '.'}`;
         yPosition = addTextWithBreaks(bulletPoint, 25, yPosition, pageWidth - 45);
-        yPosition += 2; // Add spacing between points
+        yPosition += 2;
       });
 
-      // Add disclaimer
       if (yPosition > pageHeight - 30) {
         doc.addPage();
         yPosition = 20;
@@ -395,7 +396,6 @@ const exportComprehensivePDF = (results, formState, options) => {
       doc.setFont('helvetica', 'normal');
     }
 
-    // Footer on all pages
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
@@ -405,7 +405,6 @@ const exportComprehensivePDF = (results, formState, options) => {
       doc.text(`Confidential - ${options.companyName} Tax Computation`, 20, pageHeight - 10);
     }
 
-    // Save the PDF
     doc.save(`tax-computation-${options.companyName.replace(/\s+/g, '-').toLowerCase()}-${options.taxYear}.pdf`);
   }).catch(error => {
     console.error('Error generating PDF:', error);
@@ -536,7 +535,6 @@ const exportComprehensiveExcel = (results, formState, options) => {
     XLSX.utils.book_append_sheet(wb, ws5, "Tax Optimization");
   }
 
-  // Save the workbook
   XLSX.writeFile(wb, `tax-planning-${options.companyName.replace(/\s+/g, '-').toLowerCase()}-${options.taxYear}.xlsx`);
 };
 
@@ -554,27 +552,26 @@ const EnhancedExportButtons = ({ results, formState }) => {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-3 mt-6 p-4 bg-gradient-to-r from-lime-900/20 to-green-900/20 rounded-lg border border-lime-700/30">
-        {/* In the EnhancedExportButtons component, you can add: */}
+      <div className="flex flex-col sm:flex-row gap-3 mt-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20">
         <div className="flex-1">
-          <h4 className="text-lg font-semibold text-lime-300 mb-2">Professional Reports</h4>
-            <p className="text-sm text-gray-300">
+          <h4 className="text-lg font-semibold text-[#0F2F4E] mb-2">Professional Reports</h4>
+            <p className="text-sm text-[#0F2F4E]">
              Generate comprehensive PDF reports and Excel workbooks for tax filing and planning
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[#0F2F4E]/70 mt-1">
               Includes AI-powered tax optimization suggestions (for guidance purposes)
             </p>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => setExportModal({ open: true, type: 'pdf' })}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-500 transition flex items-center gap-2"
+            className="px-6 py-3 bg-[#0F2F4E] text-white rounded-lg font-semibold hover:bg-[#0F2F4E]/90 transition flex items-center gap-2"
           >
             📄 Export PDF
           </button>
           <button
             onClick={() => setExportModal({ open: true, type: 'excel' })}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-500 transition flex items-center gap-2"
+            className="px-6 py-3 bg-[#1ED760] text-white rounded-lg font-semibold hover:bg-[#1ED760]/90 transition flex items-center gap-2"
           >
             📊 Export Excel
           </button>
@@ -645,7 +642,6 @@ const CapitalAllowanceCalculator = ({ formState, onUpdate }) => {
     const acceleratedWearTear = cost * details.acceleratedWearTear;
     const wearTear = cost * details.wearTear;
     
-    // Total allowance is the maximum of the three types
     const totalAllowance = Math.max(specialInitialAllowance, acceleratedWearTear, wearTear);
     
     return {
@@ -667,7 +663,6 @@ const CapitalAllowanceCalculator = ({ formState, onUpdate }) => {
     
     setAssetDetails(updatedDetails);
     
-    // Update the main form state with calculated allowances
     const allowances = calculateAllowances(assetType, updatedDetails[assetType]);
     if (onUpdate) {
       onUpdate(assetType, allowances.totalAllowance);
@@ -676,58 +671,62 @@ const CapitalAllowanceCalculator = ({ formState, onUpdate }) => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-lime-400">Detailed Capital Allowance Calculation</h3>
+      <h3 className="text-lg font-semibold text-[#0F2F4E]">Detailed Capital Allowance Calculation</h3>
       
       {Object.entries(assetDetails).map(([assetType, details]) => {
         const allowances = calculateAllowances(assetType, details);
         
         return (
-          <div key={assetType} className="bg-gray-700 p-4 rounded-lg border border-gray-600">
-            <h4 className="font-semibold text-lime-300 mb-3 capitalize">
+          <div key={assetType} className="bg-white p-4 rounded-lg border border-[#EEEEEE] shadow-sm">
+            <h4 className="font-semibold text-[#0F2F4E] mb-3 capitalize">
               {assetType.replace(/([A-Z])/g, ' $1')}
             </h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Total Cost Price ($)</label>
+                <label className="block text-sm text-[#0F2F4E] mb-1">Total Cost Price ($)</label>
                 <input
                   type="number"
                   value={details.totalCostPrice}
                   onChange={(e) => updateAssetDetail(assetType, 'totalCostPrice', e.target.value)}
-                  className="w-full p-2 rounded bg-gray-600 text-white border border-gray-500 focus:border-lime-400 outline-none"
+                  className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                             placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                             focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
                 />
               </div>
               
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Date Purchased</label>
+                <label className="block text-sm text-[#0F2F4E] mb-1">Date Purchased</label>
                 <input
                   type="date"
                   value={details.datePurchased}
                   onChange={(e) => updateAssetDetail(assetType, 'datePurchased', e.target.value)}
-                  className="w-full p-2 rounded bg-gray-600 text-white border border-gray-500 focus:border-lime-400 outline-none"
+                  className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                             placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                             focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
                 />
               </div>
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <div className="bg-gray-800 p-3 rounded">
-                <div className="text-gray-400">Special Initial</div>
-                <div className="text-lime-400 font-medium">${allowances.specialInitialAllowance.toLocaleString()}</div>
+              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
+                <div className="text-[#0F2F4E]/70">Special Initial</div>
+                <div className="text-[#1ED760] font-medium">${allowances.specialInitialAllowance.toLocaleString()}</div>
               </div>
               
-              <div className="bg-gray-800 p-3 rounded">
-                <div className="text-gray-400">Accelerated W&T</div>
-                <div className="text-lime-400 font-medium">${allowances.acceleratedWearTear.toLocaleString()}</div>
+              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
+                <div className="text-[#0F2F4E]/70">Accelerated W&T</div>
+                <div className="text-[#1ED760] font-medium">${allowances.acceleratedWearTear.toLocaleString()}</div>
               </div>
               
-              <div className="bg-gray-800 p-3 rounded">
-                <div className="text-gray-400">Wear & Tear</div>
-                <div className="text-lime-400 font-medium">${allowances.wearTear.toLocaleString()}</div>
+              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
+                <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                <div className="text-[#1ED760] font-medium">${allowances.wearTear.toLocaleString()}</div>
               </div>
               
-              <div className="bg-gray-800 p-3 rounded border border-lime-400">
-                <div className="text-gray-400">Total Allowance</div>
-                <div className="text-lime-400 font-semibold">${allowances.totalAllowance.toLocaleString()}</div>
+              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#FFD700]">
+                <div className="text-[#0F2F4E]/70">Total Allowance</div>
+                <div className="text-[#1ED760] font-semibold">${allowances.totalAllowance.toLocaleString()}</div>
               </div>
             </div>
           </div>
@@ -741,33 +740,368 @@ const CapitalAllowanceCalculator = ({ formState, onUpdate }) => {
 const ActionButton = ({ children, ...props }) => (
   <button
     {...props}
-    className="bg-gradient-to-r from-lime-400 to-lime-500 
-               text-gray-900 px-5 py-2 rounded-lg font-semibold 
-               hover:from-lime-300 hover:to-lime-400 transition disabled:opacity-50"
+    className="bg-gradient-to-r from-[#1ED760] to-[#1ED760]/90 
+               text-white px-5 py-3 rounded-lg font-semibold 
+               hover:from-[#1ED760]/90 hover:to-[#1ED760]/80 transition disabled:opacity-50
+               shadow-lg shadow-[#1ED760]/25"
   >
     {children}
   </button>
 );
 
-const InputField = ({ label, value, onChange, type = "number", className = "" }) => (
-  <div className={`space-y-1 ${className}`}>
-    <label className="block text-sm font-medium text-gray-400">{label}</label>
+const InputField = ({ label, value, onChange, type = "number", className = "", placeholder = "" }) => (
+  <div className={`space-y-2 ${className}`}>
+    <label className="block text-sm font-medium text-[#0F2F4E]">{label}</label>
     <input
       type={type}
       value={value}
       onChange={onChange}
-      className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 
-                 focus:border-lime-400 focus:ring focus:ring-lime-400/40 outline-none"
+      placeholder={placeholder}
+      className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                 placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                 focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
     />
   </div>
 );
 
 // Add this component near the top with other components
 const AIDisclaimer = ({ className = "" }) => (
-  <div className={`text-xs text-gray-500 mt-2 ${className}`}>
+  <div className={`text-xs text-[#0F2F4E]/70 mt-2 ${className}`}>
     ⚠️ AI guidance is for informational purposes only. Consult a qualified tax professional for specific advice.
   </div>
 );
+
+/* ---------- Chart Components ---------- */
+const ComprehensiveChartPanel = ({ results }) => {
+  if (!results.comprehensive) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-[#0F2F4E]/40 bg-white rounded-xl border border-[#EEEEEE]">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-12 w-12 text-[#1ED760] mb-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+        <p className="text-sm">No comprehensive tax data yet.</p>
+        <p className="text-xs text-[#0F2F4E]/50">
+          Fill in the forms and calculate to generate charts.
+        </p>
+      </div>
+    );
+  }
+
+  const { comprehensive } = results;
+  
+  const taxBreakdownData = [
+    { 
+      name: 'Income Tax', 
+      value: Math.max(comprehensive.taxDue || 0, 0.01)
+    },
+    { 
+      name: 'AIDS Levy', 
+      value: Math.max(comprehensive.aidsLevy || 0, 0.01)
+    },
+  ];
+
+  const capitalAllowanceData = comprehensive.detailedCapitalAllowances ? 
+    Object.entries(comprehensive.detailedCapitalAllowances).map(([assetType, details]) => ({
+      name: assetType.replace(/([A-Z])/g, ' $1').trim().substring(0, 12),
+      value: Math.max(details.totalAllowance || 0, 0.01)
+    })) : [
+    { name: 'No Data', value: 0.01 }
+  ];
+
+  const renderCustomizedLabel = ({
+    cx, cy, midAngle, innerRadius, outerRadius, percent, index
+  }) => {
+    if (percent === 0) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="#0F2F4E" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  return (
+    <div className="w-full h-full flex flex-col md:flex-row gap-4">
+      {/* Tax Breakdown Pie Chart */}
+      <div className="flex-1 min-h-[160px]">
+        <div className="text-center text-sm text-[#0F2F4E] mb-2">Tax Breakdown</div>
+        <ResponsiveContainer width="100%" height={200}>
+          <PieChart>
+            <Pie
+              data={taxBreakdownData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={40}
+              outerRadius={80}
+              paddingAngle={2}
+              label={renderCustomizedLabel}
+              labelLine={false}
+              animationDuration={800}
+            >
+              {taxBreakdownData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                  stroke="#FFFFFF"
+                  strokeWidth={2}
+                />
+              ))}
+            </Pie>
+            <Tooltip 
+              formatter={(value, name) => [
+                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                name
+              ]}
+            />
+            <Legend 
+              verticalAlign="bottom" 
+              height={36}
+              formatter={(value, entry) => (
+                <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+              )}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Capital Allowance Bar Chart */}
+      <div className="flex-1 min-h-[160px]">
+        <div className="text-center text-sm text-[#0F2F4E] mb-2">Capital Allowances</div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart 
+            data={capitalAllowanceData} 
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            animationDuration={800}
+          >
+            <XAxis 
+              dataKey="name" 
+              stroke="#0F2F4E" 
+              fontSize={12}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis 
+              stroke="#0F2F4E" 
+              fontSize={12}
+              tickFormatter={(value) => `$${value.toLocaleString()}`}
+            />
+            <Tooltip 
+              formatter={(value, name) => [
+                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                'Allowance'
+              ]}
+              labelFormatter={(label) => `Asset: ${label}`}
+              contentStyle={{ 
+                backgroundColor: '#FFFFFF', 
+                border: '1px solid #EEEEEE',
+                borderRadius: '8px',
+                color: '#0F2F4E'
+              }}
+            />
+            <Bar 
+              dataKey="value" 
+              fill="#1ED760" 
+              radius={[4, 4, 0, 0]}
+              stroke="#0F2F4E"
+              strokeWidth={1}
+            >
+              <LabelList 
+                dataKey="value" 
+                position="top" 
+                fill="#0F2F4E"
+                fontSize={11}
+                formatter={(value) => `$${value > 1000 ? `${(value/1000).toFixed(0)}k` : value.toLocaleString()}`}
+              />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+const ComprehensiveSummaryPanel = ({ results }) => {
+  if (!results.comprehensive) {
+    return (
+      <div className="text-[#0F2F4E]/40 text-sm">
+        Complete the tax computation form to see summary
+      </div>
+    );
+  }
+
+  const { comprehensive } = results;
+  
+  const items = [
+    { label: "Gross Profit", value: comprehensive.grossProfit || 0 },
+    { label: "Operating Profit", value: comprehensive.operatingProfit || 0 },
+    { label: "Taxable Income", value: comprehensive.taxableIncome || 0 },
+    { label: "Capital Allowances", value: comprehensive.capitalAllowances || 0 },
+    { label: "Total Tax", value: comprehensive.totalTax || 0 },
+  ];
+  
+  const maxValue = Math.max(...items.map((i) => i.value), 1);
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, idx) => (
+        <div key={idx}>
+          <div className="flex justify-between text-sm text-[#0F2F4E]">
+            <span>{item.label}</span>
+            <span className="text-[#1ED760] font-medium">
+              {typeof item.value === 'number' ? `$${item.value.toLocaleString()}` : item.value}
+            </span>
+          </div>
+          <div className="h-2 bg-[#EEEEEE] rounded">
+            <div
+              className="h-2 bg-[#1ED760] rounded"
+              style={{ width: `${(item.value / maxValue) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/* ---------- Chat Assistant Component ---------- */
+const ChatAssistant = ({ aiHistory, setAIHistory }) => {
+  const [query, setQuery] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
+    if (!query.trim()) return;
+    setSending(true);
+    try {
+      const res = await axios.post(`${API_BASE}/chatbot`, { query });
+      const assistant = res.data.response ?? "(no response)";
+      setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
+      setQuery("");
+    } catch {
+      setAIHistory((h) => [
+        { q: query, a: "(assistant error)" },
+        ...h,
+      ].slice(0, 50));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask about tax optimization..."
+          className="flex-1 p-3 text-sm rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                     placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                     focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
+        />
+        <button
+          onClick={send}
+          disabled={sending}
+          className="px-4 text-sm py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition"
+        >
+          {sending ? "..." : "Ask"}
+        </button>
+      </div>
+
+      <AIDisclaimer />
+
+      <div className="mt-3 max-h-40 overflow-auto space-y-2">
+        {aiHistory.map((h, i) => (
+          <div key={i} className="p-3 bg-white rounded-lg border border-[#EEEEEE]">
+            <div className="text-sm text-[#0F2F4E]">Q: {h.q}</div>
+            <div className="text-sm text-[#1ED760] mt-1">A: {cleanAIText(h.a)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ---------- Excel Uploader Component ---------- */
+const ExcelUploader = ({ onParse }) => {
+  const fileRef = useRef(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploadedFile(file.name);
+    
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      
+      const profitLossSheet = workbook.Sheets['Profit and Loss'];
+      const taxComputationSheet = workbook.Sheets['Tax Computation'];
+      const capitalAllowanceSheet = workbook.Sheets['Capital Allowance Schedule'];
+      
+      const parsedData = {
+        profitLoss: profitLossSheet ? XLSX.utils.sheet_to_json(profitLossSheet, { defval: "" }) : [],
+        taxComputation: taxComputationSheet ? XLSX.utils.sheet_to_json(taxComputationSheet, { defval: "" }) : [],
+        capitalAllowance: capitalAllowanceSheet ? XLSX.utils.sheet_to_json(capitalAllowanceSheet, { defval: "" }) : [],
+      };
+      
+      onParse?.(parsedData);
+      
+    } catch (error) {
+      console.error("Error parsing Excel file:", error);
+      alert("Error parsing Excel file. Please check the format.");
+    }
+  };
+
+  return (
+    <div>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleFile}
+        className="block w-full text-sm text-[#0F2F4E] file:mr-3 file:py-2 file:px-4 file:rounded-lg 
+                   file:border-0 file:text-sm file:font-semibold 
+                   file:bg-[#1ED760] file:text-white hover:file:bg-[#1ED760]/90"
+      />
+      {uploadedFile && (
+        <div className="mt-2 text-sm text-[#1ED760]">
+          Uploaded: {uploadedFile}
+        </div>
+      )}
+      <div className="mt-2 text-xs text-[#0F2F4E]/70">
+        Upload QPD Income Tax Computation Excel template
+      </div>
+    </div>
+  );
+};
 
 /* ---------- Main Page ---------- */
 export default function TaxPlanningPage() {
@@ -927,7 +1261,6 @@ export default function TaxPlanningPage() {
     let detailedCapitalAllowances = {};
     
     if (capitalAllowance) {
-      // Calculate detailed allowances for each asset type
       const assetRates = {
         motorVehicles: { special: 0.5, accelerated: 0.25, wearTear: 0.2 },
         moveableAssets: { special: 0.5, accelerated: 0.25, wearTear: 0.1 },
@@ -944,7 +1277,6 @@ export default function TaxPlanningPage() {
         const acceleratedAllowance = assetCost * rates.accelerated;
         const wearTearAllowance = assetCost * rates.wearTear;
         
-        // Use the maximum allowance for each asset
         const assetAllowance = Math.max(specialAllowance, acceleratedAllowance, wearTearAllowance);
         
         detailedCapitalAllowances[assetType] = {
@@ -961,25 +1293,23 @@ export default function TaxPlanningPage() {
     
     taxableIncome -= totalCapitalAllowance;
     
-    // Ensure taxable income is not negative
     taxableIncome = Math.max(0, taxableIncome);
     
-    // Calculate taxes
-    const taxDue = taxableIncome * 0.25; // 25% corporate tax
-    const aidsLevy = taxDue * 0.03; // 3% AIDS levy
+    const taxDue = taxableIncome * 0.25;
+    const aidsLevy = taxDue * 0.03;
     const totalTax = taxDue + aidsLevy;
     
     return {
       grossProfit,
       operatingProfit,
       taxableIncome,
-      taxDue: Math.max(taxDue, 0), // Ensure non-negative
-      aidsLevy: Math.max(aidsLevy, 0), // Ensure non-negative
-      totalTax: Math.max(totalTax, 0), // Ensure non-negative
+      taxDue: Math.max(taxDue, 0),
+      aidsLevy: Math.max(aidsLevy, 0),
+      totalTax: Math.max(totalTax, 0),
       costOfGoodsSold,
       operatingExpenses: totalOperatingExpenses,
       nonDeductibleExpenses: totalNonDeductibleExpenses,
-      capitalAllowances: Math.max(totalCapitalAllowance, 0), // Ensure non-negative
+      capitalAllowances: Math.max(totalCapitalAllowance, 0),
       detailedCapitalAllowances: Object.keys(detailedCapitalAllowances).length > 0 ? detailedCapitalAllowances : null
     };
   };
@@ -1026,11 +1356,9 @@ export default function TaxPlanningPage() {
       
       let data;
       try {
-        // Try to call the API first
         data = await callApi("/calculate/comprehensive-corporate-tax", payload);
       } catch (apiError) {
         console.log("API call failed, using local calculation:", apiError);
-        // If API fails, use local calculation
         data = calculateComprehensiveTaxLocal(payload);
       }
       
@@ -1049,33 +1377,45 @@ export default function TaxPlanningPage() {
     }
   };
 
-  /* ---------- UI ---------- */
+  function handleExcelImport(data) {
+    if (data.profitLoss) {
+      setFormState(prev => ({
+        ...prev,
+        sales: data.profitLoss.sales || "",
+        otherTradingIncome: data.profitLoss.otherTradingIncome || "",
+        costOfGoodsSold: data.profitLoss.costOfGoodsSold || "",
+      }));
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white py-12 px-6">
+    <div className="min-h-screen bg-[#EEEEEE] py-12 px-6">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto"
       >
         <header className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-lime-400 mt-4 mb-4">
-            Comprehensive Tax Planning
-          </h1>
-          <p className="text-gray-300 mt-2">
-            Professional tax computation with enhanced capital allowance calculations
-          </p>
+          <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
+              Comprehensive Tax Planning
+            </h1>
+            <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto">
+              Professional tax computation with enhanced capital allowance calculations for Zimbabwe
+            </p>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-6">
             {/* Calculator */}
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg">
+            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-xl">
               {/* Fixed Calculate Button - Always Visible */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-lime-900/30 to-green-900/30 rounded-lg border border-lime-700/50">
+              <div className="mb-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-lime-300">Ready to Calculate?</h3>
-                    <p className="text-sm text-gray-300 mt-1">
+                    <h3 className="text-lg font-semibold text-[#0F2F4E]">Ready to Calculate?</h3>
+                    <p className="text-sm text-[#0F2F4E]/70 mt-1">
                       Fill in data across all tabs, then click Calculate to see your comprehensive tax results
                     </p>
                   </div>
@@ -1099,10 +1439,10 @@ export default function TaxPlanningPage() {
                   <button
                     key={k}
                     onClick={() => setActiveTab(k)}
-                    className={`px-4 py-2 rounded-md font-medium text-sm transition-all ${
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
                       activeTab === k
-                        ? "bg-lime-400 text-gray-900 shadow-lg shadow-lime-400/25"
-                        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                        ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                        : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
                     }`}
                   >
                     {label}
@@ -1113,29 +1453,29 @@ export default function TaxPlanningPage() {
               {/* Tab Instructions */}
               <div className="mb-6">
                 {activeTab === "profit-loss" && (
-                  <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-700/30">
-                    <p className="text-sm text-blue-300">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <p className="text-sm text-[#0F2F4E]">
                       💡 <strong>Profit & Loss Data:</strong> Enter your business income and expenses. This forms the foundation for your tax calculation.
                     </p>
                   </div>
                 )}
                 {activeTab === "tax-computation" && (
-                  <div className="bg-purple-900/20 p-4 rounded-lg border border-purple-700/30">
-                    <p className="text-sm text-purple-300">
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <p className="text-sm text-[#0F2F4E]">
                       💡 <strong>Tax Adjustments:</strong> Add non-taxable income and non-deductible expenses. These adjust your accounting profit to arrive at taxable income.
                     </p>
                   </div>
                 )}
                 {activeTab === "capital-allowance" && (
-                  <div className="bg-green-900/20 p-4 rounded-lg border border-green-700/30">
-                    <p className="text-sm text-green-300">
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <p className="text-sm text-[#0F2F4E]">
                       💡 <strong>Capital Allowances:</strong> Enter asset values to claim tax deductions using enhanced calculation methods from the Excel template.
                     </p>
                   </div>
                 )}
                 {activeTab === "quick-calc" && (
-                  <div className="bg-orange-900/20 p-4 rounded-lg border border-orange-700/30">
-                    <p className="text-sm text-orange-300">
+                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                    <p className="text-sm text-[#0F2F4E]">
                       💡 <strong>Quick Calculation:</strong> Simplified version for quick estimates. Use when you don't need detailed breakdowns.
                     </p>
                   </div>
@@ -1146,50 +1486,58 @@ export default function TaxPlanningPage() {
               {activeTab === "profit-loss" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <h3 className="md:col-span-2 text-lg font-semibold text-lime-400">Operating Income</h3>
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E]">Operating Income</h3>
                     <InputField
                       label="Sales"
                       value={formState.sales}
                       onChange={handleChange("sales")}
+                      placeholder="Enter total sales revenue"
                     />
                     <InputField
                       label="Other Trading Income"
                       value={formState.otherTradingIncome}
                       onChange={handleChange("otherTradingIncome")}
+                      placeholder="Other business income"
                     />
                     
-                    <h3 className="md:col-span-2 text-lg font-semibold text-lime-400 mt-4">Cost of Goods Sold</h3>
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Cost of Goods Sold</h3>
                     <InputField
                       label="Cost of Goods Sold"
                       value={formState.costOfGoodsSold}
                       onChange={handleChange("costOfGoodsSold")}
+                      placeholder="Direct production costs"
                     />
                     
-                    <h3 className="md:col-span-2 text-lg font-semibold text-lime-400 mt-4">Operating Expenses</h3>
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Operating Expenses</h3>
                     <InputField
                       label="Advertising & Marketing"
                       value={formState.advertisingMarketing}
                       onChange={handleChange("advertisingMarketing")}
+                      placeholder="Marketing expenses"
                     />
                     <InputField
                       label="Training Event"
                       value={formState.trainingEvent}
                       onChange={handleChange("trainingEvent")}
+                      placeholder="Staff training costs"
                     />
                     <InputField
                       label="Bank Charges"
                       value={formState.bankCharges}
                       onChange={handleChange("bankCharges")}
+                      placeholder="Bank fees and charges"
                     />
                     <InputField
                       label="IMTT"
                       value={formState.imtt}
                       onChange={handleChange("imtt")}
+                      placeholder="Intermediated Money Transfer Tax"
                     />
                     <InputField
                       label="Salaries"
                       value={formState.salaries}
                       onChange={handleChange("salaries")}
+                      placeholder="Employee salaries"
                     />
                   </div>
                 </div>
@@ -1199,48 +1547,56 @@ export default function TaxPlanningPage() {
               {activeTab === "tax-computation" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <h3 className="md:col-span-2 text-lg font-semibold text-lime-400">Non-Taxable Income</h3>
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E]">Non-Taxable Income</h3>
                     <InputField
                       label="Dividend Received"
                       value={formState.dividendReceived}
                       onChange={handleChange("dividendReceived")}
+                      placeholder="Dividend income"
                     />
                     <InputField
                       label="Capital Receipts"
                       value={formState.capitalReceipts}
                       onChange={handleChange("capitalReceipts")}
+                      placeholder="Capital receipts"
                     />
                     <InputField
                       label="Profit on Sale of Assets"
                       value={formState.profitOnSale}
                       onChange={handleChange("profitOnSale")}
+                      placeholder="Asset sale profits"
                     />
                     <InputField
                       label="Interest from Financial Institution"
                       value={formState.interestFinancial}
                       onChange={handleChange("interestFinancial")}
+                      placeholder="Bank interest income"
                     />
                     
-                    <h3 className="md:col-span-2 text-lg font-semibold text-lime-400 mt-4">Non-Deductible Expenses</h3>
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Non-Deductible Expenses</h3>
                     <InputField
                       label="Depreciation"
                       value={formState.depreciation}
                       onChange={handleChange("depreciation")}
+                      placeholder="Accounting depreciation"
                     />
                     <InputField
                       label="Disallowable Subscriptions"
                       value={formState.disallowableSubscriptions}
                       onChange={handleChange("disallowableSubscriptions")}
+                      placeholder="Non-deductible subscriptions"
                     />
                     <InputField
                       label="Fines & Penalties"
                       value={formState.finesPenaltiesTax}
                       onChange={handleChange("finesPenaltiesTax")}
+                      placeholder="Fines and penalties"
                     />
                     <InputField
                       label="Donations"
                       value={formState.donations}
                       onChange={handleChange("donations")}
+                      placeholder="Charitable donations"
                     />
                   </div>
                 </div>
@@ -1254,26 +1610,31 @@ export default function TaxPlanningPage() {
                       label="Motor Vehicles Cost"
                       value={formState.motorVehicles}
                       onChange={handleChange("motorVehicles")}
+                      placeholder="Vehicle purchase costs"
                     />
                     <InputField
                       label="Moveable Assets Cost"
                       value={formState.moveableAssets}
                       onChange={handleChange("moveableAssets")}
+                      placeholder="Equipment and machinery"
                     />
                     <InputField
                       label="Commercial Buildings Cost"
                       value={formState.commercialBuildings}
                       onChange={handleChange("commercialBuildings")}
+                      placeholder="Commercial property costs"
                     />
                     <InputField
                       label="Industrial Buildings Cost"
                       value={formState.industrialBuildings}
                       onChange={handleChange("industrialBuildings")}
+                      placeholder="Industrial property costs"
                     />
                     <InputField
                       label="Lease Improvements Cost"
                       value={formState.leaseImprovements}
                       onChange={handleChange("leaseImprovements")}
+                      placeholder="Leasehold improvements"
                     />
                   </div>
                   
@@ -1292,21 +1653,25 @@ export default function TaxPlanningPage() {
                       label="Gross Profit"
                       value={formState.sales}
                       onChange={handleChange("sales")}
+                      placeholder="Total revenue"
                     />
                     <InputField
                       label="Total Expenses"
                       value={formState.costOfGoodsSold}
                       onChange={handleChange("costOfGoodsSold")}
+                      placeholder="Business expenses"
                     />
                     <InputField
                       label="Non-Taxable Income"
                       value={formState.otherTradingIncome}
                       onChange={handleChange("otherTradingIncome")}
+                      placeholder="Exempt income"
                     />
                     <InputField
                       label="Non-Deductible Expenses"
                       value={formState.imtt}
                       onChange={handleChange("imtt")}
+                      placeholder="Non-deductible costs"
                     />
                   </div>
                 </div>
@@ -1314,48 +1679,56 @@ export default function TaxPlanningPage() {
 
               {/* Enhanced Results Display with Capital Allowance Details */}
               {results.comprehensive && (
-                <div className="mt-8 p-6 bg-gray-900 rounded-lg border border-lime-700/30">
-                  <h3 className="text-xl font-semibold text-lime-400 mb-4 flex items-center gap-2">
-                    <span>📊</span> Tax Computation Results
+                <div className="mt-8 p-6 bg-white rounded-xl border border-[#1ED760]/30 shadow-lg">
+                  <h3 className="text-2xl font-bold text-[#0F2F4E] mb-6 text-center">
+                    Tax Computation Results
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm mb-6">
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <div className="text-gray-400">Taxable Income</div>
-                      <div className="text-lime-400 font-medium text-lg">${(results.comprehensive.taxableIncome || 0).toLocaleString()}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
+                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Taxable Income</div>
+                      <div className="text-[#1ED760] font-bold text-xl">
+                        ${(results.comprehensive.taxableIncome || 0).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <div className="text-gray-400">Tax @ 25%</div>
-                      <div className="text-lime-400 font-medium text-lg">${(results.comprehensive.taxDue || 0).toLocaleString()}</div>
+                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
+                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Tax @ 25%</div>
+                      <div className="text-[#1ED760] font-bold text-xl">
+                        ${(results.comprehensive.taxDue || 0).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <div className="text-gray-400">AIDS Levy @ 3%</div>
-                      <div className="text-lime-400 font-medium text-lg">${(results.comprehensive.aidsLevy || 0).toLocaleString()}</div>
+                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
+                      <div className="text-[#0F2F4E]/70 text-sm mb-1">AIDS Levy @ 3%</div>
+                      <div className="text-[#FFD700] font-bold text-xl">
+                        ${(results.comprehensive.aidsLevy || 0).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <div className="text-gray-400">Total Tax</div>
-                      <div className="text-lime-400 font-medium text-lg">${(results.comprehensive.totalTax || 0).toLocaleString()}</div>
+                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
+                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Total Tax</div>
+                      <div className="text-[#0F2F4E] font-bold text-xl">
+                        ${(results.comprehensive.totalTax || 0).toLocaleString()}
+                      </div>
                     </div>
                   </div>
                   
                   {/* Capital Allowance Breakdown */}
                   {results.comprehensive.detailedCapitalAllowances && (
-                    <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                      <h4 className="text-md font-semibold text-lime-300 mb-3">Capital Allowance Breakdown</h4>
+                    <div className="mt-4 p-4 bg-[#0F2F4E]/5 rounded-lg border border-[#EEEEEE]">
+                      <h4 className="text-md font-semibold text-[#0F2F4E] mb-3">Capital Allowance Breakdown</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
                         {Object.entries(results.comprehensive.detailedCapitalAllowances).map(([assetType, details]) => (
-                          <div key={assetType} className="bg-gray-700 p-3 rounded">
-                            <div className="font-medium text-lime-400 capitalize mb-2">
+                          <div key={assetType} className="bg-white p-3 rounded border border-[#EEEEEE]">
+                            <div className="font-medium text-[#0F2F4E] capitalize mb-2">
                               {assetType.replace(/([A-Z])/g, ' $1')}
                             </div>
-                            <div className="text-gray-300 space-y-1">
+                            <div className="text-[#0F2F4E] space-y-1">
                               <div>Cost: ${details.cost.toLocaleString()}</div>
                               <div>Allowance: ${details.totalAllowance.toLocaleString()}</div>
                             </div>
                           </div>
                         ))}
                       </div>
-                      <div className="mt-3 pt-3 border-t border-gray-600">
-                        <div className="flex justify-between font-semibold text-lime-300">
+                      <div className="mt-3 pt-3 border-t border-[#EEEEEE]">
+                        <div className="flex justify-between font-semibold text-[#0F2F4E]">
                           <span>Total Capital Allowances:</span>
                           <span>${(results.comprehensive.capitalAllowances || 0).toLocaleString()}</span>
                         </div>
@@ -1364,12 +1737,11 @@ export default function TaxPlanningPage() {
                   )}
                   
                   {results.comprehensive.aiExplanation && (
-                    <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                      <h4 className="text-md font-semibold text-lime-300 mb-2">AI Tax Guidance</h4>
-                      <div className="text-sm text-gray-200 leading-relaxed">
+                    <div className="mt-6 p-4 bg-[#0F2F4E]/5 rounded-lg border border-[#EEEEEE]">
+                      <h4 className="text-md font-semibold text-[#0F2F4E] mb-2">AI Tax Guidance</h4>
+                      <div className="text-sm text-[#0F2F4E] leading-relaxed">
                         {formatAIExplanation(cleanAIText(results.comprehensive.aiExplanation))}
                       </div>
-                      {/* Add disclaimer */}
                       <AIDisclaimer className="mt-3" />
                     </div>
                   )}
@@ -1383,18 +1755,18 @@ export default function TaxPlanningPage() {
             </div>
 
             {/* Visualization */}
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-lime-400 mb-3">
+            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
                 Tax Breakdown Visualization
               </h3>
-              <div className="h-80"> {/* Increased height from h-64 to h-80 */}
+              <div className="h-80">
                 <ComprehensiveChartPanel results={results} />
               </div>
             </div>
 
             {/* Excel Uploader */}
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-lime-400 mb-3">
+            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
                 Import QPD Excel Template
               </h3>
               <ExcelUploader onParse={(data) => handleExcelImport(data)} />
@@ -1403,8 +1775,8 @@ export default function TaxPlanningPage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-lime-400 mb-3">
+            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
                 Tax Summary
               </h3>
               <ComprehensiveSummaryPanel results={results} />
@@ -1416,8 +1788,8 @@ export default function TaxPlanningPage() {
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg border border-lime-800/30">
-              <h3 className="text-lg font-semibold text-lime-400 mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -1426,112 +1798,112 @@ export default function TaxPlanningPage() {
               
               <div className="space-y-3">
                 {/* Motor Vehicles */}
-                <div className="bg-gradient-to-r from-lime-900/20 to-green-900/10 p-3 rounded-lg border border-lime-700/20">
+                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-lime-300 text-sm">Motor Vehicles</span>
-                    <span className="text-xs bg-lime-500/20 text-lime-300 px-2 py-1 rounded-full">Best Value</span>
+                    <span className="font-medium text-[#0F2F4E] text-sm">Motor Vehicles</span>
+                    <span className="text-xs bg-[#1ED760]/20 text-[#0F2F4E] px-2 py-1 rounded-full">Best Value</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="text-center">
-                      <div className="text-gray-400">Special</div>
-                      <div className="text-lime-400 font-semibold">50%</div>
+                      <div className="text-[#0F2F4E]/70">Special</div>
+                      <div className="text-[#1ED760] font-semibold">50%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Accelerated</div>
-                      <div className="text-lime-400 font-semibold">25%</div>
+                      <div className="text-[#0F2F4E]/70">Accelerated</div>
+                      <div className="text-[#1ED760] font-semibold">25%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Wear & Tear</div>
-                      <div className="text-lime-400 font-semibold">20%</div>
+                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                      <div className="text-[#1ED760] font-semibold">20%</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Moveable Assets */}
-                <div className="bg-gradient-to-r from-lime-900/15 to-green-900/10 p-3 rounded-lg border border-lime-700/15">
+                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-lime-300 text-sm">Moveable Assets</span>
+                    <span className="font-medium text-[#0F2F4E] text-sm">Moveable Assets</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="text-center">
-                      <div className="text-gray-400">Special</div>
-                      <div className="text-lime-400 font-semibold">50%</div>
+                      <div className="text-[#0F2F4E]/70">Special</div>
+                      <div className="text-[#1ED760] font-semibold">50%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Accelerated</div>
-                      <div className="text-lime-400 font-semibold">25%</div>
+                      <div className="text-[#0F2F4E]/70">Accelerated</div>
+                      <div className="text-[#1ED760] font-semibold">25%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Wear & Tear</div>
-                      <div className="text-lime-400 font-semibold">10%</div>
+                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                      <div className="text-[#1ED760] font-semibold">10%</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Commercial Buildings */}
-                <div className="bg-gradient-to-r from-gray-700/20 to-gray-600/10 p-3 rounded-lg border border-gray-600/20">
+                <div className="bg-gradient-to-r from-[#EEEEEE] to-[#EEEEEE]/50 p-3 rounded-lg border border-[#EEEEEE]">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-300 text-sm">Commercial Buildings</span>
+                    <span className="font-medium text-[#0F2F4E] text-sm">Commercial Buildings</span>
                   </div>
                   <div className="flex justify-center">
                     <div className="text-center">
-                      <div className="text-gray-400">Wear & Tear</div>
-                      <div className="text-lime-400 font-semibold text-lg">2.5%</div>
+                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                      <div className="text-[#1ED760] font-semibold text-lg">2.5%</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Industrial Buildings */}
-                <div className="bg-gradient-to-r from-gray-700/20 to-gray-600/10 p-3 rounded-lg border border-gray-600/20">
+                <div className="bg-gradient-to-r from-[#EEEEEE] to-[#EEEEEE]/50 p-3 rounded-lg border border-[#EEEEEE]">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-300 text-sm">Industrial Buildings</span>
+                    <span className="font-medium text-[#0F2F4E] text-sm">Industrial Buildings</span>
                   </div>
                   <div className="flex justify-center">
                     <div className="text-center">
-                      <div className="text-gray-400">Wear & Tear</div>
-                      <div className="text-lime-400 font-semibold text-lg">5%</div>
+                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                      <div className="text-[#1ED760] font-semibold text-lg">5%</div>
                     </div>
                   </div>
                 </div>
 
                 {/* Lease Improvements */}
-                <div className="bg-gradient-to-r from-lime-900/15 to-green-900/10 p-3 rounded-lg border border-lime-700/15">
+                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-lime-300 text-sm">Lease Improvements</span>
+                    <span className="font-medium text-[#0F2F4E] text-sm">Lease Improvements</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="text-center">
-                      <div className="text-gray-400">Special</div>
-                      <div className="text-lime-400 font-semibold">50%</div>
+                      <div className="text-[#0F2F4E]/70">Special</div>
+                      <div className="text-[#1ED760] font-semibold">50%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Accelerated</div>
-                      <div className="text-lime-400 font-semibold">25%</div>
+                      <div className="text-[#0F2F4E]/70">Accelerated</div>
+                      <div className="text-[#1ED760] font-semibold">25%</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-gray-400">Wear & Tear</div>
-                      <div className="text-lime-400 font-semibold">5%</div>
+                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                      <div className="text-[#1ED760] font-semibold">5%</div>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Legend */}
-              <div className="mt-4 pt-3 border-t border-gray-700">
-                <div className="flex items-center justify-between text-xs text-gray-400">
+              <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
+                <div className="flex items-center justify-between text-xs text-[#0F2F4E]/70">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-lime-500/30 rounded"></div>
+                    <div className="w-3 h-3 bg-[#1ED760]/30 rounded"></div>
                     <span>Multiple Allowances</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-gray-600/30 rounded"></div>
+                    <div className="w-3 h-3 bg-[#EEEEEE] rounded"></div>
                     <span>Single Allowance</span>
                   </div>
                 </div>
               </div>
               {/* Disclaimer */}
-              <div className="mt-4 pt-3 border-t border-gray-700">
-                <div className="text-xs text-gray-500 text-center">
+              <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
+                <div className="text-xs text-[#0F2F4E]/50 text-center">
                   Rates based on current Zimbabwe tax legislation. Subject to change.
                 </div>
               </div>
@@ -1539,351 +1911,6 @@ export default function TaxPlanningPage() {
           </aside>
         </div>
       </motion.div>
-    </div>
-  );
-
-  function handleExcelImport(data) {
-    // Map Excel data to form state
-    if (data.profitLoss) {
-      setFormState(prev => ({
-        ...prev,
-        sales: data.profitLoss.sales || "",
-        otherTradingIncome: data.profitLoss.otherTradingIncome || "",
-        costOfGoodsSold: data.profitLoss.costOfGoodsSold || "",
-        // Map other fields...
-      }));
-    }
-  }
-}
-
-function ComprehensiveChartPanel({ results }) {
-  if (!results.comprehensive) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 text-gray-400 bg-gray-900 rounded-xl">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-12 w-12 text-lime-400 mb-3"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-        <p className="text-sm">No comprehensive tax data yet.</p>
-        <p className="text-xs text-gray-500">
-          Fill in the forms and calculate to generate charts.
-        </p>
-      </div>
-    );
-  }
-
-  const { comprehensive } = results;
-  
-  // Fix: Ensure we have proper data structure for tax breakdown
-  const taxBreakdownData = [
-    { 
-      name: 'Income Tax', 
-      value: Math.max(comprehensive.taxDue || 0, 0.01) // Ensure minimum value for display
-    },
-    { 
-      name: 'AIDS Levy', 
-      value: Math.max(comprehensive.aidsLevy || 0, 0.01) // Ensure minimum value for display
-    },
-  ];
-
-  // Fix: Proper capital allowance data extraction
-  const capitalAllowanceData = comprehensive.detailedCapitalAllowances ? 
-    Object.entries(comprehensive.detailedCapitalAllowances).map(([assetType, details]) => ({
-      name: assetType.replace(/([A-Z])/g, ' $1').trim().substring(0, 12), // Shorter names for display
-      value: Math.max(details.totalAllowance || 0, 0.01) // Ensure minimum value
-    })) : [
-    { name: 'No Data', value: 0.01 }
-  ];
-
-  // Fix: Add proper label formatter for pie chart
-  const renderCustomizedLabel = ({
-    cx, cy, midAngle, innerRadius, outerRadius, percent, index
-  }) => {
-    if (percent === 0) return null;
-    
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text 
-        x={x} 
-        y={y} 
-        fill="white" 
-        textAnchor={x > cx ? 'start' : 'end'} 
-        dominantBaseline="central"
-        fontSize={12}
-        fontWeight="bold"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
-
-  return (
-    <div className="w-full h-full flex flex-col md:flex-row gap-4">
-      {/* Tax Breakdown Pie Chart - FIXED */}
-      <div className="flex-1 min-h-[160px]">
-        <div className="text-center text-sm text-gray-400 mb-2">Tax Breakdown</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={taxBreakdownData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={40}
-              outerRadius={80}
-              paddingAngle={2}
-              label={renderCustomizedLabel}
-              labelLine={false}
-              animationDuration={800}
-            >
-              {taxBreakdownData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke="#1f2937"
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value, name) => [
-                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                name
-              ]}
-            />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value, entry) => (
-                <span style={{ color: '#d1d5db', fontSize: '12px' }}>{value}</span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Capital Allowance Bar Chart - FIXED */}
-      <div className="flex-1 min-h-[160px]">
-        <div className="text-center text-sm text-gray-400 mb-2">Capital Allowances</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart 
-            data={capitalAllowanceData} 
-            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            animationDuration={800}
-          >
-            <XAxis 
-              dataKey="name" 
-              stroke="#9CA3AF" 
-              fontSize={12}
-              angle={-45}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis 
-              stroke="#9CA3AF" 
-              fontSize={12}
-              tickFormatter={(value) => `$${value.toLocaleString()}`}
-            />
-            <Tooltip 
-              formatter={(value, name) => [
-                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                'Allowance'
-              ]}
-              labelFormatter={(label) => `Asset: ${label}`}
-              contentStyle={{ 
-                backgroundColor: '#1f2937', 
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                color: 'white'
-              }}
-            />
-            <Bar 
-              dataKey="value" 
-              fill="#84cc16" 
-              radius={[4, 4, 0, 0]}
-              stroke="#65a30d"
-              strokeWidth={1}
-            >
-              <LabelList 
-                dataKey="value" 
-                position="top" 
-                fill="#e5e7eb"
-                fontSize={11}
-                formatter={(value) => `$${value > 1000 ? `${(value/1000).toFixed(0)}k` : value.toLocaleString()}`}
-              />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-function ComprehensiveSummaryPanel({ results }) {
-  if (!results.comprehensive) {
-    return (
-      <div className="text-gray-400 text-sm">
-        Complete the tax computation form to see summary
-      </div>
-    );
-  }
-
-  const { comprehensive } = results;
-  
-  const items = [
-    { label: "Gross Profit", value: comprehensive.grossProfit || 0 },
-    { label: "Operating Profit", value: comprehensive.operatingProfit || 0 },
-    { label: "Taxable Income", value: comprehensive.taxableIncome || 0 },
-    { label: "Capital Allowances", value: comprehensive.capitalAllowances || 0 },
-    { label: "Total Tax", value: comprehensive.totalTax || 0 },
-  ];
-  
-  const maxValue = Math.max(...items.map((i) => i.value), 1);
-
-  return (
-    <div className="space-y-3">
-      {items.map((item, idx) => (
-        <div key={idx}>
-          <div className="flex justify-between text-sm text-gray-300">
-            <span>{item.label}</span>
-            <span className="text-lime-400 font-medium">
-              {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
-            </span>
-          </div>
-          <div className="h-2 bg-gray-700 rounded">
-            <div
-              className="h-2 bg-lime-400 rounded"
-              style={{ width: `${(item.value / maxValue) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ChatAssistant({ aiHistory, setAIHistory }) {
-  const [query, setQuery] = useState("");
-  const [sending, setSending] = useState(false);
-
-  const send = async () => {
-    if (!query.trim()) return;
-    setSending(true);
-    try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query });
-      const assistant = res.data.response ?? "(no response)";
-      setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
-      setQuery("");
-    } catch {
-      setAIHistory((h) => [
-        { q: query, a: "(assistant error)" },
-        ...h,
-      ].slice(0, 50));
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div>
-      <div className="flex gap-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask about tax optimization..."
-          className="flex-1 p-2 text-sm rounded-md bg-gray-700 text-white border border-gray-600 focus:border-lime-400 outline-none"
-        />
-        <button
-          onClick={send}
-          disabled={sending}
-          className="px-3 text-sm py-2 bg-lime-400 text-gray-900 rounded-md font-medium hover:bg-lime-300 transition"
-        >
-          {sending ? "..." : "Ask"}
-        </button>
-      </div>
-
-      {/* Add disclaimer below the input */}
-      <AIDisclaimer />
-
-      <div className="mt-3 max-h-40 overflow-auto space-y-2">
-        {aiHistory.map((h, i) => (
-          <div key={i} className="p-2 bg-gray-900 rounded-md">
-            <div className="text-sm text-gray-300">Q: {h.q}</div>
-            <div className="text-sm text-lime-400 mt-1">A: {cleanAIText(h.a)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ExcelUploader({ onParse }) {
-  const fileRef = useRef(null);
-  const [uploadedFile, setUploadedFile] = useState(null);
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setUploadedFile(file.name);
-    
-    try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      
-      // Parse different sheets like the QPD template
-      const profitLossSheet = workbook.Sheets['Profit and Loss'];
-      const taxComputationSheet = workbook.Sheets['Tax Computation'];
-      const capitalAllowanceSheet = workbook.Sheets['Capital Allowance Schedule'];
-      
-      const parsedData = {
-        profitLoss: profitLossSheet ? XLSX.utils.sheet_to_json(profitLossSheet, { defval: "" }) : [],
-        taxComputation: taxComputationSheet ? XLSX.utils.sheet_to_json(taxComputationSheet, { defval: "" }) : [],
-        capitalAllowance: capitalAllowanceSheet ? XLSX.utils.sheet_to_json(capitalAllowanceSheet, { defval: "" }) : [],
-      };
-      
-      onParse?.(parsedData);
-      
-    } catch (error) {
-      console.error("Error parsing Excel file:", error);
-      alert("Error parsing Excel file. Please check the format.");
-    }
-  };
-
-  return (
-    <div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleFile}
-        className="block w-full text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-md 
-                   file:border-0 file:text-sm file:font-semibold 
-                   file:bg-lime-400 file:text-gray-900 hover:file:bg-lime-300"
-      />
-      {uploadedFile && (
-        <div className="mt-2 text-sm text-lime-400">
-          Uploaded: {uploadedFile}
-        </div>
-      )}
-      <div className="mt-2 text-xs text-gray-400">
-        Upload QPD Income Tax Computation Excel template
-      </div>
     </div>
   );
 }
