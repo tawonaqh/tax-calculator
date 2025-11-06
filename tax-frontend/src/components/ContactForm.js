@@ -1,18 +1,17 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Send, Mail, Phone, MapPin, User, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react'
 
-// Move InputField component OUTSIDE to prevent recreation
 const InputField = ({ label, icon: Icon, type = 'text', name, value, onChange, error, placeholder, required = false }) => (
   <div className="space-y-2">
-    <label className="block text-sm font-medium text-gray-300">
+    <label className="block text-sm font-medium text-[#0F2F4E]">
       {label} {required && <span className="text-red-400">*</span>}
     </label>
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon className="w-5 h-5 text-gray-400" />
+        <Icon className="w-5 h-5 text-[#0F2F4E]/60" />
       </div>
       <input
         type={type}
@@ -21,11 +20,11 @@ const InputField = ({ label, icon: Icon, type = 'text', name, value, onChange, e
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={`w-full pl-10 pr-4 py-4 bg-gray-800/60 border rounded-2xl text-white 
-                   placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300
+        className={`w-full pl-10 pr-4 py-4 bg-white border rounded-xl text-[#0F2F4E] 
+                   placeholder-[#0F2F4E]/40 focus:outline-none focus:ring-2 transition-all duration-300
                    ${error 
                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400/50' 
-                     : 'border-gray-600 focus:border-lime-400 focus:ring-lime-400/50'
+                     : 'border-[#EEEEEE] focus:border-[#1ED760] focus:ring-[#1ED760]/50'
                    }`}
       />
     </div>
@@ -54,7 +53,7 @@ export default function ContactForm() {
     {
       icon: Mail,
       label: 'Email Us',
-      value: 'culverwell@culverwellvenge.com',
+      value: 'info@taxcul.com',
       description: 'We\'ll respond within 24 hours'
     },
     {
@@ -86,7 +85,6 @@ export default function ContactForm() {
       ...prev,
       [name]: value
     }))
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -129,7 +127,6 @@ export default function ContactForm() {
 
     setIsSubmitting(true)
 
-    // Simulate API call
     try {
       await new Promise(resolve => setTimeout(resolve, 2000))
       setIsSubmitted(true)
@@ -143,7 +140,7 @@ export default function ContactForm() {
 
   if (isSubmitted) {
     return (
-      <section className="py-16 bg-gradient-to-br from-gray-800/30 to-gray-900/50 rounded-3xl">
+      <section className="py-16 bg-white rounded-2xl">
         <div className="max-w-4xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -151,21 +148,21 @@ export default function ContactForm() {
             className="text-center"
           >
             <div className="flex justify-center mb-6">
-              <div className="p-4 bg-green-500/20 rounded-2xl">
-                <CheckCircle className="w-16 h-16 text-green-400" />
+              <div className="p-4 bg-[#1ED760]/20 rounded-2xl">
+                <CheckCircle className="w-16 h-16 text-[#1ED760]" />
               </div>
             </div>
-            <h2 className="text-4xl font-bold text-lime-400 mb-4">
+            <h2 className="text-4xl font-bold text-[#0F2F4E] mb-4">
               Message Sent!
             </h2>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-[#0F2F4E]/80 mb-8 max-w-2xl mx-auto">
               Thank you for reaching out! We've received your message and will get back to you within 24 hours.
             </p>
             <button
               onClick={() => setIsSubmitted(false)}
-              className="px-8 py-4 bg-lime-400 text-gray-900 font-semibold rounded-2xl 
-                         hover:bg-lime-500 transition-all duration-300 shadow-lg 
-                         hover:shadow-lime-400/25"
+              className="px-8 py-4 bg-[#1ED760] text-white font-semibold rounded-xl 
+                         hover:bg-[#1ED760]/90 transition-all duration-300 shadow-lg 
+                         hover:shadow-[#1ED760]/25"
             >
               Send Another Message
             </button>
@@ -176,7 +173,7 @@ export default function ContactForm() {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-br from-gray-800/30 to-gray-900/50 rounded-3xl">
+    <section className="py-16 bg-white rounded-2xl">
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -185,83 +182,49 @@ export default function ContactForm() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-lime-400 mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mb-4">
             Get In Touch
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          <p className="text-xl text-[#0F2F4E]/80 max-w-2xl mx-auto">
             Have questions about tax calculations? Our team is here to help you with any inquiries.
           </p>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="space-y-6"
-          >
-            <h3 className="text-2xl font-bold text-lime-400 mb-6">
+          <div className="space-y-6">
+            <h3 className="text-2xl font-bold text-[#0F2F4E] mb-6">
               Contact Information
             </h3>
             
             {contactMethods.map((method, index) => {
               const IconComponent = method.icon
               return (
-                <motion.div
+                <div
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="flex items-start gap-4 p-4 bg-gray-800/40 rounded-2xl 
-                             border border-gray-700/50 hover:border-lime-400/30 
-                             transition-all duration-300"
+                  className="flex items-start gap-4 p-4 bg-white rounded-xl border border-[#FFD700] shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="p-3 bg-lime-400/10 rounded-xl">
-                    <IconComponent className="w-6 h-6 text-lime-400" />
+                  <div className="p-3 bg-[#1ED760]/10 rounded-xl">
+                    <IconComponent className="w-6 h-6 text-[#1ED760]" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white mb-1">
+                    <h4 className="font-semibold text-[#0F2F4E] mb-1">
                       {method.label}
                     </h4>
-                    <p className="text-lime-400 font-medium mb-1">
+                    <p className="text-[#1ED760] font-medium mb-1">
                       {method.value}
                     </p>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-[#0F2F4E]/70 text-sm">
                       {method.description}
                     </p>
                   </div>
-                </motion.div>
+                </div>
               )
             })}
-
-            {/* Quick Support Info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20"
-            >
-              <h4 className="font-semibold text-blue-400 mb-2">
-                Quick Support
-              </h4>
-              <p className="text-gray-300 text-sm">
-                For urgent tax calculation issues, mention "Urgent" in your message and we'll prioritize your request.
-              </p>
-            </motion.div>
-          </motion.div>
+          </div>
 
           {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="lg:col-span-2"
-          >
+          <div className="lg:col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InputField
@@ -300,18 +263,18 @@ export default function ContactForm() {
                 />
                 
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label className="block text-sm font-medium text-[#0F2F4E]">
                     Subject <span className="text-red-400">*</span>
                   </label>
                   <select
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className={`w-full px-4 py-4 bg-gray-800/60 border rounded-2xl text-white 
+                    className={`w-full px-4 py-4 bg-white border rounded-xl text-[#0F2F4E] 
                                focus:outline-none focus:ring-2 transition-all duration-300
                                ${errors.subject 
                                  ? 'border-red-400 focus:border-red-400 focus:ring-red-400/50' 
-                                 : 'border-gray-600 focus:border-lime-400 focus:ring-lime-400/50'
+                                 : 'border-[#EEEEEE] focus:border-[#1ED760] focus:ring-[#1ED760]/50'
                                }`}
                   >
                     <option value="">Select a subject</option>
@@ -331,12 +294,12 @@ export default function ContactForm() {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-[#0F2F4E]">
                   Message <span className="text-red-400">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute top-4 left-3">
-                    <MessageCircle className="w-5 h-5 text-gray-400" />
+                    <MessageCircle className="w-5 h-5 text-[#0F2F4E]/60" />
                   </div>
                   <textarea
                     name="message"
@@ -344,11 +307,11 @@ export default function ContactForm() {
                     onChange={handleChange}
                     placeholder="Tell us about your tax calculation needs, questions, or issues..."
                     rows={6}
-                    className={`w-full pl-10 pr-4 py-4 bg-gray-800/60 border rounded-2xl text-white 
-                               placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300
+                    className={`w-full pl-10 pr-4 py-4 bg-white border rounded-xl text-[#0F2F4E] 
+                               placeholder-[#0F2F4E]/40 focus:outline-none focus:ring-2 transition-all duration-300
                                ${errors.message 
                                  ? 'border-red-400 focus:border-red-400 focus:ring-red-400/50' 
-                                 : 'border-gray-600 focus:border-lime-400 focus:ring-lime-400/50'
+                                 : 'border-[#EEEEEE] focus:border-[#1ED760] focus:ring-[#1ED760]/50'
                                }`}
                   />
                 </div>
@@ -358,7 +321,7 @@ export default function ContactForm() {
                     {errors.message}
                   </div>
                 )}
-                <div className="text-right text-sm text-gray-400">
+                <div className="text-right text-sm text-[#0F2F4E]/60">
                   {formData.message.length}/5000 characters
                 </div>
               </div>
@@ -368,16 +331,16 @@ export default function ContactForm() {
                 disabled={isSubmitting}
                 whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
                 whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-                className={`w-full py-4 px-6 rounded-2xl font-semibold transition-all duration-300 
+                className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 
                            flex items-center justify-center gap-3 shadow-lg
                            ${isSubmitting 
-                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                             : 'bg-lime-400 text-gray-900 hover:bg-lime-500 hover:shadow-lime-400/25'
+                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                             : 'bg-[#1ED760] text-white hover:bg-[#1ED760]/90 hover:shadow-[#1ED760]/25'
                            }`}
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Sending Message...
                   </>
                 ) : (
@@ -388,7 +351,7 @@ export default function ContactForm() {
                 )}
               </motion.button>
             </form>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -23,7 +23,9 @@ class FeedbackController extends Controller
             $feedback = Feedback::create($validated);
 
             // Send email notification
-            Mail::to(env('MAIL_FROM_ADDRESS', 'tnrwatida@gmail.com'))->send(new FeedbackReceived($feedback));
+            Mail::to('feedback@taxcul.com')
+                ->cc(env('MAIL_FROM_ADDRESS'))
+                ->send(new FeedbackReceived($feedback));
 
             Log::info('Feedback submitted successfully', ['feedback_id' => $feedback->id]);
 
