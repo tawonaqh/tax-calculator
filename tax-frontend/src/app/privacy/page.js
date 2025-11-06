@@ -361,7 +361,7 @@ export default function PrivacyPolicy() {
                 <Mail className="w-5 h-5 text-lime-400" />
                 <div>
                   <p className="text-gray-400 text-sm">Email</p>
-                  <p className="text-white font-medium">culverwell@culverwellvenge.com</p>
+                  <p className="text-white font-medium">info@taxcul.com</p>
                 </div>
               </div>
               <div className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-xl">

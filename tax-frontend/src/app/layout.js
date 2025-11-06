@@ -22,8 +22,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <div className="w-full min-h-screen flex flex-col bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white">
-          {/* Header */}
+        <div className="w-full min-h-screen flex flex-col bg-[#EEEEEE] text-[#0F2F4E]">
           <Header />
           {children}
           <Chatbot />

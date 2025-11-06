@@ -27,38 +27,44 @@ const testimonials = [
     company: "Global Enterprises Inc"
   },
   {
-    name: "Sarah T.",
+    name: "Sarah J.",
     role: "Small Business Owner",
-    quote: "As a small business owner, this platform has been invaluable. It's like having a tax expert on demand.",
-    rating: 4,
+    quote: "Revolutionary tool that simplified my tax planning completely.",
+    rating: 5,
     company: "Sarah's Boutique"
   },
   {
     name: "David L.",
     role: "Tax Consultant",
-    quote: "I recommend this to all my clients. The accuracy and ease of use are unmatched in the market.",
+    quote: "The accuracy and speed of calculations are unmatched in the market.",
     rating: 5,
-    company: "DL Tax Advisory"
+    company: "TaxPro Associates"
   },
   {
     name: "Lisa M.",
-    role: "Startup Founder",
-    quote: "The comprehensive tax planning suite helped us optimize our tax strategy from day one. Game changer!",
+    role: "Financial Analyst",
+    quote: "Essential tool for any finance professional working in Zimbabwe.",
     rating: 5,
-    company: "InnovateTech Startup"
+    company: "Wealth Management Corp"
   }
-]
+];
 
 const StarRating = ({ rating }) => {
   return (
     <div className="flex gap-1">
       {[...Array(5)].map((_, i) => (
-        <Star
+        <motion.div
           key={i}
-          className={`w-4 h-4 ${
-            i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'
-          }`}
-        />
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ delay: i * 0.1, type: "spring", stiffness: 100 }}
+        >
+          <Star
+            className={`w-4 h-4 ${
+              i < rating ? 'text-[#FFD700] fill-[#FFD700]' : 'text-[#0F2F4E]/40'
+            }`}
+          />
+        </motion.div>
       ))}
     </div>
   )
@@ -82,11 +88,6 @@ export default function Testimonials() {
     setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages)
   }
 
-  const goToPage = (index) => {
-    setDirection(index > currentIndex ? 1 : -1)
-    setCurrentIndex(index)
-  }
-
   useEffect(() => {
     if (!isPlaying) return
 
@@ -99,176 +100,249 @@ export default function Testimonials() {
     (currentIndex + 1) * itemsPerPage
   )
 
-  // Fixed variants without TypeScript annotations
-  const variants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0
-    }),
-    center: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction) => ({
-      x: direction < 0 ? 300 : -300,
-      opacity: 0
-    })
-  }
-
   return (
-    <section className="mb-20 py-16 bg-gradient-to-br from-gray-800/20 to-gray-900/40 rounded-3xl">
+    <section className="py-20 bg-[#0F2F4E] rounded-2xl">
       <div className="max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-lime-400 mb-4">
+          <motion.h2 
+            className="text-4xl md:text-5xl font-bold text-white mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Trusted by Professionals
-          </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p 
+            className="text-xl text-white/80 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             See what tax professionals, business owners, and finance experts are saying about our platform
-          </p>
+          </motion.p>
         </motion.div>
 
         {/* Testimonials Carousel */}
         <div className="relative max-w-6xl mx-auto">
           {/* Navigation Arrows */}
-          <button
+          <motion.button
             onClick={prevTestimonial}
+            whileHover={{ scale: 1.1, x: -2 }}
+            whileTap={{ scale: 0.95 }}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 
-                       p-3 bg-gray-800/80 backdrop-blur-sm rounded-full border border-lime-400/30 
-                       text-lime-400 hover:bg-lime-400 hover:text-gray-900 transition-all duration-300 
-                       shadow-lg hover:shadow-lime-400/25"
+                       p-3 bg-white shadow-2xl border border-[#FFD700] rounded-full
+                       text-[#1ED760] hover:bg-[#1ED760] hover:text-white transition-all duration-300"
           >
             <ChevronLeft size={24} />
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={nextTestimonial}
+            whileHover={{ scale: 1.1, x: 2 }}
+            whileTap={{ scale: 0.95 }}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 
-                       p-3 bg-gray-800/80 backdrop-blur-sm rounded-full border border-lime-400/30 
-                       text-lime-400 hover:bg-lime-400 hover:text-gray-900 transition-all duration-300 
-                       shadow-lg hover:shadow-lime-400/25"
+                       p-3 bg-white shadow-2xl border border-[#FFD700] rounded-full
+                       text-[#1ED760] hover:bg-[#1ED760] hover:text-white transition-all duration-300"
           >
             <ChevronRight size={24} />
-          </button>
+          </motion.button>
 
           {/* Testimonials Grid */}
           <div className="overflow-hidden">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={currentIndex}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.5 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-6"
-              >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <AnimatePresence mode="wait" custom={direction}>
                 {currentTestimonials.map((testimonial, idx) => (
                   <motion.div
                     key={`${currentIndex}-${idx}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: idx * 0.1 }}
-                    className="group p-8 bg-gray-800/40 rounded-2xl border border-gray-700/50 
-                               hover:border-lime-400/30 hover:bg-gray-800/60 transition-all duration-500 
-                               hover:transform hover:scale-105"
+                    custom={direction}
+                    initial={{ 
+                      opacity: 0, 
+                      x: direction > 0 ? 100 : -100,
+                      scale: 0.8
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      x: 0,
+                      scale: 1
+                    }}
+                    exit={{ 
+                      opacity: 0,
+                      x: direction > 0 ? -100 : 100,
+                      scale: 0.8
+                    }}
+                    transition={{ 
+                      duration: 0.6, 
+                      delay: idx * 0.1,
+                      type: "spring",
+                      stiffness: 100
+                    }}
+                    whileHover={{ 
+                      y: -10,
+                      transition: { duration: 0.3, ease: "easeOut" }
+                    }}
+                    className="group relative p-8 bg-white/10 backdrop-blur-sm rounded-2xl border border-[#FFD700]/30
+                               hover:border-[#1ED760] hover:bg-white/15 transition-all duration-500 
+                               hover:shadow-2xl overflow-hidden"
                   >
+                    {/* Animated Background Glow */}
+                    <motion.div 
+                      className="absolute inset-0 bg-gradient-to-br from-[#1ED760]/10 to-[#FFD700]/10 opacity-0 group-hover:opacity-100"
+                      initial={{ opacity: 0 }}
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                    />
+
                     {/* Quote Icon */}
-                    <div className="mb-4">
-                      <Quote className="w-8 h-8 text-lime-400/60" />
-                    </div>
+                    <motion.div 
+                      className="mb-6"
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Quote className="w-10 h-10 text-[#1ED760]" />
+                    </motion.div>
 
                     {/* Rating */}
-                    <div className="mb-4">
+                    <div className="mb-6">
                       <StarRating rating={testimonial.rating} />
                     </div>
 
                     {/* Quote */}
-                    <p className="text-gray-300 text-lg leading-relaxed mb-6 italic">
+                    <motion.p 
+                      className="text-white text-lg leading-relaxed mb-8 italic"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.3 }}
+                    >
                       "{testimonial.quote}"
-                    </p>
+                    </motion.p>
 
                     {/* Author Info */}
-                    <div className="border-t border-gray-700/50 pt-4">
-                      <h4 className="font-semibold text-white text-lg">
+                    <motion.div 
+                      className="border-t border-white/20 pt-6"
+                      initial={{ opacity: 0.8 }}
+                      whileHover={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <h4 className="font-semibold text-white text-xl mb-2">
                         {testimonial.name}
                       </h4>
-                      <p className="text-lime-400 text-sm mb-1">
+                      <motion.p 
+                        className="text-[#1ED760] text-base mb-2 font-medium"
+                        whileHover={{ x: 5 }}
+                        transition={{ duration: 0.2 }}
+                      >
                         {testimonial.role}
-                      </p>
-                      <p className="text-gray-400 text-sm">
+                      </motion.p>
+                      <p className="text-white/70 text-sm">
                         {testimonial.company}
                       </p>
-                    </div>
+                    </motion.div>
 
-                    {/* Hover Effect */}
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-lime-400/5 to-green-400/5 
-                                    opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
+                    {/* Floating Elements Animation */}
+                    <motion.div
+                      className="absolute top-4 right-4 w-2 h-2 bg-[#FFD700] rounded-full"
+                      animate={{
+                        scale: [1, 1.5, 1],
+                        opacity: [0.5, 1, 0.5]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: idx * 0.5
+                      }}
+                    />
                   </motion.div>
                 ))}
-              </motion.div>
-            </AnimatePresence>
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-center mt-8 space-x-4">
+          <div className="flex items-center justify-center mt-12 space-x-6">
             {/* Play/Pause */}
-            <button
+            <motion.button
               onClick={() => setIsPlaying(!isPlaying)}
-              className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full border border-lime-400/30 
-                         text-lime-400 hover:bg-lime-400 hover:text-gray-900 transition-all duration-300"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="p-3 bg-white/10 backdrop-blur-sm shadow-lg border border-[#FFD700] rounded-full
+                         text-white hover:bg-[#1ED760] hover:text-white transition-all duration-300"
             >
-              {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-            </button>
+              {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+            </motion.button>
 
             {/* Pagination Dots */}
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               {[...Array(totalPages)].map((_, idx) => (
-                <button
+                <motion.button
                   key={idx}
-                  onClick={() => goToPage(idx)}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  onClick={() => setCurrentIndex(idx)}
+                  whileHover={{ scale: 1.3 }}
+                  whileTap={{ scale: 0.8 }}
+                  className={`w-4 h-4 rounded-full transition-all duration-300 ${
                     currentIndex === idx 
-                      ? 'bg-lime-400 scale-125' 
-                      : 'bg-gray-600 hover:bg-gray-400'
+                      ? 'bg-[#1ED760] shadow-lg shadow-[#1ED760]/50' 
+                      : 'bg-white/30 hover:bg-white/60'
                   }`}
                 />
               ))}
             </div>
           </div>
+
+          {/* Animated Background Pattern */}
+          <motion.div 
+            className="absolute inset-0 -z-10 opacity-10"
+            animate={{
+              backgroundPosition: ['0% 0%', '100% 100%']
+            }}
+            transition={{
+              duration: 20,
+              repeat: Infinity,
+              ease: "linear"
+            }}
+            style={{
+              backgroundImage: `radial-gradient(circle at 25% 25%, #1ED760 2px, transparent 0),
+                                radial-gradient(circle at 75% 75%, #FFD700 1px, transparent 0)`,
+              backgroundSize: '50px 50px'
+            }}
+          />
         </div>
 
-        {/* Stats */}
-        {/* will put back stats after beta version */}
-        {/* <motion.div
+        {/* Stats Section */}
+        {/* <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 pt-12 border-t border-white/20"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 pt-8 border-t border-gray-700/50"
         >
-          <div className="text-center">
-            <div className="text-3xl font-bold text-lime-400 mb-2">500+</div>
-            <div className="text-gray-400 text-sm">Active Users</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-lime-400 mb-2">99.8%</div>
-            <div className="text-gray-400 text-sm">Accuracy Rate</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-lime-400 mb-2">4.9/5</div>
-            <div className="text-gray-400 text-sm">User Rating</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-lime-400 mb-2">24/7</div>
-            <div className="text-gray-400 text-sm">AI Support</div>
-          </div>
+          {[
+            { number: "500+", label: "Happy Professionals" },
+            { number: "98%", label: "Satisfaction Rate" },
+            { number: "4.9/5", label: "Average Rating" }
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div 
+                className="text-3xl md:text-4xl font-bold text-[#1ED760] mb-2"
+                initial={{ scale: 0 }}
+                whileInView={{ scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 + 0.5 }}
+              >
+                {stat.number}
+              </motion.div>
+              <div className="text-white/80 text-lg">{stat.label}</div>
+            </motion.div>
+          ))}
         </motion.div> */}
       </div>
     </section>
