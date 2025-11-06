@@ -140,13 +140,13 @@ const Footer = () => {
                 <Shield className="w-4 h-4 text-[#1ED760]" />
                 <span>© {currentYear} TaxCul. All rights reserved.</span>
               </div>
-              
-              <div className="hidden sm:block text-gray-500">•</div>
+              {/* developed by hidden for now */}
+              {/* <div className="hidden sm:block text-gray-500">•</div>
               
               <div className="flex items-center gap-2">
                 <span>Developed by</span>
                 <span className="text-[#1ED760] font-semibold">Code Mafia</span>
-              </div>
+              </div> */}
             </div>
 
             {/* Security Badge and Scroll to Top */}
