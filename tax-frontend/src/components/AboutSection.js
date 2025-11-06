@@ -69,9 +69,10 @@ export default function AboutSection() {
               </div>
               
               <p className="text-white/80 leading-relaxed">
-                TaxCul is a learning-focused tax technology initiative designed to help Zimbabwean 
-                businesses and professionals understand tax better, plan confidently, and strengthen 
-                compliance culture through accessible tools and clear, practical guidance.
+                Culverwell Venge is a licensed tax agent and public accountant.
+                 As the tax innovation lead he is focused on advancing tax literacy, 
+                 responsible digital adoption and stronger tax culture in Zimbabwe - 
+                 grounded in clarity, capability, and community participation.
               </p>
             </div>
           </motion.div>
@@ -96,8 +97,8 @@ export default function AboutSection() {
                 <h3 className="text-lg font-bold text-white">Our Mission</h3>
               </div>
               <p className="text-white/80 text-sm leading-relaxed">
-                Democratize tax knowledge and empower Zimbabwean businesses with accessible technology 
-                that transforms tax compliance into an opportunity for growth.
+                To strengthen Zimbabwe’s tax culture by making tax knowledge accessible, practical, and empowering
+                 — through technology, learning, and community participation.
               </p>
             </motion.div>
 

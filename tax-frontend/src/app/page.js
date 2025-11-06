@@ -650,7 +650,7 @@ export default function Home() {
 
         {/* Testimonials */}
         <AnimatedSection className="py-16 bg-white">
-          <div className="max-w-6xl mx-auto px-6">
+          <div id="about-us" className="max-w-6xl mx-auto px-6">
             <AboutSection />
           </div>
         </AnimatedSection>
