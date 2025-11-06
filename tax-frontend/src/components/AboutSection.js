@@ -114,8 +114,9 @@ export default function AboutSection() {
                 <h3 className="text-lg font-bold text-white">Our Vision</h3>
               </div>
               <p className="text-white/80 text-sm leading-relaxed">
-                A Zimbabwe where every business approaches tax with confidence, understanding, 
-                and shared responsibility for national development.
+                Building a trusted, supportive platform where Zimbabwean SMEs, professionals, 
+                and students can build tax confidence and capability together, through accessible 
+                learning, thoughtful planning tools, and a growing community committed to strengthening our tax culture.
               </p>
             </motion.div>
           </motion.div>
