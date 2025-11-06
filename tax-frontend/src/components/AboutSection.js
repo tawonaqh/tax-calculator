@@ -194,7 +194,7 @@ export default function AboutSection() {
             </div>
             <div className="space-y-4 text-white/80 leading-relaxed">
               <p>
-                My work in tax advisory, finance, and SME development has shown that strong tax 
+                Our work in tax advisory, finance, and SME development has shown that strong tax 
                 culture does not start with penalties or pressure - it starts with clarity, 
                 education, and community.
               </p>
