@@ -36,6 +36,7 @@ import { useInView } from "react-intersection-observer";
 import { Shield } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 import { Calculator } from "lucide-react";
+import AboutSection from "@/components/AboutSection";
 
 // Client component wrapper for animated sections
 const AnimatedSection = ({ children, className = "" }) => {
@@ -650,7 +651,7 @@ export default function Home() {
         {/* Testimonials */}
         <AnimatedSection className="py-16 bg-white">
           <div className="max-w-6xl mx-auto px-6">
-            <Testimonials />
+            <AboutSection />
           </div>
         </AnimatedSection>
 
