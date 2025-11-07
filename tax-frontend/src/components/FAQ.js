@@ -24,17 +24,17 @@ const FAQ = () => {
   const faqs = [
     {
       question: "What is income tax in Zimbabwe?",
-      answer: "Income tax is charged on 'taxable income' received by or accrued to any person for each year of assessment. The current rate is 25% as charged by Finance Act of 2023 for period effective 01 January 2024 onwards. Aids Levy is charged at the rate of 3% of the income tax payable.",
+      answer: "Income tax is charged on 'taxable income' received by or accrued to any person for each year of assessment, at the rates in the annual Finance Act. The current rate is 25% as charged by Finance Act of 2023 for period effective 01 January 2024 onwards. Aids Levy is charge at the rate of 3% of the income tax payable.",
       category: "individual"
     },
     {
       question: "Who must pay income tax?",
-      answer: "Tax is payable by the person to whom income accrues/is received; representative taxpayers pay in that capacity (for income they manage or control). This means every person (natural or artificial) who produces taxable income is liable to pay taxes.",
+      answer: "Tax is payable by the person to whom income accrues/is received; representative taxpayers pay in that capacity (for income they manage or control). This means every person (natural or superficial) who produces taxable income is liable to pay taxes.",
       category: "individual"
     },
     {
       question: "What counts as 'taxable income'?",
-      answer: "Start from 'gross income' (all amounts received by or accrued to a person from a Zimbabwean source, unless capital), then apply exemptions and deductions to arrive at taxable income. Amounts listed in the Third Schedule are exempt from tax.",
+      answer: "Start from 'gross income' (all amounts received by or accrued to a person from a Zimbabwean source, unless capital), then apply exemptions and deductions to arrive at taxable income.",
       category: "business"
     },
     {
@@ -53,18 +53,13 @@ const FAQ = () => {
       category: "business"
     },
     {
-      question: "How to utilize capital allowances (practical steps)?",
-      answer: "1. Identify the asset & schedule. 2. Determine the claim for year 1 and after. 3. Time-apportion and apportion for use. 4. Keep an asset register. 5. On disposal, do a balancing calculation. 6. Reflect in the tax computation.",
-      category: "business"
-    },
-    {
       question: "What is PAYE and who remits it?",
-      answer: "Employees' tax (PAYE) is payable in terms of the Thirteenth Schedule of the income tax act on 'remuneration' paid to an employee, and is remitted by the employer as per that Schedule.",
+      answer: "Employees' tax (PAYE) is payable in terms of the Thirteenth Schedule of the income tax act on 'remuneration' paid to an employee, and is remitted the employer as per that Schedule.",
       category: "paye"
     },
     {
       question: "What happens if PAYE isn't paid on time?",
-      answer: "Interest is chargeable on unpaid PAYE at a rate fixed by the Minister, for as long as the amount remains unpaid, currently at 10% p.a for foreign currency and bank policy rate of 35% plus 5% (40%) for ZiG as per SI 26 of 2025.",
+      answer: "Interest is chargeable on unpaid PAYE at a rate fixed by the Minister, for as long as the amount remains unpaid, currently at 10% p.a for foreign currency and bank policy rate of 35% plus 5% (40%) for zig as per SI 26 of 2025.",
       category: "paye"
     },
     {
@@ -74,12 +69,12 @@ const FAQ = () => {
     },
     {
       question: "When must I register for VAT?",
-      answer: "Apply once you meet the conditions for voluntary or compulsory registration under section 23 of the VAT Act; the Commissioner registers you via your application on TARMS if your 12-month taxable supplies are likely to exceed US$25,000.00 or local currency equivalent currently.",
+      answer: "Apply once you meet the conditions for voluntary or compulsory registration under section 23 of the VAT Act; the Commissioner registers you, via your application on TARMS, if your 12-month taxable supplies are likely to exceed the amount set in terms of the Fourth Schedule of the VAT Regulations (threshold)which is US$25,000.00 or local currency equivalent currently.",
       category: "vat"
     },
     {
       question: "Which items are zero-rated?",
-      answer: "Examples in the regulations include: Export goods and services, Certain tourism services to 'tourists' (accommodation excluded—taxed at the standard rate).",
+      answer: "Examples in the regulations include: Export goods and services, Certain tourism services to 'tourists' (accommodation excluded---taxed at the standard rate).",
       category: "vat"
     },
     {
@@ -99,7 +94,7 @@ const FAQ = () => {
     },
     {
       question: "What is IMTT (intermediated money transfer tax)?",
-      answer: "It is charged and collected per section 36G and the Thirtieth Schedule of the Income Tax Act at a rate of 2% on specified transactions. Common exempt transactions include transfer of money on payment of remuneration, transfer to and from ZIMRA, intra corporate transfers, and transfers between individual's mobile wallet and bank account.",
+      answer: "It is charged and collected per section 36G and the Thirtieth Schedule of the Income Tax Act at a rate of 2% on specified transactions. Common exempt transactions include transfer of money on payment of remuneration; transfer of money to and from ZIMRA for the payment or refund of any tax, duty or other charges; intra corporate transfer of money; transfer of money from specified trust accounts; transfer of money for petroleum products; transfer between individual's mobile wallet and bank account.",
       category: "compliance"
     },
     {
@@ -128,6 +123,11 @@ const FAQ = () => {
       category: "business"
     },
     {
+      question: "Can I claim entertainment expenses?",
+      answer: "No. Entertainment (including hospitality) is specifically non-deductible.",
+      category: "business"
+    },
+    {
       question: "What records must companies keep for tax?",
       answer: "Every taxpayer must keep reasonable records and documents for at least 6 years after the tax period.",
       category: "compliance"
@@ -139,17 +139,22 @@ const FAQ = () => {
     },
     {
       question: "Can a company file NIL returns?",
-      answer: "Yes. A return must be submitted whether tax is payable or a refund is due; NIL returns are therefore required. It is important to specify whether the company is trading or not as this affects ZIMRA's risk assessment.",
+      answer: "Yes. A return must be submitted whether tax is payable or a refund is due; NIL returns are therefore required. It is important to specify whether the company is trading or not as this has a direct relationship with how ZIMRA rank the taxpayer's risk profile.",
       category: "compliance"
     },
     {
       question: "What is provisional tax?",
-      answer: "It's tax you estimate on income not fully subject to PAYE; it's paid in four instalments during the year under the QPD system. 'Quarterly Payment Dates' are the four due dates for the provisional tax instalments.",
+      answer: "It's tax you estimate on income not fully subject to PAYE; it's paid in four instalments during the year under the QPD system. 'Quarterly Payment Dates' are the four due dates for the provisional tax instalments for a year of assessment.",
       category: "compliance"
     },
     {
       question: "Who must pay provisional tax?",
       answer: "Anyone whose taxable income includes amounts not subject to employees' tax (PAYE), unless specifically excluded by the Commissioner.",
+      category: "compliance"
+    },
+    {
+      question: "How do I calculate QPDs?",
+      answer: "Use the Act's cumulative percentages of the estimated annual tax: 1st QPD: 10%, 2nd QPD: 25% (cumulative), 3rd QPD: 30% (cumulative), 4th QPD: 35% (cumulative). These sum to 100%.",
       category: "compliance"
     },
     {
@@ -164,12 +169,7 @@ const FAQ = () => {
     },
     {
       question: "Do I pay tax in USD or ZiG?",
-      answer: "You must file/pay per currency - one return for ZiG, a separate one for foreign-currency income, and pay VAT and income tax in the same currency you charged/received. No cross-currency mixing is allowed.",
-      category: "currency"
-    },
-    {
-      question: "Which exchange rate should I use for tax?",
-      answer: "ZIMRA publishes the exchange rate to be used for tax purposes. You should use the official ZIMRA exchange rates for currency conversions in your tax computations.",
+      answer: "You must file/pay per currency - one return for ZiG, a separate one for foreign-currency income, and pay VAT and income tax in the same currency you charged/received. No cross-currency mixing is allowed under Income Tax Act Section 37AA and VAT Act Section 38(4).",
       category: "currency"
     }
   ];
