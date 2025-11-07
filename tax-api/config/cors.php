@@ -1,10 +1,42 @@
 <?php
 
 return [
-    'paths' => ['api/*'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Laravel CORS Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This configuration allows your Laravel API to accept requests from
+    | your frontend domains, including localhost and deployed apps.
+    |
+    */
+
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+
+    // Allow all HTTP methods
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:3000', 'https://taxcul.com' , 'https://taxcul.vercel.app'], // your Next.js frontend
+
+    // Allowed frontend origins
+    'allowed_origins' => [
+        'http://localhost:3000',        // local dev
+        'https://taxcul.vercel.app',    // Vercel production frontend
+    ],
+
+    // Optional: allow future Vercel deployments dynamically
+    'allowed_origins_patterns' => [
+        '/https:\/\/.*\.vercel\.app/',  // regex to match any Vercel preview URL
+    ],
+
+    // Allow all headers
     'allowed_headers' => ['*'],
-    'supports_credentials' => false,
+
+    // Expose no extra headers
+    'exposed_headers' => [],
+
+    // Cache preflight response for 1 hour
     'max_age' => 3600,
+
+    // Set to true if you plan to use cookies/auth in requests
+    'supports_credentials' => false,
 ];
