@@ -10,7 +10,7 @@ const Chatbot = () => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [messages, setMessages] = useState([
     {
-      text: "Hello! I'm your Tax Assistant. I can help you with tax calculations, deductions, compliance questions, and optimization strategies. How can I assist you today?",
+      text: "Hello! I'm your TANA. I can help you with tax calculations, deductions, compliance questions, and optimization strategies. How can I assist you today?",
       sender: 'bot'
     }
   ])
@@ -118,7 +118,7 @@ const Chatbot = () => {
                     <Bot className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Tax Assistant</h3>
+                    <h3 className="font-semibold text-white">TANA</h3>
                     <p className="text-xs text-white/80">AI-powered tax guidance</p>
                   </div>
                 </div>

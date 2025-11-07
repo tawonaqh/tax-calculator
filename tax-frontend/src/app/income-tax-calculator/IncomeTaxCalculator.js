@@ -16,6 +16,9 @@ import {
   YAxis,
   Legend,
   LabelList,
+  LineChart,
+  Line,
+  CartesianGrid
 } from "recharts";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
@@ -771,6 +774,435 @@ const AIDisclaimer = ({ className = "" }) => (
   </div>
 );
 
+/* ---------- NEW: Enhanced Tax Breakdown Visualization Component ---------- */
+const TaxBreakdownVisualization = ({ results, formState }) => {
+  if (!results.comprehensive) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-[#0F2F4E]/40 bg-white rounded-xl border border-[#EEEEEE]">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-12 w-12 text-[#1ED760] mb-3"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+        <p className="text-sm">No comprehensive tax data yet.</p>
+        <p className="text-xs text-[#0F2F4E]/50">
+          Fill in the forms and calculate to generate tax breakdown metrics.
+        </p>
+      </div>
+    );
+  }
+
+  const { comprehensive } = results;
+  
+  // Calculate key metrics from form data
+  const salesRevenue = parseFloat(formState.sales) || 0;
+  const otherTradingIncome = parseFloat(formState.otherTradingIncome) || 0;
+  const totalRevenue = salesRevenue + otherTradingIncome;
+  
+  const costOfGoodsSold = parseFloat(formState.costOfGoodsSold) || 0;
+  const operatingExpenses = comprehensive.operatingExpenses || 0;
+  const totalBusinessCosts = costOfGoodsSold + operatingExpenses;
+  
+  const totalTax = comprehensive.totalTax || 0;
+  const taxableIncome = comprehensive.taxableIncome || 0;
+  
+  // Calculate detailed expense breakdown from form data
+  const detailedExpenses = {
+    'Cost of Goods': costOfGoodsSold,
+    'Advertising & Marketing': parseFloat(formState.advertisingMarketing) || 0,
+    'Automobile Expense': parseFloat(formState.automobileExpense) || 0,
+    'Bank Charges': parseFloat(formState.bankCharges) || 0,
+    'IMTT': parseFloat(formState.imtt) || 0,
+    'Salaries': parseFloat(formState.salaries) || 0,
+    'Equipment Rental': parseFloat(formState.equipmentRental) || 0,
+    'IT & Internet': parseFloat(formState.itInternet) || 0,
+    'Rent & Rates': (parseFloat(formState.rentExpense) || 0) + (parseFloat(formState.warehouse) || 0) + (parseFloat(formState.cottage) || 0),
+    'Other Expenses': parseFloat(formState.otherExpenses) || 0
+  };
+
+  // Calculate tax efficiency metrics
+  const taxAsFractionOfRevenue = totalRevenue > 0 ? (totalTax / totalRevenue) * 100 : 0;
+  const taxAsFractionOfCosts = totalBusinessCosts > 0 ? (totalTax / totalBusinessCosts) * 100 : 0;
+  const effectiveTaxRate = taxableIncome > 0 ? (totalTax / taxableIncome) * 100 : 0;
+  
+  // Calculate profit margins
+  const grossProfitMargin = totalRevenue > 0 ? ((comprehensive.grossProfit || 0) / totalRevenue) * 100 : 0;
+  const operatingProfitMargin = totalRevenue > 0 ? ((comprehensive.operatingProfit || 0) / totalRevenue) * 100 : 0;
+  const netProfitMargin = totalRevenue > 0 ? (((comprehensive.operatingProfit || 0) - totalTax) / totalRevenue) * 100 : 0;
+
+  // Data for charts
+  const taxEfficiencyData = [
+    { 
+      name: 'Tax/Revenue', 
+      value: taxAsFractionOfRevenue,
+      amount: totalTax,
+      base: totalRevenue,
+      color: '#1ED760'
+    },
+    { 
+      name: 'Tax/Costs', 
+      value: taxAsFractionOfCosts,
+      amount: totalTax,
+      base: totalBusinessCosts,
+      color: '#FFD700'
+    },
+    { 
+      name: 'Effective Rate', 
+      value: effectiveTaxRate,
+      amount: totalTax,
+      base: taxableIncome,
+      color: '#0F2F4E'
+    },
+  ];
+
+  const profitMarginData = [
+    { name: 'Gross', value: grossProfitMargin, color: '#10b981' },
+    { name: 'Operating', value: operatingProfitMargin, color: '#3b82f6' },
+    { name: 'Net', value: netProfitMargin, color: '#0F2F4E' },
+  ];
+
+  const expenseBreakdownData = Object.entries(detailedExpenses)
+    .filter(([_, value]) => value > 0)
+    .map(([name, value], index) => ({
+      name,
+      value,
+      color: COLORS[index % COLORS.length]
+    }));
+
+  const revenueBreakdownData = [
+    { name: 'Sales Revenue', value: salesRevenue, color: '#1ED760' },
+    { name: 'Other Income', value: otherTradingIncome, color: '#FFD700' },
+    { name: 'Total Tax', value: totalTax, color: '#ef4444' },
+    { name: 'Net Profit', value: Math.max((comprehensive.operatingProfit || 0) - totalTax, 0), color: '#0F2F4E' },
+  ].filter(item => item.value > 0);
+
+  const renderCustomizedLabel = ({
+    cx, cy, midAngle, innerRadius, outerRadius, percent, index
+  }) => {
+    if (percent === 0) return null;
+    
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="#0F2F4E" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize={10}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Key Tax Efficiency Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-xl text-white">
+          <div className="text-sm opacity-90">Tax/Revenue Ratio</div>
+          <div className="text-2xl font-bold mt-1">{taxAsFractionOfRevenue.toFixed(2)}%</div>
+          <div className="text-xs opacity-80 mt-1">
+            ${totalTax.toLocaleString()} / ${totalRevenue.toLocaleString()}
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-xl text-[#0F2F4E]">
+          <div className="text-sm opacity-90">Tax/Cost Ratio</div>
+          <div className="text-2xl font-bold mt-1">{taxAsFractionOfCosts.toFixed(2)}%</div>
+          <div className="text-xs opacity-80 mt-1">
+            ${totalTax.toLocaleString()} / ${totalBusinessCosts.toLocaleString()}
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-xl text-white">
+          <div className="text-sm opacity-90">Effective Tax Rate</div>
+          <div className="text-2xl font-bold mt-1">{effectiveTaxRate.toFixed(2)}%</div>
+          <div className="text-xs opacity-80 mt-1">
+            On ${(taxableIncome || 0).toLocaleString()} income
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-[#84cc16] to-[#84cc16]/80 p-4 rounded-xl text-white">
+          <div className="text-sm opacity-90">Net Profit Margin</div>
+          <div className="text-2xl font-bold mt-1">{netProfitMargin.toFixed(2)}%</div>
+          <div className="text-xs opacity-80 mt-1">
+            After-tax profitability
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tax Efficiency Comparison */}
+        <div className="bg-white p-4 rounded-xl border border-[#EEEEEE]">
+          <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
+            Tax Efficiency Metrics
+          </h4>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={taxEfficiencyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
+              <YAxis 
+                stroke="#0F2F4E" 
+                fontSize={12}
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
+              />
+              <Tooltip 
+                formatter={(value, name) => [
+                  `${value.toFixed(2)}%`,
+                  name === 'value' ? 'Percentage' : name
+                ]}
+                labelFormatter={(label) => `Metric: ${label}`}
+              />
+              <Bar 
+                dataKey="value" 
+                radius={[4, 4, 0, 0]}
+              >
+                {taxEfficiencyData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+                <LabelList 
+                  dataKey="value" 
+                  position="top" 
+                  fill="#0F2F4E"
+                  fontSize={11}
+                  formatter={(value) => `${value.toFixed(1)}%`}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="text-xs text-[#0F2F4E]/70 mt-2 text-center">
+            Lower percentages indicate better tax efficiency
+          </div>
+        </div>
+
+        {/* Profit Margins */}
+        <div className="bg-white p-4 rounded-xl border border-[#EEEEEE]">
+          <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
+            Profit Margin Analysis
+          </h4>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={profitMarginData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE" />
+              <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
+              <YAxis 
+                stroke="#0F2F4E" 
+                fontSize={12}
+                tickFormatter={(value) => `${value.toFixed(1)}%`}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value.toFixed(2)}%`, 'Margin']}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="value" 
+                stroke="#0F2F4E"
+                strokeWidth={2}
+                dot={{ fill: '#0F2F4E', strokeWidth: 2, r: 4 }}
+              >
+                <LabelList 
+                  dataKey="value" 
+                  position="top" 
+                  fill="#0F2F4E"
+                  fontSize={11}
+                  formatter={(value) => `${value.toFixed(1)}%`}
+                />
+              </Line>
+            </LineChart>
+          </ResponsiveContainer>
+          <div className="text-xs text-[#0F2F4E]/70 mt-2 text-center">
+            Impact of taxes on profitability
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Expense Breakdown */}
+        <div className="bg-white p-4 rounded-xl border border-[#EEEEEE]">
+          <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
+            Expense Breakdown
+          </h4>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={expenseBreakdownData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                label={renderCustomizedLabel}
+                labelLine={false}
+              >
+                {expenseBreakdownData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color}
+                    stroke="#FFFFFF"
+                    strokeWidth={2}
+                  />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value, name) => [
+                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                  name
+                ]}
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                formatter={(value, entry) => (
+                  <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Revenue & Tax Distribution */}
+        <div className="bg-white p-4 rounded-xl border border-[#EEEEEE]">
+          <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
+            Revenue & Tax Distribution
+          </h4>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={revenueBreakdownData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                label={renderCustomizedLabel}
+                labelLine={false}
+              >
+                {revenueBreakdownData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color}
+                    stroke="#FFFFFF"
+                    strokeWidth={2}
+                  />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value, name) => [
+                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                  name
+                ]}
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                formatter={(value, entry) => (
+                  <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Tax Optimization Insights */}
+      <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-4 rounded-xl border border-[#1ED760]/20">
+        <h4 className="text-md font-semibold text-[#0F2F4E] mb-3">Tax Efficiency Insights</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-3 h-3 rounded-full ${
+                taxAsFractionOfRevenue < 10 ? 'bg-[#1ED760]' : 
+                taxAsFractionOfRevenue < 20 ? 'bg-[#FFD700]' : 'bg-[#ef4444]'
+              }`}></div>
+              <span className="font-medium text-[#0F2F4E]">Revenue Tax Burden</span>
+            </div>
+            <p className="text-[#0F2F4E]/80 text-xs">
+              {taxAsFractionOfRevenue < 10 
+                ? "Excellent tax efficiency relative to revenue" 
+                : taxAsFractionOfRevenue < 20 
+                ? "Moderate tax burden on revenue"
+                : "High tax burden relative to revenue"
+              }
+            </p>
+          </div>
+          
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-3 h-3 rounded-full ${
+                taxAsFractionOfCosts < 15 ? 'bg-[#1ED760]' : 
+                taxAsFractionOfCosts < 25 ? 'bg-[#FFD700]' : 'bg-[#ef4444]'
+              }`}></div>
+              <span className="font-medium text-[#0F2F4E]">Cost Tax Burden</span>
+            </div>
+            <p className="text-[#0F2F4E]/80 text-xs">
+              {taxAsFractionOfCosts < 15 
+                ? "Favorable tax-to-cost ratio" 
+                : taxAsFractionOfCosts < 25 
+                ? "Average tax impact on costs"
+                : "Tax represents significant portion of costs"
+              }
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-3 h-3 rounded-full ${
+                effectiveTaxRate < 20 ? 'bg-[#1ED760]' : 
+                effectiveTaxRate < 28 ? 'bg-[#FFD700]' : 'bg-[#ef4444]'
+              }`}></div>
+              <span className="font-medium text-[#0F2F4E]">Effective Tax Rate</span>
+            </div>
+            <p className="text-[#0F2F4E]/80 text-xs">
+              {effectiveTaxRate < 20 
+                ? "Below standard corporate rate (25%)" 
+                : effectiveTaxRate < 28 
+                ? "Near standard corporate rate"
+                : "Above standard corporate rate - review deductions"
+              }
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className={`w-3 h-3 rounded-full ${
+                netProfitMargin > 15 ? 'bg-[#1ED760]' : 
+                netProfitMargin > 5 ? 'bg-[#FFD700]' : 'bg-[#ef4444]'
+              }`}></div>
+              <span className="font-medium text-[#0F2F4E]">Profitability Health</span>
+            </div>
+            <p className="text-[#0F2F4E]/80 text-xs">
+              {netProfitMargin > 15 
+                ? "Strong profitability after tax" 
+                : netProfitMargin > 5 
+                ? "Moderate profitability"
+                : "Low profitability - review costs and tax strategy"
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ---------- Chart Components ---------- */
 const ComprehensiveChartPanel = ({ results }) => {
   if (!results.comprehensive) {
@@ -1020,14 +1452,14 @@ const ChatAssistant = ({ aiHistory, setAIHistory }) => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Ask about tax optimization..."
-          className="flex-1 p-3 text-sm rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+          className="flex-1 p-1 text-sm rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
                      placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
                      focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
         />
         <button
           onClick={send}
           disabled={sending}
-          className="px-4 text-sm py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition"
+          className="px-3 text-sm py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition"
         >
           {sending ? "..." : "Ask"}
         </button>
@@ -1110,12 +1542,16 @@ export default function TaxPlanningPage() {
   const [results, setResults] = useState({});
   const [aiHistory, setAIHistory] = useState([]);
   
-  // Comprehensive form state matching Excel structure
+  // Comprehensive form state matching Excel structure exactly
   const [formState, setFormState] = useState({
-    // Profit and Loss
+    // Profit and Loss - Operating Income
     sales: "",
     otherTradingIncome: "",
+    
+    // Cost of Goods Sold
     costOfGoodsSold: "",
+    
+    // Operating Expenses - Updated to match Excel document
     advertisingMarketing: "",
     trainingEvent: "",
     automobileExpense: "",
@@ -1138,7 +1574,17 @@ export default function TaxPlanningPage() {
     mealsEntertainment: "",
     officeSupplies: "",
     otherExpenses: "",
+    parking: "",
+    printingStationery: "",
+    repairsMaintenance: "",
+    telephoneExpense: "",
+    travelExpense: "",
+    flights: "",
+    taxi: "",
+    tollFee: "",
     rentExpense: "",
+    cottageRent: "",
+    warehouseRent: "",
     
     // Tax Computation
     dividendReceived: "",
@@ -1222,37 +1668,39 @@ export default function TaxPlanningPage() {
     
     const grossProfit = (sales + otherTradingIncome) - costOfGoodsSold;
     
-    // Calculate Operating Profit
+    // Calculate Operating Profit - Sum all operating expenses
     let totalOperatingExpenses = 0;
-    if (profitLoss?.operatingExpenses) {
-      totalOperatingExpenses = Object.values(profitLoss.operatingExpenses).reduce((sum, val) => {
-        return sum + (parseFloat(val) || 0);
-      }, 0);
-    }
     
-    // Add individual expenses
-    totalOperatingExpenses += parseFloat(profitLoss?.advertisingMarketing) || 0;
-    totalOperatingExpenses += parseFloat(profitLoss?.trainingEvent) || 0;
-    totalOperatingExpenses += parseFloat(profitLoss?.bankCharges) || 0;
-    totalOperatingExpenses += parseFloat(profitLoss?.imtt) || 0;
-    totalOperatingExpenses += parseFloat(profitLoss?.salaries) || 0;
+    // Add all individual expense categories
+    const expenseFields = [
+      'advertisingMarketing', 'trainingEvent', 'automobileExpense', 
+      'vehicleInsurance', 'managementMileage', 'staffMileage', 'fuelExpense',
+      'vehicleMaintenance', 'bankCharges', 'imtt', 'salaries', 'consultantExpense',
+      'accountingFees', 'equipmentRental', 'finesPenalties', 'itInternet',
+      'janitorial', 'warehouse', 'cottage', 'mealsEntertainment', 'officeSupplies',
+      'otherExpenses', 'parking', 'printingStationery', 'repairsMaintenance',
+      'telephoneExpense', 'travelExpense', 'flights', 'taxi', 'tollFee',
+      'rentExpense', 'cottageRent', 'warehouseRent'
+    ];
+    
+    expenseFields.forEach(field => {
+      totalOperatingExpenses += parseFloat(profitLoss?.[field] || 0);
+    });
     
     const operatingProfit = grossProfit - totalOperatingExpenses;
     
     // Tax Computation
     let totalNonTaxableIncome = 0;
-    if (taxComputation?.nonTaxableIncome) {
-      totalNonTaxableIncome = Object.values(taxComputation.nonTaxableIncome).reduce((sum, val) => {
-        return sum + (parseFloat(val) || 0);
-      }, 0);
-    }
+    const nonTaxableFields = ['dividendReceived', 'capitalReceipts', 'profitOnSale', 'interestFinancial'];
+    nonTaxableFields.forEach(field => {
+      totalNonTaxableIncome += parseFloat(taxComputation?.[field] || 0);
+    });
     
     let totalNonDeductibleExpenses = 0;
-    if (taxComputation?.nonDeductibleExpenses) {
-      totalNonDeductibleExpenses = Object.values(taxComputation.nonDeductibleExpenses).reduce((sum, val) => {
-        return sum + (parseFloat(val) || 0);
-      }, 0);
-    }
+    const nonDeductibleFields = ['depreciation', 'disallowableSubscriptions', 'finesPenaltiesTax', 'donations'];
+    nonDeductibleFields.forEach(field => {
+      totalNonDeductibleExpenses += parseFloat(taxComputation?.[field] || 0);
+    });
     
     let taxableIncome = operatingProfit - totalNonTaxableIncome + totalNonDeductibleExpenses;
     
@@ -1319,18 +1767,7 @@ export default function TaxPlanningPage() {
     setLoading(true);
     try {
       const payload = {
-        profitLoss: {
-          sales: parseFloat(formState.sales) || 0,
-          otherTradingIncome: parseFloat(formState.otherTradingIncome) || 0,
-          costOfGoodsSold: parseFloat(formState.costOfGoodsSold) || 0,
-          operatingExpenses: {
-            advertisingMarketing: parseFloat(formState.advertisingMarketing) || 0,
-            trainingEvent: parseFloat(formState.trainingEvent) || 0,
-            bankCharges: parseFloat(formState.bankCharges) || 0,
-            imtt: parseFloat(formState.imtt) || 0,
-            salaries: parseFloat(formState.salaries) || 0,
-          }
-        },
+        profitLoss: formState,
         taxComputation: {
           nonTaxableIncome: {
             dividendReceived: parseFloat(formState.dividendReceived) || 0,
@@ -1378,13 +1815,16 @@ export default function TaxPlanningPage() {
   };
 
   function handleExcelImport(data) {
-    if (data.profitLoss) {
-      setFormState(prev => ({
-        ...prev,
-        sales: data.profitLoss.sales || "",
-        otherTradingIncome: data.profitLoss.otherTradingIncome || "",
-        costOfGoodsSold: data.profitLoss.costOfGoodsSold || "",
-      }));
+    if (data.profitLoss && data.profitLoss.length > 0) {
+      const firstRow = data.profitLoss[0];
+      const updates = {};
+      
+      // Map Excel columns to form fields
+      if (firstRow['Sales']) updates.sales = firstRow['Sales'];
+      if (firstRow['Other Trading Income']) updates.otherTradingIncome = firstRow['Other Trading Income'];
+      if (firstRow['Cost of Goods Sold']) updates.costOfGoodsSold = firstRow['Cost of Goods Sold'];
+      
+      setFormState(prev => ({ ...prev, ...updates }));
     }
   }
 
@@ -1482,7 +1922,7 @@ export default function TaxPlanningPage() {
                 )}
               </div>
 
-              {/* Profit & Loss Form */}
+              {/* Profit & Loss Form - Updated to match Excel document */}
               {activeTab === "profit-loss" && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1509,6 +1949,7 @@ export default function TaxPlanningPage() {
                     />
                     
                     <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Operating Expenses</h3>
+                    
                     <InputField
                       label="Advertising & Marketing"
                       value={formState.advertisingMarketing}
@@ -1521,6 +1962,44 @@ export default function TaxPlanningPage() {
                       onChange={handleChange("trainingEvent")}
                       placeholder="Staff training costs"
                     />
+                    
+                    <InputField
+                      label="Automobile Expense"
+                      value={formState.automobileExpense}
+                      onChange={handleChange("automobileExpense")}
+                      placeholder="Vehicle expenses"
+                    />
+                    <InputField
+                      label="Vehicle Insurance"
+                      value={formState.vehicleInsurance}
+                      onChange={handleChange("vehicleInsurance")}
+                      placeholder="Insurance costs"
+                    />
+                    <InputField
+                      label="Management Mileage"
+                      value={formState.managementMileage}
+                      onChange={handleChange("managementMileage")}
+                      placeholder="Management travel"
+                    />
+                    <InputField
+                      label="Staff Mileage"
+                      value={formState.staffMileage}
+                      onChange={handleChange("staffMileage")}
+                      placeholder="Staff travel"
+                    />
+                    <InputField
+                      label="Fuel Expense"
+                      value={formState.fuelExpense}
+                      onChange={handleChange("fuelExpense")}
+                      placeholder="Fuel costs"
+                    />
+                    <InputField
+                      label="Vehicle Maintenance"
+                      value={formState.vehicleMaintenance}
+                      onChange={handleChange("vehicleMaintenance")}
+                      placeholder="Maintenance costs"
+                    />
+                    
                     <InputField
                       label="Bank Charges"
                       value={formState.bankCharges}
@@ -1538,6 +2017,94 @@ export default function TaxPlanningPage() {
                       value={formState.salaries}
                       onChange={handleChange("salaries")}
                       placeholder="Employee salaries"
+                    />
+                    <InputField
+                      label="Consultant Expense"
+                      value={formState.consultantExpense}
+                      onChange={handleChange("consultantExpense")}
+                      placeholder="Consultant fees"
+                    />
+                    <InputField
+                      label="Accounting Fees"
+                      value={formState.accountingFees}
+                      onChange={handleChange("accountingFees")}
+                      placeholder="Accounting services"
+                    />
+                    
+                    <InputField
+                      label="Equipment Rental"
+                      value={formState.equipmentRental}
+                      onChange={handleChange("equipmentRental")}
+                      placeholder="Equipment rental costs"
+                    />
+                    <InputField
+                      label="Fines & Penalties"
+                      value={formState.finesPenalties}
+                      onChange={handleChange("finesPenalties")}
+                      placeholder="Fines and penalties"
+                    />
+                    <InputField
+                      label="IT & Internet Expenses"
+                      value={formState.itInternet}
+                      onChange={handleChange("itInternet")}
+                      placeholder="Technology costs"
+                    />
+                    <InputField
+                      label="Janitorial Expense"
+                      value={formState.janitorial}
+                      onChange={handleChange("janitorial")}
+                      placeholder="Cleaning services"
+                    />
+                    <InputField
+                      label="Warehouse"
+                      value={formState.warehouse}
+                      onChange={handleChange("warehouse")}
+                      placeholder="Warehouse costs"
+                    />
+                    <InputField
+                      label="Cottage"
+                      value={formState.cottage}
+                      onChange={handleChange("cottage")}
+                      placeholder="Cottage expenses"
+                    />
+                    
+                    <InputField
+                      label="Meals & Entertainment"
+                      value={formState.mealsEntertainment}
+                      onChange={handleChange("mealsEntertainment")}
+                      placeholder="Entertainment costs"
+                    />
+                    <InputField
+                      label="Office Supplies"
+                      value={formState.officeSupplies}
+                      onChange={handleChange("officeSupplies")}
+                      placeholder="Office supplies"
+                    />
+                    <InputField
+                      label="Other Expenses"
+                      value={formState.otherExpenses}
+                      onChange={handleChange("otherExpenses")}
+                      placeholder="Miscellaneous expenses"
+                    />
+                    
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Rent & Rates</h3>
+                    <InputField
+                      label="Rent Expense"
+                      value={formState.rentExpense}
+                      onChange={handleChange("rentExpense")}
+                      placeholder="Office rent"
+                    />
+                    <InputField
+                      label="Cottage Rent"
+                      value={formState.cottageRent}
+                      onChange={handleChange("cottageRent")}
+                      placeholder="Cottage rental"
+                    />
+                    <InputField
+                      label="Warehouse Rent"
+                      value={formState.warehouseRent}
+                      onChange={handleChange("warehouseRent")}
+                      placeholder="Warehouse rental"
                     />
                   </div>
                 </div>
@@ -1587,6 +2154,12 @@ export default function TaxPlanningPage() {
                       placeholder="Non-deductible subscriptions"
                     />
                     <InputField
+                      label="Disallowable Legal Expenses"
+                      value={formState.disallowableLegal}
+                      onChange={handleChange("disallowableLegal")}
+                      placeholder="Non-deductible legal"
+                    />
+                    <InputField
                       label="Fines & Penalties"
                       value={formState.finesPenaltiesTax}
                       onChange={handleChange("finesPenaltiesTax")}
@@ -1597,6 +2170,32 @@ export default function TaxPlanningPage() {
                       value={formState.donations}
                       onChange={handleChange("donations")}
                       placeholder="Charitable donations"
+                    />
+                    
+                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Other Tax Items</h3>
+                    <InputField
+                      label="Recoupment"
+                      value={formState.recoupment}
+                      onChange={handleChange("recoupment")}
+                      placeholder="Tax recoupment"
+                    />
+                    <InputField
+                      label="Income Received in Advance"
+                      value={formState.incomeReceivedAdvance}
+                      onChange={handleChange("incomeReceivedAdvance")}
+                      placeholder="Deferred income"
+                    />
+                    <InputField
+                      label="Doubtful Debts"
+                      value={formState.doubtfulDebts}
+                      onChange={handleChange("doubtfulDebts")}
+                      placeholder="Bad debt provision"
+                    />
+                    <InputField
+                      label="Dividends (Net)"
+                      value={formState.dividendsNet}
+                      onChange={handleChange("dividendsNet")}
+                      placeholder="Net dividends"
                     />
                   </div>
                 </div>
@@ -1754,13 +2353,13 @@ export default function TaxPlanningPage() {
               )}
             </div>
 
-            {/* Visualization */}
+            {/* NEW: Enhanced Tax Breakdown Visualization */}
             <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
               <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
                 Tax Breakdown Visualization
               </h3>
-              <div className="h-80">
-                <ComprehensiveChartPanel results={results} />
+              <div className="min-h-[600px]">
+                <TaxBreakdownVisualization results={results} formState={formState} />
               </div>
             </div>
 

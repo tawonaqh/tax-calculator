@@ -37,6 +37,8 @@ import { Shield } from "lucide-react";
 import { ArrowRight } from "lucide-react";
 import { Calculator } from "lucide-react";
 import AboutSection from "@/components/AboutSection";
+import FeedbackModal from "@/components/FeedbackModal";
+import { useState } from "react";
 
 // Client component wrapper for animated sections
 const AnimatedSection = ({ children, className = "" }) => {
@@ -214,6 +216,16 @@ export default function Home() {
       description: "Automate complex tax computations"
     }
   ];
+
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+
+  const openFeedbackModal = () => {
+    setIsFeedbackModalOpen(true);
+  };
+
+  const closeFeedbackModal = () => {
+    setIsFeedbackModalOpen(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#EEEEEE] text-[#0F2F4E]">
@@ -402,7 +414,7 @@ export default function Home() {
               </Link>
               
               <p className="text-white/60 text-sm mt-4">
-                Join thousands of professionals who trust our tax calculations
+                Join the community and Leave a <Link className="underline" href="#" onClick={openFeedbackModal}>review</Link>
               </p>
             </motion.div>
           </div>
@@ -678,6 +690,11 @@ export default function Home() {
       </main>
 
       <Footer />
+      {/* Feedback Modal */}
+      <FeedbackModal 
+        isOpen={isFeedbackModalOpen} 
+        onClose={closeFeedbackModal} 
+      />
     </div>
   );
 }

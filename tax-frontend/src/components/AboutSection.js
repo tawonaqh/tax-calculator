@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { User, Target, Heart, Lightbulb, Shield, Users, Rocket, Mail } from 'lucide-react'
+import Link from 'next/link'
 
 export default function AboutSection() {
   return (
@@ -61,7 +62,7 @@ export default function AboutSection() {
             
             <div className="space-y-4">
               <div>
-                <h3 className="text-xl font-bold text-[#1ED760] mb-2">Culverwell Venge</h3>
+                <h3 className="text-xl font-bold text-[#1ED760] mb-2"><Link href="https://culverwellvenge.com/">Culverwell Venge</Link></h3>
                 <div className="inline-flex items-center gap-2 bg-[#1ED760]/20 text-[#1ED760] px-3 py-1 rounded-full text-sm font-medium mb-4 border border-[#1ED760]/30">
                   <Rocket className="w-3 h-3" />
                   Tax Innovation Lead
@@ -69,7 +70,7 @@ export default function AboutSection() {
               </div>
               
               <p className="text-white/80 leading-relaxed">
-                Culverwell Venge is a licensed tax agent and public accountant.
+                <Link className="underline" href="https://culverwellvenge.com/">Culverwell Venge</Link> is a licensed tax agent and public accountant.
                  As the tax innovation lead he is focused on advancing tax literacy, 
                  responsible digital adoption and stronger tax culture in Zimbabwe - 
                  grounded in clarity, capability, and community participation.

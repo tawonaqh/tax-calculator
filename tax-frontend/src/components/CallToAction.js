@@ -72,7 +72,7 @@ export default function CallToAction() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto leading-relaxed"
           >
-            Join thousands of professionals who trust our platform for accurate, 
+            Join our community for accurate, 
             AI-powered tax calculations and comprehensive planning tools.
           </motion.p>
 
@@ -126,7 +126,7 @@ export default function CallToAction() {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
             </motion.a>
 
-            <motion.a
+            {/* <motion.a
               href="/demo"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -138,7 +138,7 @@ export default function CallToAction() {
               <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center">
                 <div className="w-2 h-2 bg-[#1ED760] rounded-full" />
               </div>
-            </motion.a>
+            </motion.a> */}
           </motion.div>
 
           {/* Trust Indicators */}

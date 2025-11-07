@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Calculator, Sparkles, TrendingUp, Shield, ArrowRight, Play, Star, Zap, Target } from "lucide-react";
+import Link from "next/link";
 
 export default function Hero() {
   const [particles, setParticles] = useState([]);
@@ -166,7 +167,7 @@ export default function Hero() {
             transition={{ duration: 2, repeat: Infinity }}
           />
           <Sparkles className="w-4 h-4 relative z-10" />
-          <span className="relative z-10">Trusted by 2,500+ Tax Professionals</span>
+          <span className="relative z-10">Join the community <Link className="underline" href="https://chat.whatsapp.com/E7EEyNwLl9MGkijENxR3Kq">here</Link></span>
         </motion.div>
 
         {/* Main Heading with character animation */}
@@ -284,7 +285,7 @@ export default function Hero() {
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200 relative z-10" />
           </motion.a>
 
-          <motion.a
+          {/* <motion.a
             href="#features"
             whileHover={{ 
               scale: 1.05,
@@ -303,7 +304,7 @@ export default function Hero() {
             />
             <Play className="w-5 h-5 relative z-10" />
             <span className="relative z-10">Watch Demo</span>
-          </motion.a>
+          </motion.a> */}
         </motion.div>
       </div>
 
