@@ -128,11 +128,6 @@ const FAQ = () => {
       category: "business"
     },
     {
-      question: "Can I claim entertainment expenses?",
-      answer: "No. Entertainment (including hospitality) is specifically non-deductible.",
-      category: "business"
-    },
-    {
       question: "What records must companies keep for tax?",
       answer: "Every taxpayer must keep reasonable records and documents for at least 6 years after the tax period.",
       category: "compliance"
@@ -158,11 +153,6 @@ const FAQ = () => {
       category: "compliance"
     },
     {
-      question: "How do I calculate QPDs?",
-      answer: "Use the Act's cumulative percentages of the estimated annual tax: 1st QPD: 10%, 2nd QPD: 25% (cumulative), 3rd QPD: 30% (cumulative), 4th QPD: 35% (cumulative). These sum to 100%.",
-      category: "compliance"
-    },
-    {
       question: "Can I change my QPD estimate?",
       answer: "Yes. Provisional taxpayers submit an estimate with each period; the Commissioner can waive interest if an under-estimate is within 10% or due to sufficient cause.",
       category: "compliance"
@@ -181,71 +171,6 @@ const FAQ = () => {
       question: "Which exchange rate should I use for tax?",
       answer: "ZIMRA publishes the exchange rate to be used for tax purposes. You should use the official ZIMRA exchange rates for currency conversions in your tax computations.",
       category: "currency"
-    },
-    {
-      question: "Are USD earnings treated differently for tax?",
-      answer: "Taxability depends on source and exemptions, not currency. The Act taxes income from Zimbabwean sources (subject to exemptions), regardless of the currency, with conversion rules where stated.",
-      category: "currency"
-    },
-    {
-      question: "Do I declare USD revenue to ZIMRA?",
-      answer: "Yes. Returns must disclose taxable income; dual-currency specifics are addressed where the Act provides conversion provisions. Separate returns are required for foreign currency income.",
-      category: "currency"
-    },
-    {
-      question: "Is USD payroll taxed differently?",
-      answer: "PAYE applies to 'remuneration' per the Thirteenth Schedule; currency does not change the obligation to withhold/remit. The same PAYE rules apply regardless of currency.",
-      category: "paye"
-    },
-    {
-      question: "How do I treat exchange gains/losses for tax?",
-      answer: "Foreign currency gains/losses follow the nature of the underlying item. Trading/operational items are revenue if gains or expenditure if losses (taxable/deductible on realization); capital items are treated as capital in nature.",
-      category: "currency"
-    },
-    {
-      question: "What triggers a ZIMRA tax audit?",
-      answer: "The Act empowers officers to require information/records and to enter/search with a warrant where there are reasonable grounds of suspected offences; compliance reviews can occur under these powers.",
-      category: "compliance"
-    },
-    {
-      question: "What documents does ZIMRA ask for?",
-      answer: "Books of account, records, statements, working papers or calculations supporting income/expenses/tax, and computer print-outs where necessary.",
-      category: "compliance"
-    },
-    {
-      question: "How do I respond to a ZIMRA tax query?",
-      answer: "You must provide the requested information; you may be accompanied by a tax agent/legal practitioner/accountant when attending interviews. Keep 6-year records to substantiate positions.",
-      category: "compliance"
-    },
-    {
-      question: "Why was my tax clearance blocked?",
-      answer: "Where a taxpayer has arrears/non-compliance in the form of not submitting returns, these commonly result in no clearance.",
-      category: "compliance"
-    },
-    {
-      question: "How do I restore tax clearance?",
-      answer: "Rectify non-compliance and arrears so that section 80 withholding no longer applies and your tax clearance is renewed.",
-      category: "compliance"
-    },
-    {
-      question: "What are the penalties for tax evasion/late payment?",
-      answer: "Interest accrues on late payment under section 71(2) - (3). Additional tax/penalties may apply under various provisions. Current rates are 10% p.a for foreign currency and 40% for ZiG.",
-      category: "compliance"
-    },
-    {
-      question: "Can ZIMRA garnish my bank account?",
-      answer: "Yes. The Commissioner may appoint an agent (including a financial institution) and require payment of tax due from moneys held for the taxpayer (garnishee).",
-      category: "compliance"
-    },
-    {
-      question: "How long must I keep tax records?",
-      answer: "At least 6 years after the tax period.",
-      category: "compliance"
-    },
-    {
-      question: "Can ZIMRA back-tax previous years?",
-      answer: "Yes. The Commissioner may make additional/estimated assessments within the statutory framework (including where prejudice or misstatement is suspected).",
-      category: "compliance"
     }
   ];
 
