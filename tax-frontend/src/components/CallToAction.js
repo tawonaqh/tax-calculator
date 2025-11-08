@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { ArrowRight, Calculator, Sparkles, Users, Zap } from 'lucide-react'
+import Link from 'next/link'
 
 export default function CallToAction() {
   const features = [
@@ -150,24 +151,24 @@ export default function CallToAction() {
             className="space-y-4"
           >
             <p className="text-gray-300 text-sm font-medium">
-              No credit card required • Free forever plan • Setup in 2 minutes
+              No credit card required • Setup in 2 minutes
             </p>
 
             {/* Social Proof */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-gray-300">
               <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
+                {/* <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
                       className="w-8 h-8 bg-white rounded-full border-2 border-[#1ED760]"
                     />
                   ))}
-                </div>
-                <span className="text-sm font-medium">Join 2,500+ tax professionals</span>
+                </div> */}
+                <span className="text-sm font-medium">Join Our <Link className="underline" href="https://chat.whatsapp.com/E7EEyNwLl9MGkijENxR3Kq">Community</Link></span>
               </div>
 
-              <div className="hidden sm:block w-px h-6 bg-white/20" />
+              {/* <div className="hidden sm:block w-px h-6 bg-white/20" />
 
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -176,7 +177,7 @@ export default function CallToAction() {
                   ))}
                 </div>
                 <span className="text-sm font-medium">4.9/5 rating</span>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </motion.div>
