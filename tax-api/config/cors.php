@@ -20,7 +20,9 @@ return [
     // Allowed frontend origins
     'allowed_origins' => [
         'http://localhost:3000',        // local dev
-        'https://taxcul.vercel.app',    // Vercel production frontend
+        'https://taxcul.vercel.app', // vercel stagging
+        'https://taxcul.com',
+        'https://www.taxcul.com',     // Vercel production frontend
     ],
 
     // Optional: allow future Vercel deployments dynamically
