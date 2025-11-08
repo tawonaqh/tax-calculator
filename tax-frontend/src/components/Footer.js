@@ -112,7 +112,7 @@ const Footer = () => {
                 {[
                   { icon: Twitter, href: '#', label: 'Twitter' },
                   { icon: Linkedin, href: '#', label: 'LinkedIn' },
-                  { icon: Github, href: 'https://github.com/TaxCul', label: 'GitHub' },
+                  { icon: Github, href: '#', label: 'GitHub' },
                 ].map((social, index) => (
                   <motion.a
                     key={index}
