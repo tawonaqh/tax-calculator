@@ -156,7 +156,7 @@ POST /calculate/healthcare
 ## 🎨 UI/UX Features
 
 ### Design System
-- **Color Scheme**: Dark theme with lime green accents
+- **Color Scheme**: Light theme with green and navy accents
 - **Typography**: Clean, readable fonts
 - **Spacing**: Consistent padding and margins
 - **Icons**: Lucide React for consistent iconography
