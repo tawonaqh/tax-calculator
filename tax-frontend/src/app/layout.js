@@ -15,7 +15,33 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Tax Calculator Zimbabwe | TaxCul App",
-  description: "Simplify your tax calculations with our easy-to-use AI-powered tax calculator specifically designed for the Zimbabwean environment. Fast, quick, and compliant.",
+  description:
+    "Simplify your tax calculations with our easy-to-use AI-powered tax calculator specifically designed for the Zimbabwean environment. Fast, quick, and compliant.",
+
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: ["/favicon.ico"],
+    apple: ["/apple-touch-icon.png"],
+    other: [
+      {
+        rel: "icon",
+        url: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
+
+  openGraph: {
+    title: "Tax Calculator Zimbabwe | TaxCul App",
+    description:
+      "Simplify your tax calculations with our easy-to-use AI-powered tax calculator.",
+    images: ["/og-image.png"],
+    type: "website",
+    locale: "en_ZW",
+  },
 };
 
 export default function RootLayout({ children }) {
