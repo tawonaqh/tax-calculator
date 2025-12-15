@@ -281,7 +281,7 @@ const VATImportedServices = () => {
               <div className="space-y-3 text-sm text-[#0F2F4E]">
                 <div className="flex justify-between">
                   <span>Applicable Rate:</span>
-                  <span className="text-[#1ED760] font-semibold">14.5%</span>
+                  <span className="text-[#1ED760] font-semibold">15.5%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax Base:</span>

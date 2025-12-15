@@ -295,7 +295,7 @@ const PAYETaxCalculator = () => {
                         placeholder="NSSA contributions"
                       />
                       <InputField
-                        label="Total Deductions"
+                        label="Other Deductions"
                         value={formState.totalDeductions}
                         onChange={handleChange('totalDeductions')}
                         placeholder="Other deductions"
