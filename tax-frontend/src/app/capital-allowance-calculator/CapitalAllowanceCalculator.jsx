@@ -8,7 +8,9 @@ import {
   Settings, RefreshCw, ChevronRight, AlertCircle,
   DollarSign, Percent, Calendar, Tag, Trash2,
   Car, Factory, Cpu, Home, Sofa, Hammer,
-  Info, Banknote, Clock, FileText
+  Info, Banknote, Clock, FileText, Zap,
+  TrendingDown, ChevronDown, ChevronUp, Users,
+  Shield, Globe, Target, Sparkles
 } from 'lucide-react'
 import Papa from 'papaparse'
 
@@ -31,8 +33,8 @@ const InputField = ({
       </label>
       {tooltip && (
         <div className="group relative">
-          <Info className="w-4 h-4 text-[#0F2F4E]/40 cursor-help" />
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-[#0F2F4E] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+          <Info className="w-4 h-4 text-[#0F2F4E]/40 cursor-help hover:text-[#0F2F4E]/60 transition-colors" />
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-[#0F2F4E] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10 shadow-lg">
             {tooltip}
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[#0F2F4E]"></div>
           </div>
@@ -51,9 +53,9 @@ const InputField = ({
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
-        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-2 py-3 bg-white border border-[#EEEEEE] rounded-xl 
+        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-2 py-3 bg-white border border-[#E5E7EB] rounded-xl 
                    text-[#0F2F4E] placeholder-[#0F2F4E]/40 focus:outline-none focus:border-[#1ED760] 
-                   focus:ring-2 focus:ring-[#1ED760]/50 transition-all duration-300 shadow-sm ${className}`}
+                   focus:ring-3 focus:ring-[#1ED760]/20 transition-all duration-300 shadow-sm hover:shadow-md ${className}`}
       />
     </div>
   </div>
@@ -68,8 +70,8 @@ const SelectField = ({ label, value, onChange, options, icon: Icon, tooltip = ''
       </label>
       {tooltip && (
         <div className="group relative">
-          <Info className="w-4 h-4 text-[#0F2F4E]/40 cursor-help" />
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-[#0F2F4E] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
+          <Info className="w-4 h-4 text-[#0F2F4E]/40 cursor-help hover:text-[#0F2F4E]/60 transition-colors" />
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-[#0F2F4E] text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10 shadow-lg">
             {tooltip}
             <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[#0F2F4E]"></div>
           </div>
@@ -85,9 +87,9 @@ const SelectField = ({ label, value, onChange, options, icon: Icon, tooltip = ''
       <select
         value={value}
         onChange={onChange}
-        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 bg-white border border-[#EEEEEE] rounded-xl 
+        className={`w-full ${Icon ? 'pl-10' : 'pl-4'} pr-4 py-3 bg-white border border-[#E5E7EB] rounded-xl 
                    text-[#0F2F4E] focus:outline-none focus:border-[#1ED760] 
-                   focus:ring-2 focus:ring-[#1ED760]/50 transition-all duration-300 shadow-sm`}
+                   focus:ring-3 focus:ring-[#1ED760]/20 transition-all duration-300 shadow-sm hover:shadow-md appearance-none cursor-pointer`}
       >
         {options.map(option => (
           <option key={option.value} value={option.value}>
@@ -95,54 +97,59 @@ const SelectField = ({ label, value, onChange, options, icon: Icon, tooltip = ''
           </option>
         ))}
       </select>
+      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+        <ChevronDown className="w-4 h-4 text-[#0F2F4E]/60" />
+      </div>
     </div>
   </div>
 )
 
 // Card Component
-const Card = ({ children, className = '' }) => (
-  <div className={`bg-white rounded-2xl border border-[#FFD700] shadow-lg p-6 ${className}`}>
+const Card = ({ children, className = '', hover = false }) => (
+  <div className={`bg-white rounded-2xl border border-[#E5E7EB] shadow-lg hover:shadow-xl transition-all duration-300 ${hover ? 'hover:border-[#1ED760]/30' : ''} p-6 ${className}`}>
     {children}
   </div>
 )
 
-// StatCard Component - Fixed with proper icon display
+// StatCard Component
 const StatCard = ({ 
   title, 
   value, 
   icon: Icon, 
   color = '#1ED760', 
-  trend, 
+  trend,
+  trendDirection = 'up',
   description,
-  size = 'sm'
+  size = 'md',
+  loading = false
 }) => {
   const sizeClasses = {
     sm: {
       card: 'p-3',
-      iconWrapper: 'p-2 hidden',
-      icon: 'w-2 h-2 hidden',
-      value: 'text-sm',
-      title: 'text-xs',
+      iconWrapper: 'p-2',
+      icon: 'w-4 h-4',
+      value: 'text-lg font-bold',
+      title: 'text-xs font-medium',
       description: 'text-xs',
       trend: 'text-xs',
       trendIcon: 'w-3 h-3',
     },
     md: {
-      card: 'p-6',
+      card: 'p-4',
       iconWrapper: 'p-3',
-      icon: 'w-3 h-3',
-      value: 'text-xl',
-      title: 'text-sm',
+      icon: 'w-5 h-5',
+      value: 'text-xl font-bold',
+      title: 'text-sm font-medium',
       description: 'text-xs',
       trend: 'text-sm',
       trendIcon: 'w-4 h-4',
     },
     lg: {
-      card: 'p-8',
+      card: 'p-6',
       iconWrapper: 'p-4',
-      icon: 'w-8 h-8',
-      value: 'text-3xl',
-      title: 'text-base',
+      icon: 'w-6 h-6',
+      value: 'text-2xl font-bold',
+      title: 'text-base font-medium',
       description: 'text-sm',
       trend: 'text-base',
       trendIcon: 'w-5 h-5',
@@ -152,35 +159,78 @@ const StatCard = ({
   const classes = sizeClasses[size]
 
   return (
-    <div className={`bg-white rounded-2xl border border-[#FFD700] shadow-sm hover:shadow-md transition-all duration-300 ${classes.card}`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className={`${classes.title} font-medium text-[#0F2F4E]/60 mb-1`}>{title}</p>
-          <p className={`${classes.value} font-bold text-[#0F2F4E]`}>{value}</p>
+    <div className={`bg-white rounded-xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all duration-300 ${classes.card}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className={`${classes.title} text-[#0F2F4E]/60 mb-2`}>{title}</p>
+          {loading ? (
+            <div className="h-8 bg-[#EEEEEE] rounded animate-pulse mb-2"></div>
+          ) : (
+            <p className={`${classes.value} text-[#0F2F4E] mb-1`}>{value}</p>
+          )}
           {description && (
-            <p className={`${classes.description} text-[#0F2F4E]/40 mt-1`}>{description}</p>
+            <p className={`${classes.description} text-[#0F2F4E]/40`}>{description}</p>
+          )}
+          {trend && (
+            <div className={`flex items-center gap-1 mt-3 ${classes.trend} ${trendDirection === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+              {trendDirection === 'up' ? <TrendingUp className={classes.trendIcon} /> : <TrendingDown className={classes.trendIcon} />}
+              <span>{trendDirection === 'up' ? '+' : ''}{trend}%</span>
+            </div>
           )}
         </div>
         {Icon && (
           <div 
-            className={`${classes.iconWrapper} rounded-xl`}
+            className={`${classes.iconWrapper} rounded-lg flex-shrink-0`}
             style={{ 
-              backgroundColor: `${color}1A` // 1A = 10% opacity in hex
+              backgroundColor: `${color}15`,
+              color: color
             }}
           >
-            <Icon className={classes.icon} style={{ color }} />
+            <Icon className={classes.icon} />
           </div>
         )}
       </div>
-      {trend && (
-        <div className={`flex items-center gap-1 mt-3 ${classes.trend} ${trend > 0 ? 'text-green-500' : 'text-red-500'}`}>
-          <TrendingUp className={classes.trendIcon} />
-          <span>{trend > 0 ? '+' : ''}{trend}%</span>
-        </div>
-      )}
     </div>
   )
 }
+
+// Badge Component
+const Badge = ({ children, variant = 'default', icon: Icon }) => {
+  const variants = {
+    default: 'bg-[#0F2F4E]/10 text-[#0F2F4E]',
+    success: 'bg-[#1ED760]/10 text-[#1ED760]',
+    warning: 'bg-[#FFD700]/10 text-[#FFD700]',
+    danger: 'bg-red-100 text-red-700',
+    info: 'bg-blue-100 text-blue-700'
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${variants[variant]}`}>
+      {Icon && <Icon className="w-3 h-3" />}
+      {children}
+    </span>
+  )
+}
+
+// Toggle Switch Component
+const Toggle = ({ enabled, onChange, label }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-sm text-[#0F2F4E]">{label}</span>
+    <button
+      type="button"
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#1ED760] focus:ring-offset-2 ${
+        enabled ? 'bg-[#1ED760]' : 'bg-[#E5E7EB]'
+      }`}
+      onClick={() => onChange(!enabled)}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          enabled ? 'translate-x-6' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  </div>
+)
 
 // Generate unique IDs
 const generateId = () => Date.now() + Math.random().toString(36).substr(2, 9)
@@ -193,7 +243,6 @@ const ZIM_EFFECTIVE_TAX_RATE = 0.2575 // 25.75%
 
 // Capital Allowance Rules for Zimbabwe (2024/2025)
 const ZIM_CAPITAL_ALLOWANCE_RULES = {
-  // Motor Vehicles - No SIA, 20% W&T
   MotorVehicles: { 
     wAndTRate: 0.20, 
     siaRate: 0.00,
@@ -203,7 +252,6 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
     minValue: 0,
     conditions: "No SIA for vehicles"
   },
-  // Plant & Machinery - 25% W&T + 50% SIA (50% in Year 1, 25% over next 4 years)
   PlantMachinery: { 
     wAndTRate: 0.25, 
     siaRate: 0.50,
@@ -213,7 +261,6 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
     minValue: 1000,
     siaExplanation: "50% SIA in Year 1, 25% over next 4 years"
   },
-  // Computers & IT Equipment - 33.33% W&T + 50% SIA
   ITEquipment: { 
     wAndTRate: 0.3333, 
     siaRate: 0.50,
@@ -223,16 +270,14 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
     minValue: 0,
     conditions: "Software included with hardware"
   },
-  // Industrial Buildings - 5% W&T + 50% SIA
   IndustrialBuildings: { 
     wAndTRate: 0.05, 
     siaRate: 0.50,
-    icon: Factory,
+    icon: Building,
     description: "Factories, warehouses for manufacturing",
     color: "#F59E0B",
     minValue: 10000
   },
-  // Commercial Buildings - 2.5% W&T only (No SIA)
   CommercialBuildings: { 
     wAndTRate: 0.025, 
     siaRate: 0.00,
@@ -242,7 +287,6 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
     minValue: 10000,
     conditions: "No SIA for commercial buildings"
   },
-  // Furniture & Fittings - 10% W&T only (No SIA)
   FurnitureFittings: { 
     wAndTRate: 0.10, 
     siaRate: 0.00,
@@ -251,7 +295,6 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
     color: "#EC4899",
     minValue: 500
   },
-  // Improvements & Other - 10% W&T only (No SIA)
   Improvements: { 
     wAndTRate: 0.10, 
     siaRate: 0.00,
@@ -264,12 +307,12 @@ const ZIM_CAPITAL_ALLOWANCE_RULES = {
 
 // Zimbabwe Tax Rates (2024/2025)
 const ZIM_TAX_RATES = {
-  standard: ZIM_EFFECTIVE_TAX_RATE, // 25.75% effective rate
-  specialMiningLease: 0.1545, // 15% + 3% AIDS levy
-  sezAfter5Years: 0.1545, // 15% + 3% AIDS levy
-  manufacturingExport: 0.1545, // 15% + 3% AIDS levy for 51%+ exports
-  smallScale: 0.1545, // 15% + 3% AIDS levy for turnover < $25,000
-  agriculture: 0.103, // 10% + 3% AIDS levy
+  standard: ZIM_EFFECTIVE_TAX_RATE,
+  specialMiningLease: 0.1545,
+  sezAfter5Years: 0.1545,
+  manufacturingExport: 0.1545,
+  smallScale: 0.1545,
+  agriculture: 0.103,
 }
 
 // Compliance Information
@@ -304,7 +347,8 @@ const INITIAL_SCENARIOS = [
     description: 'Current business plan',
     created_at: new Date().toISOString(),
     assets: [],
-    businessType: 'standard'
+    businessType: 'standard',
+    color: '#3B82F6'
   },
   {
     id: 'scenario-2',
@@ -312,12 +356,10 @@ const INITIAL_SCENARIOS = [
     description: '20% growth with new equipment',
     created_at: new Date().toISOString(),
     assets: [],
-    businessType: 'standard'
+    businessType: 'standard',
+    color: '#10B981'
   }
 ]
-
-// Initial sample assets for base scenario
-const INITIAL_ASSETS = []
 
 const CapitalAllowanceEngine = () => {
   // For scenarios
@@ -327,10 +369,7 @@ const CapitalAllowanceEngine = () => {
   const [activeScenario, setActiveScenario] = useState(INITIAL_SCENARIOS[0]?.id || null)
 
   // For assets
-  const [assets, setAssets] = useState(INITIAL_ASSETS.map(asset => ({
-    ...asset,
-    current_rtv: asset.current_rtv || asset.acquisition_cost
-  })))
+  const [assets, setAssets] = useState([])
 
   // State for new asset
   const [newAsset, setNewAsset] = useState({
@@ -357,9 +396,6 @@ const CapitalAllowanceEngine = () => {
     periodType: 'Annual',
   })
 
-  // Accounting data (for tax P&L integration)
-  const [accountingData, setAccountingData] = useState({})
-
   // Results
   const [results, setResults] = useState(null)
   const [comparisonResults, setComparisonResults] = useState(null)
@@ -368,6 +404,7 @@ const CapitalAllowanceEngine = () => {
   const [activeTab, setActiveTab] = useState('assets')
   const [isCreatingScenario, setIsCreatingScenario] = useState(false)
   const [newScenarioName, setNewScenarioName] = useState('')
+  const [expandedYears, setExpandedYears] = useState({})
 
   // Current tax rate based on business type
   const currentTaxRate = ZIM_TAX_RATES[businessType] || ZIM_TAX_RATES.standard
@@ -375,20 +412,9 @@ const CapitalAllowanceEngine = () => {
   // Save to localStorage whenever state changes
   useEffect(() => {
     localStorage.setItem('taxcul-scenarios', JSON.stringify(scenarios))
-  }, [scenarios])
-
-  useEffect(() => {
     localStorage.setItem('taxcul-active-scenario', activeScenario)
-  }, [activeScenario])
-
-  useEffect(() => {
     localStorage.setItem('taxcul-assets', JSON.stringify(assets))
-  }, [assets])
-
-  // Get assets for active scenario
-  const getActiveScenarioAssets = () => {
-    return assets.filter(asset => asset.scenario_id === activeScenario)
-  }
+  }, [scenarios, activeScenario, assets])
 
   // Load from localStorage only on the client side
   useEffect(() => {
@@ -423,13 +449,15 @@ const CapitalAllowanceEngine = () => {
       return
     }
 
+    const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899']
     const newScenario = {
       id: `scenario-${generateId()}`,
       scenario_name: newScenarioName,
       description: `${newScenarioName} scenario for tax planning`,
       created_at: new Date().toISOString(),
       assets: [],
-      businessType: 'standard'
+      businessType: 'standard',
+      color: colors[scenarios.length % colors.length]
     }
 
     setScenarios([...scenarios, newScenario])
@@ -457,7 +485,6 @@ const CapitalAllowanceEngine = () => {
     const rules = ZIM_CAPITAL_ALLOWANCE_RULES[newAsset.asset_category]
     const cost = parseFloat(newAsset.acquisition_cost)
     
-    // Check minimum value thresholds
     if (rules.minValue && cost < rules.minValue) {
       setError(`Minimum value for ${rules.description} is $${rules.minValue.toLocaleString()}`)
       return
@@ -548,11 +575,9 @@ const CapitalAllowanceEngine = () => {
       const acquisitionYear = new Date(asset.acquisition_date).getFullYear()
       const yearsSinceAcquisition = year - acquisitionYear
 
-      // Initialize asset tracking if not exists
       if (!asset.sia_claimed) asset.sia_claimed = false
       if (!asset.remaining_sia_years) asset.remaining_sia_years = rules.siaRate > 0 ? 4 : 0
 
-      // Special Initial Allowance (SIA) - Year 1 only
       if (acquisitionYear === year && !asset.sia_claimed && rules.siaRate > 0) {
         const sia = asset.acquisition_cost * rules.siaRate
         siaTotal += sia
@@ -568,7 +593,6 @@ const CapitalAllowanceEngine = () => {
         })
       }
 
-      // SIA Continuation (25% over next 4 years after Year 1)
       if (asset.sia_claimed && asset.remaining_sia_years > 0 && yearsSinceAcquisition >= 1) {
         const yearsClaimed = 4 - asset.remaining_sia_years
         if (yearsClaimed >= 1 && yearsClaimed <= 4) {
@@ -587,15 +611,13 @@ const CapitalAllowanceEngine = () => {
         }
       }
 
-      // Wear & Tear Allowance (every year)
       if (yearsSinceAcquisition >= 0 && asset.current_rtv > 0) {
         const wAndT = Math.min(
           asset.current_rtv * rules.wAndTRate,
-          asset.current_rtv // Can't depreciate below 0
+          asset.current_rtv
         )
         wAndTTotal += wAndT
         
-        // Update remaining tax value
         asset.current_rtv = Math.max(0, asset.current_rtv - wAndT)
         
         assetBreakdown.push({
@@ -634,14 +656,13 @@ const CapitalAllowanceEngine = () => {
         periods.push(year)
       }
 
-      const activeScenarioAssets = getActiveScenarioAssets()
+      const activeScenarioAssets = assets.filter(asset => asset.scenario_id === activeScenario)
       const allowances = {}
       let totalCapitalAllowances = 0
       let totalTaxSavings = 0
       let totalSIAAmount = 0
       let totalWTAmount = 0
 
-      // Calculate for each period
       periods.forEach(year => {
         const { totalAllowance, siaTotal, wAndTTotal } = calculateZimbabweCapitalAllowances(activeScenarioAssets, year)
         allowances[year] = {
@@ -656,7 +677,6 @@ const CapitalAllowanceEngine = () => {
         totalWTAmount += wAndTTotal
       })
 
-      // Get category summary
       const summaryByCategory = {}
       Object.keys(ZIM_CAPITAL_ALLOWANCE_RULES).forEach(category => {
         const categoryAssets = activeScenarioAssets.filter(a => a.asset_category === category)
@@ -681,10 +701,9 @@ const CapitalAllowanceEngine = () => {
         }
       })
 
-      // Simulate tax P&L results with Zimbabwe tax rates
       const taxResults = {
         period_results: periods.reduce((acc, year) => {
-          const revenue = 100000 + (year - periods[0]) * 20000 // Growing revenue
+          const revenue = 100000 + (year - periods[0]) * 20000
           const expenses = 60000 + (year - periods[0]) * 10000
           const accountingProfit = revenue - expenses
           const taxableIncome = Math.max(0, accountingProfit - allowances[year].capital_allowance)
@@ -732,7 +751,6 @@ const CapitalAllowanceEngine = () => {
           const scenarioAssets = assets.filter(a => a.scenario_id === scenario.id)
           const totalCost = scenarioAssets.reduce((sum, a) => sum + (a.acquisition_cost || 0), 0)
           
-          // Calculate allowances using Zimbabwe rules
           let totalAllowance = 0
           let totalSIA = 0
           let totalWT = 0
@@ -746,7 +764,7 @@ const CapitalAllowanceEngine = () => {
           }
           
           const taxSavings = totalAllowance * currentTaxRate
-          const effectiveTaxRate = 0.25 // Simplified - would calculate based on actual profits
+          const effectiveTaxRate = 0.25
 
           return {
             id: scenario.id,
@@ -776,7 +794,7 @@ const CapitalAllowanceEngine = () => {
   }
 
   const exportToCSV = () => {
-    const activeScenarioAssets = getActiveScenarioAssets()
+    const activeScenarioAssets = assets.filter(asset => asset.scenario_id === activeScenario)
     const csvContent = [
       ['Asset Name', 'Category', 'Acquisition Date', 'Cost (USD)', 'Allowance Method', 'Currency'],
       ...activeScenarioAssets.map(asset => [
@@ -797,7 +815,7 @@ const CapitalAllowanceEngine = () => {
     a.click()
   }
 
-  const activeScenarioAssets = getActiveScenarioAssets()
+  const activeScenarioAssets = assets.filter(asset => asset.scenario_id === activeScenario)
   const totalAssetCost = activeScenarioAssets.reduce((sum, asset) => sum + (asset.acquisition_cost || 0), 0)
   const totalAllowances = results?.allowances?.total_capital_allowances || 0
   const totalTaxSavings = results?.allowances?.total_tax_savings || 0
@@ -805,36 +823,42 @@ const CapitalAllowanceEngine = () => {
   const totalWT = results?.allowances?.total_wt || 0
 
   return (
-    <div className="min-h-screen bg-[#EEEEEE] py-12">
-      <div className="max-w-8xl mx-auto px-6">
+    <div className="min-h-screen bg-gradient-to-br from-[#EEEEEE] to-[#E5E7EB] py-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-12"
+          className="mb-8"
         >
-          <Card className="p-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="p-4 bg-[#1ED760]/10 rounded-2xl">
-                  <Calculator className="w-12 h-12 text-[#1ED760]" />
-                </div>
-                <div>
-                  <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E]">
-                    Capital Allowance Engine
-                  </h1>
-                  <p className="text-xl text-[#0F2F4E]/80 mt-2">
-                    Zimbabwe Tax Planning with Scenario Analysis
-                  </p>
-                  <div className="flex items-center gap-4 mt-3 text-sm">
-                    <span className="px-3 py-1 bg-[#1ED760]/10 text-[#1ED760] rounded-full">
-                      Effective Tax Rate: {(currentTaxRate * 100).toFixed(2)}%
-                    </span>
-                    <span className="px-3 py-1 bg-[#0F2F4E]/10 text-[#0F2F4E] rounded-full">
-                      Finance (No. 2) Act, 2024
-                    </span>
+          <Card className="p-8 bg-gradient-to-r from-[#0F2F4E] to-[#1a3a5f] border-none">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+              <div className="flex-1">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-sm">
+                    <Calculator className="w-8 h-8 text-white" />
                   </div>
+                  <div>
+                    <h1 className="text-3xl md:text-4xl font-bold text-white">
+                      Capital Allowance Engine
+                    </h1>
+                    <p className="text-lg text-white/80 mt-2 flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Zimbabwe Tax Planning with Scenario Analysis
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                  <Badge variant="success" icon={Zap}>
+                    Effective Tax Rate: {(currentTaxRate * 100).toFixed(2)}%
+                  </Badge>
+                  <Badge variant="info" icon={Globe}>
+                    Finance (No. 2) Act, 2024
+                  </Badge>
+                  <Badge variant="warning" icon={Target}>
+                    {activeScenarioAssets.length} Assets
+                  </Badge>
                 </div>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -842,8 +866,8 @@ const CapitalAllowanceEngine = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={exportToCSV}
-                  className="px-6 py-3 bg-[#0F2F4E] text-white rounded-xl font-semibold 
-                           hover:bg-[#0F2F4E]/90 transition-all duration-300 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold 
+                           hover:bg-white/20 transition-all duration-300 flex items-center gap-2 border border-white/20"
                 >
                   <Download className="w-4 h-4" />
                   Export CSV
@@ -852,22 +876,22 @@ const CapitalAllowanceEngine = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => compareScenarios(scenarios.slice(0, 2).map(s => s.id))}
-                  className="px-6 py-3 bg-[#1ED760] text-white rounded-xl font-semibold 
-                           hover:bg-[#1ED760]/90 transition-all duration-300 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-[#1ED760] text-white rounded-xl font-semibold 
+                           hover:bg-[#1ED760]/90 transition-all duration-300 flex items-center gap-2 shadow-lg"
                 >
                   <Share2 className="w-4 h-4" />
-                  Compare Scenarios
+                  Compare
                 </motion.button>
               </div>
             </div>
           </Card>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content - 3 columns */}
-          <div className="lg:col-span-3">
-            {/* Scenario & Period Control */}
-            <Card className="mb-6">
+          <div className="lg:col-span-3 space-y-6">
+            {/* Control Panel */}
+            <Card hover={true}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <SelectField
                   label="Active Scenario"
@@ -883,24 +907,21 @@ const CapitalAllowanceEngine = () => {
                   icon={Settings}
                 />
 
-                <div className="">
-                  <label className="block text-sm font-medium text-[#0F2F4E]">
-                    Business Type (Tax Rate)
-                  </label>
-                  <SelectField
-                    value={businessType}
-                    onChange={(e) => setBusinessType(e.target.value)}
-                    options={[
-                      { value: 'standard', label: `Standard Corporate (${(ZIM_TAX_RATES.standard * 100).toFixed(2)}%)` },
-                      { value: 'specialMiningLease', label: `Special Mining Lease (${(ZIM_TAX_RATES.specialMiningLease * 100).toFixed(2)}%)` },
-                      { value: 'sezAfter5Years', label: `SEZ (After 5 years) (${(ZIM_TAX_RATES.sezAfter5Years * 100).toFixed(2)}%)` },
-                      { value: 'manufacturingExport', label: `Manufacturing Export (${(ZIM_TAX_RATES.manufacturingExport * 100).toFixed(2)}%)` },
-                      { value: 'agriculture', label: `Agriculture (${(ZIM_TAX_RATES.agriculture * 100).toFixed(2)}%)` }
-                    ]}
-                  />
-                </div>
+                <SelectField
+                  label="Business Type"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
+                  options={[
+                    { value: 'standard', label: `Standard Corporate (${(ZIM_TAX_RATES.standard * 100).toFixed(2)}%)` },
+                    { value: 'specialMiningLease', label: `Special Mining Lease (${(ZIM_TAX_RATES.specialMiningLease * 100).toFixed(2)}%)` },
+                    { value: 'sezAfter5Years', label: `SEZ (After 5 years) (${(ZIM_TAX_RATES.sezAfter5Years * 100).toFixed(2)}%)` },
+                    { value: 'manufacturingExport', label: `Manufacturing Export (${(ZIM_TAX_RATES.manufacturingExport * 100).toFixed(2)}%)` },
+                    { value: 'agriculture', label: `Agriculture (${(ZIM_TAX_RATES.agriculture * 100).toFixed(2)}%)` }
+                  ]}
+                  icon={Building}
+                />
 
-                <div className="">
+                <div className="space-y-2">
                   <label className="block text-sm font-medium text-[#0F2F4E]">
                     Period Range
                   </label>
@@ -924,17 +945,17 @@ const CapitalAllowanceEngine = () => {
                 </div>
               </div>
               
-              <div className="flex items-end gap-3 mt-4">
+              <div className="flex items-center gap-3 mt-6">
                 <motion.button
                   onClick={calculateTaxImpact}
                   disabled={loading || !activeScenario}
                   whileHover={{ scale: loading ? 1 : 1.02 }}
                   whileTap={{ scale: loading ? 1 : 0.98 }}
-                  className={`flex-1 py-3 px-6 rounded-xl font-bold text-lg transition-all duration-300 
-                             flex items-center justify-center gap-3 shadow-lg
+                  className={`flex-1 py-3 px-6 rounded-xl font-bold text-base transition-all duration-300 
+                             flex items-center justify-center gap-3 shadow-lg relative overflow-hidden
                              ${loading || !activeScenario
-                               ? 'bg-[#EEEEEE] text-[#0F2F4E]/40 cursor-not-allowed' 
-                               : 'bg-[#1ED760] text-white hover:bg-[#1ED760]/90 hover:shadow-[#1ED760]/25'
+                               ? 'bg-[#E5E7EB] text-[#0F2F4E]/40 cursor-not-allowed' 
+                               : 'bg-gradient-to-r from-[#1ED760] to-[#10B981] text-white hover:shadow-xl hover:shadow-[#1ED760]/25'
                              }`}
                 >
                   {loading ? (
@@ -944,17 +965,24 @@ const CapitalAllowanceEngine = () => {
                     </>
                   ) : (
                     <>
-                      <Calculator className="w-5 h-5" />
+                      <Sparkles className="w-5 h-5" />
                       Run ZIM Tax Analysis
                       <ChevronRight className="w-5 h-5" />
                     </>
                   )}
                 </motion.button>
+                
+                <button
+                  onClick={() => window.location.reload()}
+                  className="p-3 border border-[#E5E7EB] rounded-xl hover:bg-[#0F2F4E]/5 transition-colors"
+                >
+                  <RefreshCw className="w-5 h-5 text-[#0F2F4E]/60" />
+                </button>
               </div>
             </Card>
 
             {/* Tab Navigation */}
-            <div className="flex border-b border-[#EEEEEE] mb-6 overflow-x-auto">
+            <div className="flex space-x-1 bg-white/50 backdrop-blur-sm rounded-xl p-1 border border-[#E5E7EB]">
               {[
                 { id: 'assets', label: 'Asset Register', icon: Package },
                 { id: 'results', label: 'Results', icon: BarChart3 },
@@ -963,13 +991,13 @@ const CapitalAllowanceEngine = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-3 font-medium text-lg whitespace-nowrap
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-medium text-sm whitespace-nowrap rounded-lg transition-all duration-300
                              ${activeTab === tab.id 
-                               ? 'text-[#1ED760] border-b-2 border-[#1ED760]' 
-                               : 'text-[#0F2F4E]/60 hover:text-[#0F2F4E]'
-                             } transition-colors duration-300`}
+                               ? 'bg-white text-[#1ED760] shadow-md' 
+                               : 'text-[#0F2F4E]/60 hover:text-[#0F2F4E] hover:bg-white/50'
+                             }`}
                 >
-                  <tab.icon className="w-5 h-5" />
+                  <tab.icon className="w-4 h-4" />
                   {tab.label}
                 </button>
               ))}
@@ -980,10 +1008,10 @@ const CapitalAllowanceEngine = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl"
+                className="p-4 bg-red-50 border border-red-200 rounded-xl"
               >
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-500" />
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                   <p className="text-red-700 text-sm">{error}</p>
                 </div>
               </motion.div>
@@ -1007,7 +1035,6 @@ const CapitalAllowanceEngine = () => {
                     deleteAsset={deleteAsset}
                     activeScenario={activeScenario}
                     handleCSVUpload={handleCSVUpload}
-                    csvFile={csvFile}
                     isCreatingScenario={isCreatingScenario}
                     setIsCreatingScenario={setIsCreatingScenario}
                     newScenarioName={newScenarioName}
@@ -1022,6 +1049,8 @@ const CapitalAllowanceEngine = () => {
                     periodSettings={periodSettings}
                     totalAssetCost={totalAssetCost}
                     businessType={businessType}
+                    expandedYears={expandedYears}
+                    setExpandedYears={setExpandedYears}
                   />
                 )}
 
@@ -1039,9 +1068,12 @@ const CapitalAllowanceEngine = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Stats */}
-            <Card>
-              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">Scenario Summary</h3>
-              <div className="grid grid-cols-2 gap-4">
+            <Card hover={true}>
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5" />
+                Scenario Summary
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
                 <StatCard
                   title="Total Assets"
                   value={activeScenarioAssets.length}
@@ -1077,7 +1109,7 @@ const CapitalAllowanceEngine = () => {
                 )}
               </div>
               {results && (
-                <div className="mt-4 pt-4 border-t border-[#EEEEEE]">
+                <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div className="text-[#0F2F4E]/60">SIA Total:</div>
                     <div className="text-right font-medium">${totalSIA.toLocaleString()}</div>
@@ -1093,42 +1125,47 @@ const CapitalAllowanceEngine = () => {
             </Card>
 
             {/* Category Breakdown */}
-            <Card>
-              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">Assets by Category</h3>
-              <div className="space-y-4">
+            <Card hover={true}>
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Assets by Category
+              </h3>
+              <div className="space-y-3">
                 {Object.keys(ZIM_CAPITAL_ALLOWANCE_RULES).map(category => {
                   const rules = ZIM_CAPITAL_ALLOWANCE_RULES[category]
                   const categoryAssets = activeScenarioAssets.filter(a => a.asset_category === category)
                   if (categoryAssets.length === 0) return null
                   
                   const cost = categoryAssets.reduce((sum, a) => sum + (a.acquisition_cost || 0), 0)
+                  const percentage = (cost / totalAssetCost) * 100
                   
                   return (
-                    <div key={category} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: rules.color }}
-                        />
-                        <div>
-                          <span className="text-sm text-[#0F2F4E]">{category.replace(/([A-Z])/g, ' $1').trim()}</span>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-[#0F2F4E]/60">
-                              {rules.wAndTRate * 100}% W&T
-                            </span>
-                            {rules.siaRate > 0 && (
-                              <span className="text-xs text-[#1ED760]">
-                                + {rules.siaRate * 100}% SIA
-                              </span>
-                            )}
+                    <div key={category} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: rules.color }}
+                          />
+                          <span className="text-sm text-[#0F2F4E] font-medium">
+                            {category.replace(/([A-Z])/g, ' $1').trim()}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-[#0F2F4E]">{categoryAssets.length}</div>
+                          <div className="text-xs text-[#0F2F4E]/60">
+                            ${cost.toLocaleString()}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-[#0F2F4E]">{categoryAssets.length}</div>
-                        <div className="text-xs text-[#0F2F4E]/60">
-                          ${cost.toLocaleString()}
-                        </div>
+                      <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${percentage}%`,
+                            backgroundColor: rules.color
+                          }}
+                        />
                       </div>
                     </div>
                   )
@@ -1137,53 +1174,29 @@ const CapitalAllowanceEngine = () => {
             </Card>
 
             {/* ZIM Tax Compliance Info */}
-            <Card>
-              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4">ZIM Tax Compliance</h3>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-[#0F2F4E]/10 rounded-lg">
-                    <Clock className="w-4 h-4 text-[#0F2F4E]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#0F2F4E]">Revenue Remittance</p>
-                    <p className="text-xs text-[#0F2F4E]/60">{ZIM_COMPLIANCE_INFO.revenueRemittance}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#0F2F4E]">Late Filing Penalty</p>
-                    <p className="text-xs text-[#0F2F4E]/60">{ZIM_COMPLIANCE_INFO.lateFilingPenalty}</p>
+            <Card hover={true}>
+              <h3 className="text-lg font-bold text-[#0F2F4E] mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                ZIM Compliance
+              </h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0F2F4E]">Revenue Remittance</p>
+                      <p className="text-xs text-[#0F2F4E]/60 mt-0.5">{ZIM_COMPLIANCE_INFO.revenueRemittance}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Calendar className="w-4 h-4 text-green-500" />
+                <div className="p-3 bg-red-50 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-[#0F2F4E]">Late Filing Penalty</p>
+                      <p className="text-xs text-[#0F2F4E]/60 mt-0.5">{ZIM_COMPLIANCE_INFO.lateFilingPenalty}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#0F2F4E]">QPD Dates 2025</p>
-                    <ul className="text-xs text-[#0F2F4E]/60 space-y-1 mt-1">
-                      {ZIM_COMPLIANCE_INFO.qpdDates.map((date, index) => (
-                        <li key={index}>{date}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Disclaimer */}
-            <Card className="bg-[#0F2F4E]/5">
-              <div className="flex items-start gap-3">
-                <Info className="w-5 h-5 text-[#0F2F4E]/60 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-[#0F2F4E] font-medium">Disclaimer</p>
-                  <p className="text-xs text-[#0F2F4E]/60 mt-1">
-                    This tool provides estimates based on Zimbabwe tax regulations (Finance No. 2 Act, 2024). 
-                    Consult a tax professional for official filings. Rates subject to change.
-                  </p>
                 </div>
               </div>
             </Card>
@@ -1203,25 +1216,24 @@ const AssetRegisterTab = ({
   deleteAsset,
   activeScenario,
   handleCSVUpload,
-  csvFile,
   isCreatingScenario,
   setIsCreatingScenario,
   newScenarioName,
   setNewScenarioName,
   createScenario
 }) => (
-  <Card>
+  <Card hover={true}>
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#0F2F4E]">Asset Register</h2>
+        <h2 className="text-xl font-bold text-[#0F2F4E]">Asset Register</h2>
         <p className="text-sm text-[#0F2F4E]/60 mt-1">
           Add capital assets for Zimbabwe tax planning
         </p>
       </div>
-      <div className="flex gap-3">
-        <label className="px-4 py-2 border border-[#1ED760] text-[#1ED760] rounded-xl 
+      <div className="flex gap-2">
+        <label className="px-4 py-2 border border-[#1ED760] text-[#1ED760] rounded-lg 
                          hover:bg-[#1ED760]/10 transition-all duration-300 cursor-pointer
-                         flex items-center gap-2">
+                         flex items-center gap-2 text-sm font-medium">
           <FileUp className="w-4 h-4" />
           Import CSV
           <input 
@@ -1231,16 +1243,28 @@ const AssetRegisterTab = ({
             className="hidden" 
           />
         </label>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsCreatingScenario(true)}
+          className="px-4 py-2 bg-[#0F2F4E] text-white rounded-lg hover:bg-[#0F2F4E]/90 
+                   transition-all duration-300 flex items-center gap-2 text-sm font-medium"
+        >
+          <Plus className="w-4 h-4" />
+          New Scenario
+        </motion.button>
       </div>
     </div>
 
     {/* Scenario Creation */}
     {!activeScenario && (
-      <Card className="mb-6 bg-[#0F2F4E]/5">
-        <div className="text-center py-6">
+      <Card className="mb-6 bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 border-dashed">
+        <div className="text-center py-8">
           <Building className="w-12 h-12 text-[#0F2F4E]/40 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[#0F2F4E] mb-2">No Active Scenario</h3>
-          <p className="text-[#0F2F4E]/60 mb-4">Create a scenario to start adding assets</p>
+          <p className="text-[#0F2F4E]/60 mb-6 max-w-md mx-auto">
+            Create a scenario to start adding assets and analyze tax implications
+          </p>
           {isCreatingScenario ? (
             <div className="space-y-4 max-w-md mx-auto">
               <InputField
@@ -1248,19 +1272,20 @@ const AssetRegisterTab = ({
                 value={newScenarioName}
                 onChange={(e) => setNewScenarioName(e.target.value)}
                 placeholder="e.g., 2024 Tax Planning"
+                icon={Tag}
               />
               <div className="flex gap-3">
                 <motion.button
                   onClick={createScenario}
-                  className="flex-1 py-3 bg-[#1ED760] text-white rounded-xl font-semibold 
+                  className="flex-1 py-2.5 bg-[#1ED760] text-white rounded-lg font-medium 
                            hover:bg-[#1ED760]/90 transition-all duration-300"
                 >
                   Create Scenario
                 </motion.button>
                 <button
                   onClick={() => setIsCreatingScenario(false)}
-                  className="px-6 py-3 bg-white text-[#0F2F4E] rounded-xl font-semibold 
-                           hover:bg-[#0F2F4E]/5 transition-all duration-300 border border-[#EEEEEE]"
+                  className="px-6 py-2.5 bg-white text-[#0F2F4E] rounded-lg font-medium 
+                           hover:bg-[#0F2F4E]/5 transition-all duration-300 border border-[#E5E7EB]"
                 >
                   Cancel
                 </button>
@@ -1271,10 +1296,10 @@ const AssetRegisterTab = ({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setIsCreatingScenario(true)}
-              className="px-6 py-3 bg-[#1ED760] text-white rounded-xl font-semibold 
-                       hover:bg-[#1ED760]/90 transition-all duration-300 flex items-center gap-2 mx-auto"
+              className="px-6 py-3 bg-gradient-to-r from-[#1ED760] to-[#10B981] text-white rounded-lg font-medium 
+                       hover:shadow-lg transition-all duration-300 flex items-center gap-2 mx-auto"
             >
-              <Plus className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" />
               Create New Scenario
             </motion.button>
           )}
@@ -1285,12 +1310,12 @@ const AssetRegisterTab = ({
     {/* Add Asset Form */}
     {activeScenario && (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
           <InputField
             label="Asset Name"
             value={newAsset.asset_name}
             onChange={(e) => setNewAsset(prev => ({...prev, asset_name: e.target.value}))}
-            placeholder="Asset name"
+            placeholder="e.g., Delivery Van"
             icon={Tag}
           />
           <SelectField
@@ -1309,31 +1334,24 @@ const AssetRegisterTab = ({
             value={newAsset.acquisition_date}
             onChange={(e) => setNewAsset(prev => ({...prev, acquisition_date: e.target.value}))}
             icon={Calendar}
-            tooltip="Date of purchase/commissioning"
           />
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <InputField
-                label="Cost (USD)"
-                value={newAsset.acquisition_cost}
-                onChange={(e) => setNewAsset(prev => ({...prev, acquisition_cost: e.target.value}))}
-                placeholder="0.00"
-                type="number"
-                icon={DollarSign}
-                className="flex-1"
-                tooltip="Enter cost in USD (ZWL equivalent will be calculated)"
-              />
-            </div>
-          </div>
+          <InputField
+            label="Cost (USD)"
+            value={newAsset.acquisition_cost}
+            onChange={(e) => setNewAsset(prev => ({...prev, acquisition_cost: e.target.value}))}
+            placeholder="0.00"
+            type="number"
+            icon={DollarSign}
+          />
           <div className="flex items-end">
             <motion.button
               onClick={addAsset}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full py-3 bg-[#1ED760] text-white rounded-xl hover:bg-[#1ED760]/90 
-                       transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-gradient-to-r from-[#1ED760] to-[#10B981] text-white rounded-lg hover:shadow-lg 
+                       transition-all duration-300 flex items-center justify-center gap-2 font-medium"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4" />
               Add Asset
             </motion.button>
           </div>
@@ -1341,108 +1359,114 @@ const AssetRegisterTab = ({
 
         {/* Asset Table */}
         {assets.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-[#EEEEEE]">
-            <table className="min-w-full divide-y divide-[#EEEEEE]">
-              <thead className="bg-[#0F2F4E]/5">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Asset
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Cost (USD)
-                  </th>
-                  <th className="px6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Allowances
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#EEEEEE] bg-white">
-                {assets.map(asset => {
-                  const rules = ZIM_CAPITAL_ALLOWANCE_RULES[asset.asset_category]
-                  const Icon = rules?.icon || Package
-                  const color = rules?.color || '#1ED760'
-                  
-                  return (
-                    <motion.tr 
-                      key={asset.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="hover:bg-[#1ED760]/5 transition-colors duration-300"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="text-[#0F2F4E] font-medium">{asset.asset_name}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="p-1.5 rounded-lg"
-                            style={{ backgroundColor: `${color}1A` }}
-                          >
-                            <Icon className="w-4 h-4" style={{ color }} />
-                          </div>
-                          <div>
-                            <span className={`px-1 py-1 rounded-full text-xs font-medium ${
-                              asset.asset_category === 'MotorVehicles' ? 'bg-blue-100 text-blue-800' :
-                              asset.asset_category === 'PlantMachinery' ? 'bg-green-100 text-green-800' :
-                              asset.asset_category === 'ITEquipment' ? 'bg-purple-100 text-purple-800' :
-                              asset.asset_category === 'IndustrialBuildings' ? 'bg-yellow-100 text-yellow-800' :
-                              asset.asset_category === 'CommercialBuildings' ? 'bg-red-100 text-red-800' :
-                              asset.asset_category === 'FurnitureFittings' ? 'bg-pink-100 text-pink-800' :
-                              'bg-gray-100 text-gray-800'
-                            }`}>
-                              {asset.asset_category.replace(/([A-Z])/g, ' $1').trim()}
-                            </span>
-                            <div className="text-xs text-[#0F2F4E]/60 mt-1">
-                              {rules?.wAndTRate * 100}% W&T
-                              {rules?.siaRate > 0 && ` + ${rules.siaRate * 100}% SIA`}
+          <div className="overflow-hidden rounded-xl border border-[#E5E7EB]">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-[#E5E7EB]">
+                <thead className="bg-[#0F2F4E]/5">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Asset
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Category
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Cost
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Allowances
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E7EB] bg-white">
+                  {assets.map(asset => {
+                    const rules = ZIM_CAPITAL_ALLOWANCE_RULES[asset.asset_category]
+                    const Icon = rules?.icon || Package
+                    const color = rules?.color || '#1ED760'
+                    
+                    return (
+                      <motion.tr 
+                        key={asset.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="hover:bg-[#1ED760]/5 transition-colors duration-300"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="text-[#0F2F4E] font-medium">{asset.asset_name}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="p-1.5 rounded-lg"
+                              style={{ backgroundColor: `${color}15` }}
+                            >
+                              <Icon className="w-4 h-4" style={{ color }} />
+                            </div>
+                            <div>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                asset.asset_category === 'MotorVehicles' ? 'bg-blue-100 text-blue-800' :
+                                asset.asset_category === 'PlantMachinery' ? 'bg-green-100 text-green-800' :
+                                asset.asset_category === 'ITEquipment' ? 'bg-purple-100 text-purple-800' :
+                                asset.asset_category === 'IndustrialBuildings' ? 'bg-yellow-100 text-yellow-800' :
+                                asset.asset_category === 'CommercialBuildings' ? 'bg-red-100 text-red-800' :
+                                asset.asset_category === 'FurnitureFittings' ? 'bg-pink-100 text-pink-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {asset.asset_category.replace(/([A-Z])/g, ' $1').trim()}
+                              </span>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-[#0F2F4E]">
-                        {new Date(asset.acquisition_date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-[#0F2F4E] font-bold">
-                          ${asset.acquisition_cost?.toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2 py-1 bg-[#1ED760]/10 text-[#1ED760] rounded-full text-xs font-medium">
-                          {asset.allowance_method}
-                        </span>
-                      </td>
-                      <td className="px-3 py-4">
-                        <button
-                          onClick={() => deleteAsset(asset.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </motion.tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[#0F2F4E]">
+                          {new Date(asset.acquisition_date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-[#0F2F4E] font-bold">
+                            ${asset.acquisition_cost?.toLocaleString()}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col gap-1">
+                            <span className="px-2 py-1 bg-[#1ED760]/10 text-[#1ED760] rounded-full text-xs font-medium w-fit">
+                              {asset.allowance_method}
+                            </span>
+                            <span className="text-xs text-[#0F2F4E]/60">
+                              {rules.wAndTRate * 100}% W&T
+                              {rules.siaRate > 0 && ` + ${rules.siaRate * 100}% SIA`}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => deleteAsset(asset.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete asset"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="text-center py-12">
             <Package className="w-12 h-12 text-[#0F2F4E]/40 mx-auto mb-4" />
-            <p className="text-[#0F2F4E]/60">No assets added yet. Add assets to start tax planning.</p>
+            <p className="text-[#0F2F4E]/60 mb-2">No assets added yet</p>
+            <p className="text-sm text-[#0F2F4E]/40">Add assets to start tax planning</p>
           </div>
         )}
       </>
@@ -1450,8 +1474,8 @@ const AssetRegisterTab = ({
   </Card>
 )
 
-const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) => {
-  const years = Object.keys(results.allowances?.periods || {})
+const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType, expandedYears, setExpandedYears }) => {
+  const years = Object.keys(results.allowances?.periods || {}).sort((a, b) => a - b)
   const taxTypeLabels = {
     standard: 'Standard Corporate',
     specialMiningLease: 'Special Mining Lease',
@@ -1460,10 +1484,17 @@ const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) =
     agriculture: 'Agriculture'
   }
 
+  const toggleYear = (year) => {
+    setExpandedYears(prev => ({
+      ...prev,
+      [year]: !prev[year]
+    }))
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
           title="Total Asset Cost"
           value={`$${totalAssetCost.toLocaleString()}`}
@@ -1496,38 +1527,41 @@ const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) =
       </div>
 
       {/* SIA vs W&T Breakdown */}
-      <Card>
-        <h3 className="text-xl font-bold text-[#0F2F4E] mb-6">Allowance Breakdown</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-4">
+      <Card hover={true}>
+        <h3 className="text-lg font-bold text-[#0F2F4E] mb-6 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" />
+          Allowance Breakdown
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
             <div className="text-center">
-              <div className="text-sm text-[#0F2F4E]/60 mb-1">Special Initial Allowance (SIA)</div>
-              <div className="text-3xl font-bold text-[#1ED760]">
+              <div className="text-sm text-green-700 mb-1 font-medium">Special Initial Allowance</div>
+              <div className="text-2xl font-bold text-green-600">
                 ${results.allowances?.total_sia?.toLocaleString()}
               </div>
-              <div className="text-xs text-[#0F2F4E]/60 mt-2">
+              <div className="text-xs text-green-600/60 mt-2">
                 50% in Year 1, 25% over next 4 years
               </div>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl">
             <div className="text-center">
-              <div className="text-sm text-[#0F2F4E]/60 mb-1">Wear & Tear (W&T)</div>
-              <div className="text-3xl font-bold text-[#3B82F6]">
+              <div className="text-sm text-blue-700 mb-1 font-medium">Wear & Tear</div>
+              <div className="text-2xl font-bold text-blue-600">
                 ${results.allowances?.total_wt?.toLocaleString()}
               </div>
-              <div className="text-xs text-[#0F2F4E]/60 mt-2">
+              <div className="text-xs text-blue-600/60 mt-2">
                 Annual depreciation based on category
               </div>
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl">
             <div className="text-center">
-              <div className="text-sm text-[#0F2F4E]/60 mb-1">Total Tax Impact</div>
-              <div className="text-3xl font-bold text-[#10B981]">
+              <div className="text-sm text-emerald-700 mb-1 font-medium">Total Tax Impact</div>
+              <div className="text-2xl font-bold text-emerald-600">
                 ${results.allowances?.total_tax_savings?.toLocaleString()}
               </div>
-              <div className="text-xs text-[#0F2F4E]/60 mt-2">
+              <div className="text-xs text-emerald-600/60 mt-2">
                 Based on {taxTypeLabels[businessType]} rate
               </div>
             </div>
@@ -1536,102 +1570,106 @@ const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) =
       </Card>
 
       {/* Year-by-Year Breakdown */}
-      <Card>
-        <h3 className="text-xl font-bold text-[#0F2F4E] mb-6">Multi-Period Analysis ({periodSettings.startYear} - {periodSettings.endYear})</h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-[#EEEEEE]">
-            <thead className="bg-[#0F2F4E]/5">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  Year
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  SIA
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  W&T
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  Total Allowance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  Taxable Income
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  Tax Payable
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                  Effective Rate
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#EEEEEE]">
-              {years.map(year => {
-                const period = results.allowances.periods[year]
-                const taxPeriod = results.taxResults?.period_results?.[year]
-                const effectiveRate = taxPeriod?.effective_tax_rate || 0
+      <Card hover={true}>
+        <h3 className="text-lg font-bold text-[#0F2F4E] mb-6">Multi-Period Analysis ({periodSettings.startYear} - {periodSettings.endYear})</h3>
+        <div className="space-y-3">
+          {years.map(year => {
+            const period = results.allowances.periods[year]
+            const taxPeriod = results.taxResults?.period_results?.[year]
+            const effectiveRate = taxPeriod?.effective_tax_rate || 0
+            const isExpanded = expandedYears[year]
+            
+            return (
+              <div key={year} className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+                <button
+                  onClick={() => toggleYear(year)}
+                  className="w-full px-4 py-3 bg-white hover:bg-[#0F2F4E]/5 transition-colors flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold text-[#0F2F4E]">{year}</span>
+                    <div className="flex items-center gap-3">
+                      <Badge variant="success">SIA: ${period.sia_amount?.toLocaleString()}</Badge>
+                      <Badge variant="info">W&T: ${period.wt_amount?.toLocaleString()}</Badge>
+                      <Badge variant="default">Total: ${period.capital_allowance?.toLocaleString()}</Badge>
+                    </div>
+                  </div>
+                  {isExpanded ? (
+                    <ChevronUp className="w-4 h-4 text-[#0F2F4E]/60" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-[#0F2F4E]/60" />
+                  )}
+                </button>
                 
-                return (
-                  <tr key={year} className="hover:bg-[#1ED760]/5">
-                    <td className="px-6 py-4 font-medium text-[#0F2F4E]">{year}</td>
-                    <td className="px-6 py-4">
-                      <div className="text-[#1ED760] font-bold">
-                        ${period.sia_amount?.toLocaleString()}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-4 py-3 bg-[#0F2F4E]/5 border-t border-[#E5E7EB]">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div>
+                            <div className="text-xs text-[#0F2F4E]/60 mb-1">Taxable Income</div>
+                            <div className="font-medium text-[#0F2F4E]">
+                              ${taxPeriod?.taxable_income?.toLocaleString() || '0'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-[#0F2F4E]/60 mb-1">Tax Payable</div>
+                            <div className="font-medium text-[#0F2F4E]">
+                              ${taxPeriod?.tax_payable?.toLocaleString() || '0'}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-[#0F2F4E]/60 mb-1">Effective Tax Rate</div>
+                            <Badge variant={effectiveRate < 0.2 ? 'success' : 'default'}>
+                              {(effectiveRate * 100).toFixed(2)}%
+                            </Badge>
+                          </div>
+                          <div>
+                            <div className="text-xs text-[#0F2F4E]/60 mb-1">Tax Savings</div>
+                            <div className="font-medium text-[#1ED760]">
+                              ${period.tax_impact?.toLocaleString() || '0'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 text-[#3B82F6]">
-                      ${period.wt_amount?.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-[#0F2F4E] font-bold">
-                        ${period.capital_allowance?.toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-[#0F2F4E]">
-                      ${taxPeriod?.taxable_income?.toLocaleString() || '0'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-[#0F2F4E] font-bold">
-                        ${taxPeriod?.tax_payable?.toLocaleString() || '0'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-[#0F2F4E]/10 text-[#0F2F4E] rounded-full text-xs font-medium">
-                        {(effectiveRate * 100).toFixed(2)}%
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
         </div>
       </Card>
 
       {/* Category Breakdown */}
-      <Card>
-        <h3 className="text-xl font-bold text-[#0F2F4E] mb-6">Allowances by Category</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card hover={true}>
+        <h3 className="text-lg font-bold text-[#0F2F4E] mb-6">Allowances by Category</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {Object.entries(results.allowances?.summary_by_category || {}).map(([category, data]) => {
             const rules = ZIM_CAPITAL_ALLOWANCE_RULES[category]
             const Icon = rules?.icon || Package
             const color = rules?.color || '#1ED760'
             
             return (
-              <div key={category} className="p-4 border border-[#EEEEEE] rounded-xl hover:border-[#1ED760]/50 transition-all duration-300">
-                <div className="flex items-center gap-3 mb-3">
+              <div key={category} className="p-3 border border-[#E5E7EB] rounded-lg hover:border-[#1ED760]/50 transition-all duration-300">
+                <div className="flex items-center gap-2 mb-3">
                   <div 
                     className="p-2 rounded-lg"
-                    style={{ backgroundColor: `${color}1A` }}
+                    style={{ backgroundColor: `${color}15` }}
                   >
-                    <Icon className="w-5 h-5" style={{ color }} />
+                    <Icon className="w-4 h-4" style={{ color }} />
                   </div>
                   <div>
                     <div className="text-sm font-medium text-[#0F2F4E]">
                       {category.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
                     <div className="text-xs text-[#0F2F4E]/60">
-                      {data.asset_count} assets
+                      {data.asset_count} asset{data.asset_count !== 1 ? 's' : ''}
                     </div>
                   </div>
                 </div>
@@ -1648,11 +1686,13 @@ const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) =
                       ${data.wt_amount?.toLocaleString()}
                     </span>
                   </div>
-                  <div className="flex justify-between pt-2 border-t border-[#EEEEEE]">
-                    <span className="text-sm font-medium text-[#0F2F4E]">Total:</span>
-                    <span className="text-lg font-bold text-[#0F2F4E]">
-                      ${data.total_allowance?.toLocaleString()}
-                    </span>
+                  <div className="pt-2 border-t border-[#E5E7EB]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-[#0F2F4E]">Total:</span>
+                      <span className="text-base font-bold text-[#0F2F4E]">
+                        ${data.total_allowance?.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1665,9 +1705,14 @@ const ResultsTab = ({ results, periodSettings, totalAssetCost, businessType }) =
 }
 
 const ComparisonTab = ({ comparisonResults, scenarios, compareScenarios }) => (
-  <Card>
-    <div className="flex justify-between items-center mb-6">
-      <h3 className="text-2xl font-bold text-[#0F2F4E]">Scenario Comparison</h3>
+  <Card hover={true}>
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+      <div>
+        <h3 className="text-xl font-bold text-[#0F2F4E]">Scenario Comparison</h3>
+        <p className="text-sm text-[#0F2F4E]/60 mt-1">
+          Compare different tax planning scenarios
+        </p>
+      </div>
       <SelectField
         label=""
         value=""
@@ -1683,136 +1728,108 @@ const ComparisonTab = ({ comparisonResults, scenarios, compareScenarios }) => (
             label: scenario.scenario_name
           }))
         ]}
-        icon={Settings}
+        icon={Users}
         className="w-64"
       />
     </div>
     
-    <div className="overflow-x-auto rounded-xl border border-[#EEEEEE]">
-      <table className="min-w-full divide-y divide-[#EEEEEE]">
-        <thead className="bg-[#0F2F4E]/5">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-              Metric
-            </th>
-            {comparisonResults.scenarios.map(scenario => (
-              <th key={scenario.id} className="px-6 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
-                {scenario.scenario_name}
+    <div className="overflow-hidden rounded-lg border border-[#E5E7EB]">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-[#E5E7EB]">
+          <thead className="bg-[#0F2F4E]/5">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                Metric
               </th>
-            ))}
-            <th className="px-6 py-3 text-left text-xs font-semibold text-[#1ED760] uppercase tracking-wider">
-              Difference
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[#EEEEEE] bg-white">
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">Total Assets</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                {scenario.total_assets}
+              {comparisonResults.scenarios.map(scenario => (
+                <th key={scenario.id} className="px-4 py-3 text-left text-xs font-semibold text-[#0F2F4E] uppercase tracking-wider">
+                  {scenario.scenario_name}
+                </th>
+              ))}
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#1ED760] uppercase tracking-wider">
+                Difference
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E5E7EB] bg-white">
+            <tr className="hover:bg-[#1ED760]/5">
+              <td className="px-4 py-3 font-medium text-[#0F2F4E]">Total Assets</td>
+              {comparisonResults.scenarios.map(scenario => (
+                <td key={scenario.id} className="px-4 py-3">
+                  {scenario.total_assets}
+                </td>
+              ))}
+              <td className="px-4 py-3">
+                <div className="font-bold text-[#1ED760]">
+                  {comparisonResults.scenarios.length > 1 
+                    ? Math.abs(comparisonResults.scenarios[1].total_assets - comparisonResults.scenarios[0].total_assets)
+                    : 0}
+                </div>
               </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                {comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].total_assets - comparisonResults.scenarios[0].total_assets)
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">Total Cost</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                ${scenario.total_cost?.toLocaleString()}
+            </tr>
+            <tr className="hover:bg-[#1ED760]/5">
+              <td className="px-4 py-3 font-medium text-[#0F2F4E]">Total Cost</td>
+              {comparisonResults.scenarios.map(scenario => (
+                <td key={scenario.id} className="px-4 py-3">
+                  ${scenario.total_cost?.toLocaleString()}
+                </td>
+              ))}
+              <td className="px-4 py-3">
+                <div className="font-bold text-[#1ED760]">
+                  ${comparisonResults.scenarios.length > 1 
+                    ? Math.abs(comparisonResults.scenarios[1].total_cost - comparisonResults.scenarios[0].total_cost).toLocaleString()
+                    : 0}
+                </div>
               </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                ${comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].total_cost - comparisonResults.scenarios[0].total_cost).toLocaleString()
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">SIA Amount</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                ${scenario.sia_amount?.toLocaleString()}
+            </tr>
+            <tr className="hover:bg-[#1ED760]/5">
+              <td className="px-4 py-3 font-medium text-[#0F2F4E]">SIA Amount</td>
+              {comparisonResults.scenarios.map(scenario => (
+                <td key={scenario.id} className="px-4 py-3">
+                  ${scenario.sia_amount?.toLocaleString()}
+                </td>
+              ))}
+              <td className="px-4 py-3">
+                <div className="font-bold text-[#1ED760]">
+                  ${comparisonResults.scenarios.length > 1 
+                    ? Math.abs(comparisonResults.scenarios[1].sia_amount - comparisonResults.scenarios[0].sia_amount).toLocaleString()
+                    : 0}
+                </div>
               </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                ${comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].sia_amount - comparisonResults.scenarios[0].sia_amount).toLocaleString()
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">W&T Amount</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                ${scenario.wt_amount?.toLocaleString()}
+            </tr>
+            <tr className="hover:bg-[#1ED760]/5">
+              <td className="px-4 py-3 font-medium text-[#0F2F4E]">W&T Amount</td>
+              {comparisonResults.scenarios.map(scenario => (
+                <td key={scenario.id} className="px-4 py-3">
+                  ${scenario.wt_amount?.toLocaleString()}
+                </td>
+              ))}
+              <td className="px-4 py-3">
+                <div className="font-bold text-[#1ED760]">
+                  ${comparisonResults.scenarios.length > 1 
+                    ? Math.abs(comparisonResults.scenarios[1].wt_amount - comparisonResults.scenarios[0].wt_amount).toLocaleString()
+                    : 0}
+                </div>
               </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                ${comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].wt_amount - comparisonResults.scenarios[0].wt_amount).toLocaleString()
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">Total Allowances</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                ${scenario.capital_allowances?.toLocaleString()}
+            </tr>
+            <tr className="hover:bg-[#1ED760]/5">
+              <td className="px-4 py-3 font-medium text-[#0F2F4E]">Tax Savings</td>
+              {comparisonResults.scenarios.map(scenario => (
+                <td key={scenario.id} className="px-4 py-3">
+                  ${scenario.tax_savings?.toLocaleString()}
+                </td>
+              ))}
+              <td className="px-4 py-3">
+                <div className="font-bold text-[#1ED760]">
+                  ${comparisonResults.scenarios.length > 1 
+                    ? Math.abs(comparisonResults.scenarios[1].tax_savings - comparisonResults.scenarios[0].tax_savings).toLocaleString()
+                    : 0}
+                </div>
               </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                ${comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].capital_allowances - comparisonResults.scenarios[0].capital_allowances).toLocaleString()
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">Tax Savings</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                ${scenario.tax_savings?.toLocaleString()}
-              </td>
-            ))}
-            <td className="px-6 py-4">
-              <div className="font-bold text-[#1ED760]">
-                ${comparisonResults.scenarios.length > 1 
-                  ? Math.abs(comparisonResults.scenarios[1].tax_savings - comparisonResults.scenarios[0].tax_savings).toLocaleString()
-                  : 0}
-              </div>
-            </td>
-          </tr>
-          <tr className="hover:bg-[#1ED760]/5">
-            <td className="px-6 py-4 font-medium text-[#0F2F4E]">Effective Tax Rate</td>
-            {comparisonResults.scenarios.map(scenario => (
-              <td key={scenario.id} className="px-6 py-4">
-                {(scenario.effective_tax_rate * 100).toFixed(2)}%
-              </td>
-            ))}
-            <td className="px-6 py-4">
-              <span className="px-3 py-1 bg-[#1ED760]/10 text-[#1ED760] rounded-full text-xs font-medium">
-                {comparisonResults.scenarios.length > 1 
-                  ? Math.abs((comparisonResults.scenarios[1].effective_tax_rate - comparisonResults.scenarios[0].effective_tax_rate) * 100).toFixed(2)
-                  : 0}%
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </Card>
 )

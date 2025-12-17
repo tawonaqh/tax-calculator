@@ -11,7 +11,7 @@ class TaxCalculatorController extends Controller
 {
     public function calculateVATImportedServices(Request $request) {
         $value = $request->input('value');
-        $isMarketValue = $request->input('isMarketValue', false); // Default to false
+        $isMarketValue = $request->input('isMarketValue', false);
         $rate = $this->getTaxRate('VAT');
         $marketValue = $isMarketValue ? $value : max($value, $this->getMarketValue($value));
         $vat = $marketValue * $rate;
@@ -20,13 +20,12 @@ class TaxCalculatorController extends Controller
     }
 
     private function getMarketValue($value) {
-        // Logic to determine market value based on other criteria if needed
-        return $value; // Placeholder
+        return $value;
     }
 
     public function calculateVATTaxableSupplies(Request $request) {
         $amount = $request->input('amount');
-        $rate = $this->getTaxRate('VAT'); // Fetching VAT rate dynamically
+        $rate = $this->getTaxRate('VAT');
         $vat = $amount * $rate;
 
         return response()->json(['vat' => $vat]);
@@ -58,7 +57,7 @@ class TaxCalculatorController extends Controller
 
     public function calculateWithholdingTaxTenders(Request $request) {
         $value = $request->input('value');
-        $rate = $this->getTaxRate('Withholding_Tenders'); // Fetching rate dynamically
+        $rate = $this->getTaxRate('Withholding_Tenders');
         $taxDue = $value * $rate;
 
         return response()->json(['taxDue' => $taxDue]);
@@ -67,14 +66,13 @@ class TaxCalculatorController extends Controller
     public function calculateCorporateIncomeTax(Request $request) {
         $profits = $request->input('profits');
         $deductions = $request->input('deductions', 0);
-        $nonDeductible = $request->input('nonDeductible', 0); // e.g. fines, private expenses
-        $recoupments = $request->input('recoupments', 0);     // recovered allowances
+        $nonDeductible = $request->input('nonDeductible', 0);
+        $recoupments = $request->input('recoupments', 0);
 
         $adjustedIncome = $profits - ($deductions - $nonDeductible) + $recoupments;
         $taxRate = $this->getTaxRate('Corporate_Income');
         $taxDue = $adjustedIncome * $taxRate;
 
-        // AIDS Levy 3%
         $aidsLevy = $taxDue * 0.03;
         $totalTax = $taxDue + $aidsLevy;
 
@@ -97,15 +95,13 @@ class TaxCalculatorController extends Controller
         $taxDue = 0;
 
         foreach ($bands as $band) {
-            $bandMax = $band->max_income ?? INF; // upper limit
+            $bandMax = $band->max_income ?? INF;
             if ($taxableIncome >= $band->min_income && $taxableIncome <= $bandMax) {
-                // Formula: (Income * Rate) - Deduct
                 $taxDue = ($taxableIncome * $band->rate) - $band->deduct;
                 break;
             }
         }
 
-        // AIDS Levy 3%
         $aidsLevy = $taxDue * 0.03;
         $totalTax = $taxDue + $aidsLevy;
 
@@ -119,12 +115,12 @@ class TaxCalculatorController extends Controller
 
     private function getTaxRate($category) {
         $taxRate = TaxRate::where('category', $category)->first();
-        return $taxRate ? $taxRate->rate : 0; // Return the rate or 0 if not found
+        return $taxRate ? $taxRate->rate : 0;
     }
 
     public function calculateCapitalAllowances(Request $request) {
         $qualifyingAssets = $request->input('qualifyingAssets');
-        $allowanceRate = $request->input('allowanceRate', 0.10); // Default to 10%
+        $allowanceRate = $request->input('allowanceRate', 0.10);
         $totalAllowances = 0;
 
         foreach ($qualifyingAssets as $assetValue) {
@@ -136,12 +132,12 @@ class TaxCalculatorController extends Controller
 
     public function calculateVATDeferment(Request $request) {
         $equipmentValue = $request->input('equipmentValue');
-        $threshold = $request->input('threshold', 10000); // Default threshold example
+        $threshold = $request->input('threshold', 10000);
         return response()->json(['defermentDays' => ($equipmentValue >= $threshold) ? $this->getDefermentDays($equipmentValue) : 0]);
     }
 
     private function getDefermentDays($equipmentValue) {
-        return 30; // Example
+        return 30;
     }
 
     public function calculateTaxRelief(Request $request) {
@@ -189,65 +185,395 @@ class TaxCalculatorController extends Controller
     }
 
     public function calculatePAYE(Request $request) {
+        try {
+            $calculatorType = $request->input('calculatorType', 'individual');
+            $businessType = $request->input('businessType', 'private');
+            $periodType = $request->input('periodType', 'monthly');
+            $projectionYears = $request->input('projectionYears', 1);
+            
+            if ($calculatorType === 'individual') {
+                return $this->calculateIndividualPAYE($request);
+            } else {
+                return $this->calculateBusinessPAYE($request);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('PAYE calculation error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'PAYE calculation failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function calculateIndividualPAYE(Request $request) {
         // Retrieve input values
-        $currentSalary = $request->input('currentSalary');
-        $currentBonus = $request->input('currentBonus', 0);
-        $irregularCommission = $request->input('irregularCommission', 0);
-        $otherIrregularEarnings = $request->input('otherIrregularEarnings', 0);
-        $exemptions = $request->input('exemptions', 0);
-        $housingBenefit = $request->input('housingBenefit', 0);
-        $vehicleBenefit = $request->input('vehicleBenefit', 0);
-        $educationBenefit = $request->input('educationBenefit', 0);
-        $nonTaxableEarnings = $request->input('nonTaxableEarnings', 0);
-        $pensionContributions = $request->input('pensionContributions', 0);
-        $nssaContributions = $request->input('nssaContributions', 0);
-        $totalDeductions = $request->input('totalDeductions', 0);
-        $medicalContributions = $request->input('medicalContributions', 0);
-        $medicalExpenses = $request->input('medicalExpenses', 0);
-        $credits = $request->input('credits', 0);
-        $aidsLevy = $request->input('aidsLevy', 0);
-
+        $currentSalary = floatval($request->input('currentSalary', 0));
+        $currentBonus = floatval($request->input('currentBonus', 0));
+        $irregularCommission = floatval($request->input('irregularCommission', 0));
+        $otherIrregularEarnings = floatval($request->input('otherIrregularEarnings', 0));
+        $exemptions = floatval($request->input('exemptions', 0));
+        $housingBenefit = floatval($request->input('housingBenefit', 0));
+        $vehicleBenefit = floatval($request->input('vehicleBenefit', 0));
+        $educationBenefit = floatval($request->input('educationBenefit', 0));
+        $nonTaxableEarnings = floatval($request->input('nonTaxableEarnings', 0));
+        $pensionContributions = floatval($request->input('pensionContributions', 0));
+        $nssaContributions = floatval($request->input('nssaContributions', 0));
+        $totalDeductions = floatval($request->input('totalDeductions', 0));
+        $medicalContributions = floatval($request->input('medicalContributions', 0));
+        $medicalExpenses = floatval($request->input('medicalExpenses', 0));
+        $credits = floatval($request->input('credits', 0));
+        
         // Calculate total income
-        $totalIncome = $currentSalary + $currentBonus + $irregularCommission + $otherIrregularEarnings + $housingBenefit + $vehicleBenefit + $educationBenefit;
-
+        $totalIncome = $currentSalary + $currentBonus + $irregularCommission + $otherIrregularEarnings;
+        
+        // Calculate taxable benefits
+        $totalBenefits = $housingBenefit + $vehicleBenefit + $educationBenefit;
+        
+        // ZIMBABWE-SPECIFIC LOGIC FIXES:
+        
+        // 1. Apply Medical Aid as 50% credit off the tax (NOT deduction from income)
+        $medicalCredit = 0;
+        if ($medicalContributions > 0) {
+            // Medical aid contributions give a 50% tax credit
+            $medicalCredit = min($medicalContributions * 0.50, 0); // Will be subtracted from tax later
+        }
+        
+        // 2. Cap NSSA at $700 (USD) or equivalent
+        // Convert NSSA to USD if needed (assuming input is in ZiG)
+        // For simplicity, we'll assume input is in USD or equivalent
+        $nssaCapped = min($nssaContributions, 700);
+        
+        // Calculate total deductions (with capped NSSA)
+        $totalDeductionsAmount = $pensionContributions + $nssaCapped + $totalDeductions + $medicalExpenses;
+        
         // Calculate taxable income
-        $taxableIncome = $totalIncome - $exemptions - $nonTaxableEarnings - $pensionContributions - $nssaContributions - $totalDeductions - $medicalContributions - $medicalExpenses;
+        $taxableIncome = $totalIncome + $totalBenefits - $exemptions - $nonTaxableEarnings - $totalDeductionsAmount;
         
         // Ensure taxable income is not negative
         $taxableIncome = max(0, $taxableIncome);
-
-        // Calculate PAYE based on tax bands (implement your logic here)
-        $payeDue = $this->calculateTaxBasedOnBands($taxableIncome);
-
-        // Consider tax credits and AIDS Levy
-        $payeDue -= $credits; // Subtract credits
-        $payeDue += $aidsLevy; // Add AIDS Levy if applicable
-
+        
+        // Calculate PAYE based on Zimbabwe tax bands
+        $payeDue = $this->calculatePAYEBasedOnBands($taxableIncome);
+        
+        // Apply tax credits (including medical aid credit)
+        $totalCredits = $credits + abs($medicalCredit);
+        $payeDue = max(0, $payeDue - $totalCredits);
+        
+        // Add AIDS Levy (3% of PAYE - Zimbabwe specific)
+        $aidsLevy = $payeDue * 0.03;
+        $totalTax = $payeDue + $aidsLevy;
+        
+        // Calculate net pay
+        $netPay = $totalIncome + $totalBenefits - $totalTax - $pensionContributions - $nssaCapped - $totalDeductions;
+        
         return response()->json([
+            'totalIncome' => $totalIncome,
+            'totalBenefits' => $totalBenefits,
             'taxableIncome' => $taxableIncome,
-            'payeDue' => max(0, $payeDue), // Ensure PAYE due is not negative
+            'payeDue' => $payeDue,
+            'medicalCredit' => abs($medicalCredit),
+            'nssaCapped' => $nssaCapped,
+            'aidsLevy' => $aidsLevy,
+            'totalTax' => $totalTax,
+            'totalDeductions' => $totalDeductionsAmount,
+            'netPay' => $netPay,
+            'calculatorType' => 'individual'
         ]);
     }
 
-    private function calculateTaxBasedOnBands($taxableIncome) {
-        $bands = DB::table('paye_bands')->orderBy('min_income')->get();
-        $taxDue = 0;
+    private function calculateBusinessPAYE(Request $request) {
+        $businessType = $request->input('businessType', 'private');
+        $periodType = $request->input('periodType', 'monthly');
+        $projectionYears = intval($request->input('projectionYears', 1));
+        
+        // Business inputs
+        $employeeCount = floatval($request->input('employeeCount', 0));
+        $totalGrossPayroll = floatval($request->input('totalGrossPayroll', 0));
+        $averageSalary = floatval($request->input('averageSalary', 0));
+        $annualSalaryIncrease = floatval($request->input('annualSalaryIncrease', 10)) / 100;
+        $expectedBonuses = floatval($request->input('expectedBonuses', 15)) / 100;
+        $employerContributions = floatval($request->input('employerContributions', 0));
+        $nssaEmployerRate = floatval($request->input('nssaEmployerRate', 4.5)) / 100;
+        $pensionEmployerRate = floatval($request->input('pensionEmployerRate', 5)) / 100;
+        $benefitsPercentage = floatval($request->input('benefitsPercentage', 20)) / 100;
+        $credits = floatval($request->input('credits', 0));
 
-        foreach ($bands as $band) {
-            $bandMax = $band->max_income ?? INF; // Upper limit
-            if ($taxableIncome > $band->min_income) {
-                $bandAmount = min($taxableIncome, $bandMax) - $band->min_income;
-                $taxDue += ($bandAmount * $band->rate) - $band->deduct; // Apply the rate and deduct fixed amount
-                $taxableIncome -= $bandAmount; // Reduce taxable income
-                if ($taxableIncome <= 0) break; // Stop if no taxable income remains
+        // Calculate current period (Year 1, Period 1)
+        $currentPeriod = $this->calculateBusinessPAYEPeriod(
+            $employeeCount,
+            $totalGrossPayroll,
+            $averageSalary,
+            $expectedBonuses,
+            $employerContributions,
+            $nssaEmployerRate,
+            $pensionEmployerRate,
+            $benefitsPercentage,
+            $businessType,
+            $periodType,
+            $credits,
+            1, // year
+            1  // period
+        );
+
+        // Calculate multi-period projections if needed
+        $multiPeriod = [];
+        if ($projectionYears > 1 && $employeeCount > 0 && $totalGrossPayroll > 0) {
+            $currentPayroll = $totalGrossPayroll;
+            $currentEmployees = $employeeCount;
+            $currentAvgSalary = $averageSalary;
+            
+            // Calculate total periods
+            $periodsPerYear = $this->getPeriodsPerYear($periodType);
+            $totalPeriods = $projectionYears * $periodsPerYear;
+            
+            for ($periodIndex = 1; $periodIndex <= $totalPeriods; $periodIndex++) {
+                // Calculate which year and period this is
+                $year = ceil($periodIndex / $periodsPerYear);
+                $periodInYear = (($periodIndex - 1) % $periodsPerYear) + 1;
+                
+                // Apply salary increase compounded annually
+                $yearMultiplier = pow(1 + $annualSalaryIncrease, $year - 1);
+                
+                // Calculate payroll for this period (distribute annual payroll evenly)
+                $periodPayroll = ($totalGrossPayroll * $yearMultiplier) / $periodsPerYear;
+                
+                // Calculate period average salary
+                $periodAvgSalary = $averageSalary * $yearMultiplier;
+                
+                // Calculate credits for this period (distribute evenly)
+                $periodCredits = $credits / $periodsPerYear / $projectionYears;
+                
+                $periodResult = $this->calculateBusinessPAYEPeriod(
+                    $currentEmployees,
+                    $periodPayroll,
+                    $periodAvgSalary,
+                    $expectedBonuses,
+                    $employerContributions * $yearMultiplier,
+                    $nssaEmployerRate,
+                    $pensionEmployerRate,
+                    $benefitsPercentage,
+                    $businessType,
+                    $periodType,
+                    $periodCredits,
+                    $year,
+                    $periodInYear
+                );
+                
+                $multiPeriod[] = $periodResult;
             }
         }
 
-        // AIDS Levy 3%
-        $aidsLevy = $taxDue * 0.03;
-        $totalTax = $taxDue + $aidsLevy;
+        return response()->json([
+            'currentPeriod' => $currentPeriod,
+            'multiPeriod' => $multiPeriod,
+            'calculatorType' => 'business',
+            'businessType' => $businessType,
+            'periodType' => $periodType,
+            'projectionYears' => $projectionYears,
+            'summary' => [
+                'totalEmployees' => $employeeCount,
+                'totalPayroll' => $totalGrossPayroll,
+                'totalPAYELiability' => $currentPeriod['payeLiability'],
+                'totalStaffCost' => $currentPeriod['totalCost'],
+                'taxPercentage' => $currentPeriod['taxPercentage'],
+                'zimdef' => $currentPeriod['zimdef'],
+                'sdf' => $currentPeriod['sdf'],
+                'totalStatutoryCost' => $currentPeriod['totalStatutoryCost']
+            ]
+        ]);
+    }
 
-        return $totalTax;
+    private function calculateBusinessPAYEPeriod(
+        $employeeCount,
+        $payrollAmount,
+        $averageSalary,
+        $bonusPercentage,
+        $otherContributions,
+        $nssaRate,
+        $pensionRate,
+        $benefitsRate,
+        $businessType,
+        $periodType,
+        $credits = 0,
+        $year = 1,
+        $period = 1
+    ) {
+        // Calculate bonuses for the period
+        $bonuses = $payrollAmount * $bonusPercentage;
+        
+        // ZIMBABWE-SPECIFIC BUSINESS LOGIC:
+        
+        // 1. Calculate employer contributions with NSSA cap per employee
+        $periodsPerYear = $this->getPeriodsPerYear($periodType);
+        $annualNssaPerEmployee = min($averageSalary * $nssaRate * $periodsPerYear, 700);
+        $nssaContributions = ($annualNssaPerEmployee / $periodsPerYear) * $employeeCount;
+        
+        // Calculate pension contributions
+        $pensionContributions = $payrollAmount * $pensionRate;
+        
+        // Calculate benefits
+        $benefits = $payrollAmount * $benefitsRate;
+        
+        // 2. Add ZIMDEF (1%) and SDF (0.5%) as mandatory business costs
+        $zimdef = $payrollAmount * 0.01; // 1% ZIMDEF
+        $sdf = $payrollAmount * 0.005; // 0.5% Skills Development Fund
+        
+        // Calculate total taxable amount per employee
+        $totalPayeLiability = 0;
+        
+        if ($employeeCount > 0 && $payrollAmount > 0) {
+            // Calculate per employee taxable income
+            $perEmployeeSalary = $payrollAmount / $employeeCount;
+            $perEmployeeBenefits = $benefits / $employeeCount;
+            
+            // For each employee (simplified - in reality would loop through actual salaries)
+            $perEmployeeTaxable = $perEmployeeSalary + $perEmployeeBenefits;
+            
+            // Calculate PAYE for this taxable amount
+            $perEmployeePAYE = $this->calculatePAYEBasedOnBands($perEmployeeTaxable);
+            
+            // Total PAYE liability
+            $totalPayeLiability = $perEmployeePAYE * $employeeCount;
+        }
+        
+        // Apply credits
+        $payeLiability = max(0, $totalPayeLiability - $credits);
+        
+        // Add AIDS Levy (3%)
+        $aidsLevy = $payeLiability * 0.03;
+        $totalPAYE = $payeLiability + $aidsLevy;
+        
+        // Calculate total cost to employer including all statutory costs
+        $totalCost = $payrollAmount + $bonuses + $nssaContributions + $pensionContributions + 
+                    $benefits + $otherContributions + $totalPAYE + $zimdef + $sdf;
+        
+        // Calculate tax as percentage of total cost
+        $taxPercentage = $totalCost > 0 ? $totalPAYE / $totalCost : 0;
+        
+        // Calculate statutory costs percentage
+        $statutoryCosts = $nssaContributions + $zimdef + $sdf;
+        $totalStatutoryCost = $statutoryCosts + $totalPAYE;
+        
+        // Generate period name
+        $periodName = $this->getPeriodName($periodType, $period, $year);
+
+        return [
+            'period' => $periodName,
+            'employeeCount' => $employeeCount,
+            'totalPayroll' => $payrollAmount,
+            'averageSalary' => $averageSalary,
+            'bonuses' => $bonuses,
+            'nssaContributions' => $nssaContributions,
+            'nssaCappedPerEmployee' => $annualNssaPerEmployee / $periodsPerYear,
+            'pensionContributions' => $pensionContributions,
+            'benefits' => $benefits,
+            'otherContributions' => $otherContributions,
+            'zimdef' => $zimdef,
+            'sdf' => $sdf,
+            'payeLiability' => $payeLiability,
+            'aidsLevy' => $aidsLevy,
+            'totalTax' => $totalPAYE,
+            'totalCost' => $totalCost,
+            'taxPercentage' => $taxPercentage,
+            'statutoryCosts' => $statutoryCosts,
+            'totalStatutoryCost' => $totalStatutoryCost,
+            'businessType' => $businessType,
+            'statutoryBreakdown' => [
+                'nssa' => $nssaContributions,
+                'zimdef' => $zimdef,
+                'sdf' => $sdf,
+                'paye' => $totalPAYE
+            ]
+        ];
+    }
+
+    private function calculatePAYEBasedOnBands($taxableIncome) {
+        // Get Zimbabwe PAYE bands from database
+        $bands = DB::table('paye_bands')
+            ->where('min_income', '>=', 0)
+            ->orderBy('min_income')
+            ->get();
+        
+        // If no bands in database, use Zimbabwe default bands (2024)
+        if ($bands->isEmpty()) {
+            $bands = collect([
+                (object) ['min_income' => 0, 'max_income' => 75000, 'rate' => 0.00, 'deduct' => 0],
+                (object) ['min_income' => 75001, 'max_income' => 150000, 'rate' => 0.20, 'deduct' => 15000],
+                (object) ['min_income' => 150001, 'max_income' => 300000, 'rate' => 0.25, 'deduct' => 22500],
+                (object) ['min_income' => 300001, 'max_income' => 600000, 'rate' => 0.30, 'deduct' => 37500],
+                (object) ['min_income' => 600001, 'max_income' => null, 'rate' => 0.40, 'deduct' => 97500]
+            ]);
+        }
+
+        $taxDue = 0;
+        $remainingIncome = $taxableIncome;
+
+        foreach ($bands as $band) {
+            if ($remainingIncome <= 0) break;
+            
+            $bandMin = $band->min_income;
+            $bandMax = $band->max_income ?? PHP_INT_MAX;
+            
+            if ($remainingIncome > $bandMin) {
+                $bandAmount = min($remainingIncome, $bandMax) - $bandMin;
+                if ($bandAmount > 0) {
+                    // Calculate tax for this band: (amount × rate) - deduct
+                    $bandTax = ($bandAmount * $band->rate);
+                    $taxDue += max(0, $bandTax - $band->deduct);
+                    $remainingIncome -= $bandAmount;
+                }
+            }
+        }
+
+        return max(0, $taxDue);
+    }
+
+    private function applyBusinessTypeAdjustments($taxableIncome, $businessType) {
+        // Apply different adjustments based on business type
+        switch ($businessType) {
+            case 'pvo':
+            case 'ngo':
+                // PVOs and NGOs may have tax exemptions
+                return $taxableIncome * 0.5; // Example: 50% exemption
+            case 'public':
+                // Public institutions might have different rates
+                return $taxableIncome * 0.8; // Example: 20% reduction
+            default:
+                // Private companies pay full tax
+                return $taxableIncome;
+        }
+    }
+
+    private function getPeriodsPerYear($periodType) {
+        switch ($periodType) {
+            case 'monthly': return 12;
+            case 'quarterly': return 4;
+            case 'annually': return 1;
+            default: return 12;
+        }
+    }
+
+    private function getPeriodName($periodType, $period, $year) {
+        $currentYear = date('Y');
+        $targetYear = $currentYear + $year - 1;
+        
+        switch ($periodType) {
+            case 'monthly':
+                $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return $monthNames[($period - 1) % 12] . ' ' . $targetYear;
+                
+            case 'quarterly':
+                $quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+                return $quarters[($period - 1) % 4] . ' ' . $targetYear;
+                
+            case 'annually':
+                return 'Year ' . $targetYear;
+                
+            default:
+                return 'Period ' . $period . ' ' . $targetYear;
+        }
     }
 
     public function calculateComprehensiveCorporateTax(Request $request) {
@@ -269,7 +595,7 @@ class TaxCalculatorController extends Controller
             
             $grossProfit = ($sales + $otherTradingIncome) - $costOfGoodsSold;
             
-            // Calculate Operating Profit (sum all operating expenses)
+            // Calculate Operating Profit
             $totalOperatingExpenses = 0;
             if (isset($profitLoss['operatingExpenses'])) {
                 foreach ($profitLoss['operatingExpenses'] as $expense) {
@@ -277,7 +603,6 @@ class TaxCalculatorController extends Controller
                 }
             }
 
-            // Add individual expense fields if provided
             $totalOperatingExpenses += floatval($profitLoss['advertisingMarketing'] ?? 0);
             $totalOperatingExpenses += floatval($profitLoss['trainingEvent'] ?? 0);
             $totalOperatingExpenses += floatval($profitLoss['bankCharges'] ?? 0);
@@ -286,7 +611,7 @@ class TaxCalculatorController extends Controller
 
             $operatingProfit = $grossProfit - $totalOperatingExpenses;
             
-            // Tax Computation - Non-taxable income
+            // Tax Computation
             $totalNonTaxableIncome = 0;
             if (isset($taxComputation['nonTaxableIncome'])) {
                 foreach ($taxComputation['nonTaxableIncome'] as $income) {
@@ -294,7 +619,6 @@ class TaxCalculatorController extends Controller
                 }
             }
 
-            // Tax Computation - Non-deductible expenses
             $totalNonDeductibleExpenses = 0;
             if (isset($taxComputation['nonDeductibleExpenses'])) {
                 foreach ($taxComputation['nonDeductibleExpenses'] as $expense) {
@@ -302,16 +626,10 @@ class TaxCalculatorController extends Controller
                 }
             }
 
-            // Start with operating profit and adjust for tax purposes
             $taxableIncome = $operatingProfit;
-            
-            // Subtract non-taxable income
             $taxableIncome -= $totalNonTaxableIncome;
-            
-            // Add back non-deductible expenses
             $taxableIncome += $totalNonDeductibleExpenses;
             
-            // Add tax income (recoupments, etc.)
             $totalTaxIncome = 0;
             if (isset($taxComputation['taxIncome'])) {
                 foreach ($taxComputation['taxIncome'] as $income) {
@@ -320,7 +638,6 @@ class TaxCalculatorController extends Controller
             }
             $taxableIncome += $totalTaxIncome;
             
-            // Deduct tax expenditure (allowances, etc.)
             $totalTaxExpenditure = 0;
             if (isset($taxComputation['taxExpenditure'])) {
                 foreach ($taxComputation['taxExpenditure'] as $expense) {
@@ -329,7 +646,6 @@ class TaxCalculatorController extends Controller
             }
             $taxableIncome -= $totalTaxExpenditure;
             
-            // Apply capital allowances
             $totalCapitalAllowance = 0;
             if (isset($capitalAllowance)) {
                 foreach ($capitalAllowance as $assetValue) {
@@ -338,14 +654,11 @@ class TaxCalculatorController extends Controller
             }
             $taxableIncome -= $totalCapitalAllowance;
             
-            // Ensure taxable income is not negative
             $taxableIncome = max(0, $taxableIncome);
             
-            // Calculate taxes (Zimbabwe corporate tax rate: 25%)
             $taxRate = $this->getTaxRate('Corporate_Income') ?: 0.25;
             $taxDue = $taxableIncome * $taxRate;
             
-            // AIDS Levy (3%)
             $aidsLevy = $taxDue * 0.03;
             $totalTax = $taxDue + $aidsLevy;
 
@@ -377,5 +690,4 @@ class TaxCalculatorController extends Controller
             ], 500);
         }
     }
-
 }

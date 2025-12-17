@@ -5,9 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaxCalculatorController;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\FeedbackController;
-use App\Http\Controllers\CapitalAllowanceController;
-use App\Http\Controllers\TaxPandLController;
-use App\Http\Controllers\ScenarioController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -41,29 +38,3 @@ Route::post('/calculate/paye', [TaxCalculatorController::class, 'calculatePAYE']
 
 // feedback
 Route::post('/feedback', [FeedbackController::class, 'store']);
-
-// Capital Allowance Routes
-Route::prefix('capital-allowance')->group(function () {
-    Route::post('/assets/store', [CapitalAllowanceController::class, 'storeAsset']);
-    Route::post('/assets/import-csv', [CapitalAllowanceController::class, 'importAssetsCSV']);
-    Route::post('/calculate/scenario', [CapitalAllowanceController::class, 'calculateScenarioAllowances']);
-    Route::get('/assets/{scenario_id}', [CapitalAllowanceController::class, 'getScenarioAssets']);
-    Route::delete('/assets/{asset_id}', [CapitalAllowanceController::class, 'deleteAsset']);
-});
-
-// Tax P&L Engine Routes
-Route::prefix('tax-engine')->group(function () {
-    Route::post('/calculate-pandl', [TaxPandLController::class, 'calculateTaxPandL']);
-    Route::get('/scenarios/{scenario_id}/results', [TaxPandLController::class, 'getScenarioResults']);
-    Route::post('/scenarios/comparison', [TaxPandLController::class, 'compareScenarios']);
-});
-
-// Scenario Management Routes
-Route::prefix('scenarios')->group(function () {
-    Route::post('/create', [ScenarioController::class, 'createScenario']);
-    Route::post('/clone/{scenario_id}', [ScenarioController::class, 'cloneScenario']);
-    Route::get('/list/{company_id?}', [ScenarioController::class, 'listScenarios']);
-    Route::put('/update/{scenario_id}', [ScenarioController::class, 'updateScenario']);
-    Route::delete('/delete/{scenario_id}', [ScenarioController::class, 'deleteScenario']);
-});
-
