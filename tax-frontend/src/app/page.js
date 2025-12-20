@@ -15,7 +15,8 @@ import {
   FaSeedling,
   FaUmbrella,
   FaHandHoldingUsd,
-  FaHeartbeat
+  FaHeartbeat,
+  FaUser,
 } from "react-icons/fa"; 
 import { 
   FiTrendingUp, 
@@ -116,9 +117,9 @@ export default function Home() {
       featured: true
     },
     { 
-      href: "/self-employment-tax-calculator", 
-      label: "Individual Income Tax", 
-      description: "Personal tax computation",
+      href: "/capital-allowance-calculator", 
+      label: "Capital Allowances", 
+      description: "Periodic capital allowances computation",
       icon: FaFileInvoiceDollar,
       featured: true
     }
@@ -126,6 +127,12 @@ export default function Home() {
 
   // All general calculators (complete list)
   const allCalculators = [
+    { 
+      href: "/self-employment-tax-calculator", 
+      label: "Individual Income Tax", 
+      description: "Individual income tax calculations",
+      icon: FaUser,
+    },
     { 
       href: "/corporate-tax-calculator", 
       label: "Corporate Tax", 

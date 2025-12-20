@@ -20,6 +20,7 @@ Route::post('/calculate/withholding/tenders', [TaxCalculatorController::class, '
 Route::post('/calculate/corporate-income-tax', [TaxCalculatorController::class, 'calculateCorporateIncomeTax']);
 Route::post('/calculate/individual-income-tax', [TaxCalculatorController::class, 'calculateIndividualIncomeTax']);
 Route::post('/calculate/capital-allowances', [TaxCalculatorController::class, 'calculateCapitalAllowances']);
+Route::post('/calculate/capital-allowances/multi-period', [TaxCalculatorController::class, 'calculateMultiPeriodCapitalAllowances']);
 Route::post('/calculate/vat-deferment', [TaxCalculatorController::class, 'calculateVATDeferment']);
 Route::post('/calculate/tax-relief', [TaxCalculatorController::class, 'calculateTaxRelief']);
 Route::post('/calculate/tax-credits', [TaxCalculatorController::class, 'calculateTaxCredits']);
@@ -37,4 +38,3 @@ Route::post('/calculate/paye', [TaxCalculatorController::class, 'calculatePAYE']
 
 // feedback
 Route::post('/feedback', [FeedbackController::class, 'store']);
-
