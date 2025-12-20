@@ -12,7 +12,7 @@ import {
   TrendingDown, ChevronDown, ChevronUp, Users,
   Shield, Globe, Target, Sparkles
 } from 'lucide-react'
-import * as Papa from 'papaparse';
+import Papa from 'papaparse'
 
 // Reusable InputField Component
 const InputField = ({ 
