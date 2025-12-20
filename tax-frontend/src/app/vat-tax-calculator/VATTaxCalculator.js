@@ -31,17 +31,29 @@ const InputField = ({ label, icon: Icon, value, onChange, placeholder, type = 'n
 const VATTaxableSupplies = () => {
   const [formData, setFormData] = useState({
     amount: '',
-    rate: '14.5' // Zimbabwe VAT rate
+    rate: '15.5' // Zimbabwe VAT rate
   })
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const vatRates = [
-    { value: '14.5', label: 'Standard Rate (14.5%)', description: 'Most goods and services' },
-    { value: '0', label: 'Zero Rate (0%)', description: 'Exports, basic food items' },
-    { value: 'exempt', label: 'Exempt', description: 'Financial services, medical' }
-  ]
+    { 
+      value: '15.5', 
+      label: 'Standard Rate (15.5%)', 
+      description: 'Taxed at the general rate of 15.5%, allowing the supplier to claim input tax credits.' 
+    },
+    { 
+      value: '0', 
+      label: 'Zero Rate (0%)', 
+      description: 'Exports of goods/services, prescribed foodstuffs (basic food commodities), and essential farm inputs/machinery.' 
+    },
+    { 
+      value: 'exempt', 
+      label: 'Exempt', 
+      description: 'Supplies listed in the First Schedule (e.g., financial, medical, and educational services). Supplier cannot claim input tax.' 
+    }
+  ]
 
   const handleChange = (field) => (e) => {
     setFormData(prev => ({
@@ -84,7 +96,7 @@ const VATTaxableSupplies = () => {
   const resetCalculator = () => {
     setFormData({
       amount: '',
-      rate: '14.5'
+      rate: '15.5'
     })
     setResults(null)
     setError('')
@@ -294,11 +306,11 @@ const VATTaxableSupplies = () => {
               <div className="space-y-3 text-sm text-[#0F2F4E]">
                 <div className="flex justify-between">
                   <span>Standard Rate:</span>
-                  <span className="text-[#1ED760] font-semibold">14.5%</span>
+                  <span className="text-[#1ED760] font-semibold">15.5%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Registration Threshold:</span>
-                  <span className="text-[#0F2F4E]/70">$60,000/year</span>
+                  <span className="text-[#0F2F4E]/70">$25,000/year</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Filing Frequency:</span>
@@ -319,7 +331,7 @@ const VATTaxableSupplies = () => {
               <ul className="space-y-3 text-sm text-[#0F2F4E]">
                 <li className="flex items-start gap-2">
                   <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
-                  <span>Register for VAT if turnover exceeds $60,000 annually</span>
+                  <span>Register for VAT if turnover exceeds $25,000 annually</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Zap className="w-4 h-4 text-[#1ED760] mt-0.5 flex-shrink-0" />
@@ -343,16 +355,16 @@ const VATTaxableSupplies = () => {
               </h3>
               <div className="space-y-3 text-sm text-[#0F2F4E]">
                 <div>
-                  <div className="font-semibold text-[#1ED760]">Standard Rate (14.5%)</div>
+                  <div className="font-semibold text-[#1ED760]">Standard Rate (15.5%)</div>
                   <div className="text-[#0F2F4E]/70">Most goods and services sold in Zimbabwe</div>
                 </div>
                 <div>
                   <div className="font-semibold text-[#1ED760]">Zero Rate (0%)</div>
-                  <div className="text-[#0F2F4E]/70">Exports, basic food items, certain agricultural products</div>
+                  <div className="text-[#0F2F4E]/70">Exports of goods/services, prescribed foodstuffs (basic food commodities), and essential farm inputs/machinery.</div>
                 </div>
                 <div>
                   <div className="font-semibold text-[#1ED760]">Exempt</div>
-                  <div className="text-[#0F2F4E]/70">Financial services, residential rentals, medical services</div>
+                  <div className="text-[#0F2F4E]/70">Supplies listed in the First Schedule (e.g., financial, medical, and educational services). Supplier cannot claim input tax.</div>
                 </div>
               </div>
             </div>

@@ -2204,7 +2204,7 @@ export default function TaxPlanningPage() {
               {/* Enhanced Capital Allowance Form */}
               {activeTab === "capital-allowance" && (
                 <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
                     <InputField
                       label="Motor Vehicles Cost"
                       value={formState.motorVehicles}
