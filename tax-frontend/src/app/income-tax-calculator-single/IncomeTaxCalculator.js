@@ -1838,7 +1838,7 @@ export default function TaxPlanningPage() {
         <header className="text-center mb-8">
           <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg">
             <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
-              Comprehensive Tax Planning
+              Single-Period Tax Planning
             </h1>
             <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto">
               Professional tax computation with enhanced capital allowance calculations for Zimbabwe

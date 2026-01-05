@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import FeedbackModal from "./FeedbackModal";
+import { MdOutlineArrowDropDown } from "react-icons/md";
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -47,23 +48,45 @@ const Header = () => {
           </div>
 
           {/* Nav Links */}
-          <div className="hidden md:flex gap-8 text-sm font-medium">
+          <div className="hidden md:flex gap-8 text-sm font-medium items-center">
             <Link href="/" className="text-white hover:text-[#1ED760] transition">
               Home
             </Link>
+
             <Link href="/paye-calculator" className="text-white hover:text-[#1ED760] transition">
               Pay As You Earn
             </Link>
-            <Link href="/income-tax-calculator-single" className="text-white hover:text-[#1ED760] transition">
-              Tax Planning
-            </Link>
-            <Link href="/income-tax-calculator" className="text-white hover:text-[#1ED760] transition">
-              Multi-Period Tax Planning
-            </Link>
+
+            {/* Tax Planning Dropdown */}
+            <div className="relative group">
+              <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1">
+                Tax Planning
+                <MdOutlineArrowDropDown />
+              </button>
+
+              {/* Dropdown Menu */}
+              <div className="absolute left-0 top-full mt-3 w-56 rounded-xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <Link
+                  href="/income-tax-calculator-single"
+                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-t-xl"
+                >
+                  Single-Period Tax Planning
+                </Link>
+
+                <Link
+                  href="/income-tax-calculator"
+                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-b-xl"
+                >
+                  Multi-Period Tax Planning
+                </Link>
+              </div>
+            </div>
+
             <Link href="/contact" className="text-white hover:text-[#1ED760] transition">
               Contact
             </Link>
-            <button 
+
+            <button
               onClick={openFeedbackModal}
               className="text-white hover:text-[#1ED760] transition text-sm font-medium"
             >
