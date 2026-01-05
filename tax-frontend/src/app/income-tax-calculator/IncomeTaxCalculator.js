@@ -24,14 +24,267 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const COLORS = ["#1ED760", "#FFD700", "#0F2F4E", "#84cc16", "#f97316"];
 
-// Color constants based on design system
-const COLORS_DESIGN = {
-  primaryNavy: "#0F2F4E",
-  accentGreen: "#1ED760",
-  goldAccent: "#FFD700",
-  neutralWhite: "#FFFFFF",
-  secondaryGrey: "#EEEEEE"
+const TUTORIAL_STEPS = [
+  {
+    id: 'welcome',
+    title: 'Welcome to TaxCul Multi-Period Tax Planning',
+    description: 'This tool helps you plan taxes for Zimbabwean businesses. Let\'s get started!',
+    position: 'center',
+    target: null,
+    tab: null, // No tab needed
+    order: 1
+  },
+  {
+    id: 'period-timeline',
+    title: 'Multi-Period Planning',
+    description: 'Plan taxes across multiple years. Switch between annual, quarterly, or monthly views.',
+    position: 'bottom',
+    target: '.tutorial-period-manager',
+    tab: 'overview', // This component is in Overview tab
+    order: 2
+  },
+  {
+    id: 'scenarios',
+    title: 'Scenario Planning',
+    description: 'Create "what-if" scenarios: Growth plans, cost-cutting, or custom strategies.',
+    position: 'right',
+    target: '.tutorial-scenario',
+    tab: 'scenarios', // This component is in Scenarios tab
+    order: 3
+  },
+  {
+    id: 'data-import',
+    title: 'Import Your Data',
+    description: 'Upload Excel/CSV files from Xero, QuickBooks, or other accounting software.',
+    position: 'left',
+    target: '.tutorial-data-import',
+    tab: 'data-input', // This component is in Data Input tab
+    order: 4
+  },
+  {
+    id: 'capital-allowances',
+    title: 'Capital Allowances',
+    description: 'Claim tax deductions for business assets like vehicles, equipment, and buildings.',
+    position: 'top',
+    target: '.tutorial-capital-allowance',
+    tab: 'data-input', // Also in Data Input tab
+    order: 5
+  },
+  {
+    id: 'employee-costs',
+    title: 'Employee Costs & PAYE',
+    description: 'Calculate PAYE, NSSA, and other employment-related taxes.',
+    position: 'bottom',
+    target: '.tutorial-employee-cost',
+    tab: 'data-input', // Also in Data Input tab
+    order: 6
+  },
+  {
+    id: 'ai-assistant',
+    title: 'AI Tax Assistant',
+    description: 'Get Zimbabwe-specific tax advice and optimization tips.',
+    position: 'left',
+    target: '.tutorial-ai-assistant',
+    tab: null, // Always visible in sidebar
+    order: 7
+  },
+  {
+    id: 'export-reports',
+    title: 'Export Reports',
+    description: 'Generate professional PDF and Excel reports for your accountant.',
+    position: 'right',
+    target: '.tutorial-export',
+    tab: 'reports', // This component is in Reports tab
+    order: 8
+  },
+  {
+    id: 'calculate',
+    title: 'Run Analysis',
+    description: 'Click this button to calculate tax projections across all periods and scenarios.',
+    position: 'top',
+    target: '.tutorial-calculate',
+    tab: null, // Always visible at bottom
+    order: 9
+  }
+];
+
+// Check if tutorial has been completed
+const getTutorialStatus = () => {
+  if (typeof window === 'undefined') return { completed: false, step: 0 };
+  const status = localStorage.getItem('taxcul-tutorial-status');
+  return status ? JSON.parse(status) : { completed: false, step: 0 };
 };
+
+const saveTutorialStatus = (completed = false, step = 0) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('taxcul-tutorial-status', JSON.stringify({ completed, step }));
+};
+
+// Zimbabwe Tax Constants from Phase 2 Document
+const ZIMBABWE_TAX_RULES = {
+  corporateTaxRate: 0.25,
+  aidsLevyRate: 0.03,
+  capitalAllowanceRates: {
+    motorVehicles: { special: 0.5, accelerated: 0.25, wearTear: 0.2 },
+    moveableAssets: { special: 0.5, accelerated: 0.25, wearTear: 0.1 },
+    commercialBuildings: { special: 0, accelerated: 0, wearTear: 0.025 },
+    industrialBuildings: { special: 0, accelerated: 0, wearTear: 0.05 },
+    leaseImprovements: { special: 0.5, accelerated: 0.25, wearTear: 0.05 },
+    itEquipment: { special: 0.5, accelerated: 0.25, wearTear: 0.333 }
+  },
+  payeBands: [
+    { min: 0, max: 75000, rate: 0.00, deduct: 0 },
+    { min: 75001, max: 150000, rate: 0.20, deduct: 15000 },
+    { min: 150001, max: 300000, rate: 0.25, deduct: 22500 },
+    { min: 300001, max: 600000, rate: 0.30, deduct: 37500 },
+    { min: 600001, max: Infinity, rate: 0.40, deduct: 97500 },
+  ],
+  vatRate: 0.145,
+  withholdingTaxRates: {
+    royalties: 0.15,
+    fees: 0.15,
+    interest: 0.10,
+    tenders: 0.10,
+  }
+};
+
+// ============= PHASE 2 UTILITY FUNCTIONS =============
+
+// 1. Multi-Period Data Structure
+const createPeriods = (years = 3, periodType = 'annually') => {
+  const periods = [];
+  const currentYear = new Date().getFullYear();
+  
+  for (let year = 0; year < years; year++) {
+    const targetYear = currentYear + year;
+    
+    if (periodType === 'annually') {
+      periods.push({
+        id: `year-${targetYear}`,
+        type: 'annually',
+        year: targetYear,
+        periodNumber: 1,
+        label: `Year ${targetYear}`,
+        actuals: {},
+        budget: {},
+        projections: {},
+        taxResult: null,
+        adjustments: {
+          nonDeductible: 0,
+          nonTaxable: 0,
+          capitalAllowances: 0
+        }
+      });
+    } else if (periodType === 'quarterly') {
+      for (let quarter = 1; quarter <= 4; quarter++) {
+        periods.push({
+          id: `year-${targetYear}-q${quarter}`,
+          type: 'quarterly',
+          year: targetYear,
+          periodNumber: quarter,
+          label: `Q${quarter} ${targetYear}`,
+          actuals: {},
+          budget: {},
+          projections: {},
+          taxResult: null,
+          adjustments: {
+            nonDeductible: 0,
+            nonTaxable: 0,
+            capitalAllowances: 0
+          }
+        });
+      }
+    } else if (periodType === 'monthly') {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      for (let month = 1; month <= 12; month++) {
+        periods.push({
+          id: `year-${targetYear}-m${month}`,
+          type: 'monthly',
+          year: targetYear,
+          periodNumber: month,
+          label: `${monthNames[month-1]} ${targetYear}`,
+          actuals: {},
+          budget: {},
+          projections: {},
+          taxResult: null,
+          adjustments: {
+            nonDeductible: 0,
+            nonTaxable: 0,
+            capitalAllowances: 0
+          }
+        });
+      }
+    }
+  }
+  
+  return periods;
+};
+
+// 2. Scenario Creation
+const createScenario = (name, type, baseData) => {
+  const drivers = {
+    revenueGrowth: type === 'growth' ? 0.2 : 0,
+    marginChange: 0,
+    expensePercentage: type === 'cost-cutting' ? -0.15 : 0,
+    capexSchedule: [],
+    staffCount: 0,
+    salaryGrowth: 0,
+    capitalAllowanceRate: 0.1
+  };
+  
+  return {
+    id: `scenario-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    name,
+    type,
+    description: '',
+    drivers,
+    periods: baseData?.periods ? [...baseData.periods] : [],
+    createdAt: new Date().toISOString(),
+    isBase: type === 'base'
+  };
+};
+
+// 3. Tax Engine Calculations
+const calculateTaxProfit = (accountingProfit, adjustments, capitalAllowances, previousLosses = 0) => {
+  // Start with accounting profit
+  let taxableIncome = accountingProfit;
+  
+  // Add back non-deductible expenses
+  taxableIncome += adjustments.nonDeductible || 0;
+  
+  // Deduct non-taxable income
+  taxableIncome -= adjustments.nonTaxable || 0;
+  
+  // Apply prior year losses (can only offset up to current year profit)
+  const lossesToUse = Math.min(previousLosses, Math.max(0, taxableIncome));
+  taxableIncome = Math.max(0, taxableIncome - lossesToUse);
+  
+  // Apply capital allowances
+  taxableIncome = Math.max(0, taxableIncome - capitalAllowances);
+  
+  // Calculate tax
+  const taxDue = taxableIncome * ZIMBABWE_TAX_RULES.corporateTaxRate;
+  const aidsLevy = taxDue * ZIMBABWE_TAX_RULES.aidsLevyRate;
+  const totalTax = taxDue + aidsLevy;
+  
+  // Calculate losses to carry forward
+  const newLossesCarriedForward = Math.max(0, previousLosses - lossesToUse);
+  
+  return {
+    taxableIncome,
+    taxDue,
+    aidsLevy,
+    totalTax,
+    effectiveTaxRate: taxableIncome > 0 ? (totalTax / taxableIncome) * 100 : 0,
+    lossesUtilized: lossesToUse,
+    lossesCarriedForward: newLossesCarriedForward,
+    capitalAllowancesUsed: capitalAllowances,
+    accountingProfit
+  };
+};
+
+// ============= REACT COMPONENTS =============
 
 function cleanAIText(text) {
     if (!text) return "";
@@ -43,22 +296,985 @@ function cleanAIText(text) {
       .trim();
 }
 
-function formatAIExplanation(text) {
-  if (!text) return "";
+// 1. Multi-Period Manager Component
+const PeriodManager = ({ periods, activePeriod, onSelectPeriod, onAddPeriod, onPeriodTypeChange }) => {
+  const [periodType, setPeriodType] = useState('annually');
   
-  const sentences = text.split('. ').filter(sentence => sentence.trim().length > 10);
+  const handlePeriodTypeChange = (type) => {
+    setPeriodType(type);
+    onPeriodTypeChange(type);
+  };
   
   return (
-    <ul className="space-y-2">
-      {sentences.map((sentence, index) => (
-        <li key={index} className="flex items-start">
-          <span className="text-[#1ED760] mr-2 mt-1">•</span>
-          <span>{sentence.trim()}{sentence.trim().endsWith('.') ? '' : '.'}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm tutorial-period-manager">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-[#0F2F4E]">Period Timeline</h3>
+        <div className="flex gap-2">
+          <select 
+            value={periodType}
+            onChange={(e) => handlePeriodTypeChange(e.target.value)}
+            className="text-sm p-2 border border-[#EEEEEE] rounded-lg"
+          >
+            <option value="annually">Annual</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+          <button 
+            onClick={onAddPeriod}
+            className="px-3 py-2 bg-[#1ED760] text-white rounded-lg text-sm hover:bg-[#1ED760]/90"
+          >
+            + Add Year
+          </button>
+        </div>
+      </div>
+      
+      <div className="flex overflow-x-auto pb-2 gap-2">
+        {periods.map((period) => (
+          <button
+            key={period.id}
+            onClick={() => onSelectPeriod(period.id)}
+            className={`flex-shrink-0 px-4 py-2 rounded-lg border transition min-w-[120px] ${
+              activePeriod === period.id
+                ? 'bg-[#1ED760] text-white border-[#1ED760] shadow-lg'
+                : 'bg-white text-[#0F2F4E] border-[#EEEEEE] hover:border-[#1ED760]'
+            }`}
+          >
+            <div className="text-sm font-medium">{period.label}</div>
+            <div className="text-xs opacity-70">
+              {period.taxResult ? `Tax: $${(period.taxResult.totalTax || 0).toLocaleString()}` : 'No data'}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+// 2. Scenario Builder Component
+const ScenarioBuilder = ({ scenarios, activeScenario, onSelectScenario, onCreateScenario, onDeleteScenario }) => {
+  const [newScenarioName, setNewScenarioName] = useState('');
+  const [newScenarioType, setNewScenarioType] = useState('growth');
+  
+  const handleCreate = () => {
+    if (newScenarioName.trim()) {
+      onCreateScenario(newScenarioName, newScenarioType);
+      setNewScenarioName('');
+    }
+  };
+  
+  const getScenarioColor = (type) => {
+    switch(type) {
+      case 'base': return '#0F2F4E';
+      case 'growth': return '#1ED760';
+      case 'cost-cutting': return '#FFD700';
+      case 'strategy-a': return '#8b5cf6';
+      case 'strategy-b': return '#f97316';
+      default: return '#6b7280';
+    }
+  };
+  
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm tutorial-scenario">
+      <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Scenario Management</h3>
+      
+      {/* Create New Scenario */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20">
+        <h4 className="text-md font-medium text-[#0F2F4E] mb-3">Create New Scenario</h4>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input
+            type="text"
+            value={newScenarioName}
+            onChange={(e) => setNewScenarioName(e.target.value)}
+            placeholder="Scenario name"
+            className="p-2 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+          />
+          <select
+            value={newScenarioType}
+            onChange={(e) => setNewScenarioType(e.target.value)}
+            className="p-2 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+          >
+            <option value="base">Base Case</option>
+            <option value="growth">Growth Plan (+20%)</option>
+            <option value="cost-cutting">Cost Cutting (-15%)</option>
+            <option value="strategy-a">Strategy A</option>
+            <option value="strategy-b">Strategy B</option>
+          </select>
+          <button
+            onClick={handleCreate}
+            className="p-2 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90"
+          >
+            Create Scenario
+          </button>
+        </div>
+      </div>
+      
+      {/* Scenario List */}
+      <div className="space-y-3">
+        {scenarios.map((scenario) => (
+          <div
+            key={scenario.id}
+            className={`p-3 rounded-lg border cursor-pointer transition relative group ${
+              activeScenario === scenario.id
+                ? 'border-[#1ED760] bg-[#1ED760]/5'
+                : 'border-[#EEEEEE] hover:border-[#1ED760]'
+            }`}
+            onClick={() => onSelectScenario(scenario.id)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: getScenarioColor(scenario.type) }}
+                ></div>
+                <div>
+                  <div className="font-medium text-[#0F2F4E]">{scenario.name}</div>
+                  <div className="text-sm text-[#0F2F4E]/70">
+                    {scenario.type === 'base' ? 'Base Case' : 
+                     scenario.type === 'growth' ? 'Growth Plan' : 
+                     scenario.type === 'cost-cutting' ? 'Cost Cutting' : 
+                     scenario.type === 'strategy-a' ? 'Strategy A' : 'Strategy B'}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="text-sm text-[#1ED760]">
+                  {scenario.periods?.length || 0} periods
+                </div>
+                {!scenario.isBase && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteScenario(scenario.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-sm"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 3. Scenario Comparison Dashboard
+const ScenarioComparison = ({ scenarios, periods }) => {
+  if (scenarios.length < 2) {
+    return (
+      <div className="bg-white rounded-xl p-8 border border-[#EEEEEE] shadow-sm text-center">
+        <svg className="w-12 h-12 mx-auto text-[#0F2F4E]/20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <p className="text-[#0F2F4E]/60">Create multiple scenarios to enable comparison</p>
+      </div>
+    );
+  }
+  
+  // Calculate comparison data
+  const comparisonData = scenarios.map(scenario => {
+    const totalTax = scenario.periods?.reduce((sum, period) => 
+      sum + (period.taxResult?.totalTax || 0), 0) || 0;
+    const totalProfit = scenario.periods?.reduce((sum, period) => 
+      sum + (period.taxResult?.taxableIncome || 0), 0) || 0;
+    const totalRevenue = scenario.periods?.reduce((sum, period) => 
+      sum + (period.actuals?.revenue || 0), 0) || 0;
+    
+    return {
+      name: scenario.name,
+      type: scenario.type,
+      totalTax,
+      totalProfit,
+      totalRevenue,
+      effectiveRate: totalProfit > 0 ? (totalTax / totalProfit) * 100 : 0,
+      color: scenario.type === 'base' ? '#0F2F4E' : 
+             scenario.type === 'growth' ? '#1ED760' : 
+             scenario.type === 'cost-cutting' ? '#FFD700' : 
+             scenario.type === 'strategy-a' ? '#8b5cf6' : '#f97316'
+    };
+  });
+  
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+      <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Scenario Comparison</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {comparisonData.map((scenario, index) => (
+          <div key={index} className="p-4 border rounded-lg hover:shadow-md transition" style={{ borderColor: scenario.color }}>
+            <div className="font-medium text-[#0F2F4E] mb-2">{scenario.name}</div>
+            <div className="text-2xl font-bold mb-1" style={{ color: scenario.color }}>
+              ${scenario.totalTax?.toLocaleString()}
+            </div>
+            <div className="text-sm text-[#0F2F4E]/70">
+              Total Tax Liability
+            </div>
+            <div className="mt-2 space-y-1 text-sm">
+              <div>Revenue: <span className="font-medium">${scenario.totalRevenue.toLocaleString()}</span></div>
+              <div>Profit: <span className="font-medium">${scenario.totalProfit.toLocaleString()}</span></div>
+              <div>Effective Rate: <span className="font-medium">{scenario.effectiveRate.toFixed(1)}%</span></div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Comparison Chart */}
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={comparisonData}>
+            <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
+            <YAxis stroke="#0F2F4E" fontSize={12} />
+            <Tooltip 
+              formatter={(value) => [`$${value.toLocaleString()}`, 'Value']}
+              labelFormatter={(label) => `Scenario: ${label}`}
+            />
+            <Bar 
+              dataKey="totalTax" 
+              name="Total Tax"
+              radius={[4, 4, 0, 0]}
+            >
+              {comparisonData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+// 4. Enhanced Capital Allowance Module with Multi-Period Support
+const EnhancedCapitalAllowanceModule = ({ periods, onUpdate, assets: externalAssets, onAssetsUpdate }) => {
+  const [assets, setAssets] = useState(externalAssets || []);
+  const [newAsset, setNewAsset] = useState({
+    name: '',
+    category: 'motorVehicles',
+    acquisitionDate: new Date().toISOString().split('T')[0],
+    cost: '',
+    periodId: periods[0]?.id || ''
+  });
+  
+  useEffect(() => {
+    if (externalAssets) {
+      setAssets(externalAssets);
+    }
+  }, [externalAssets]);
+  
+  const addAsset = () => {
+    if (!newAsset.name || !newAsset.cost) {
+      alert('Please fill in asset name and cost');
+      return;
+    }
+    
+    const costValue = parseFloat(newAsset.cost);
+    if (isNaN(costValue) || costValue <= 0) {
+      alert('Please enter a valid cost amount');
+      return;
+    }
+    
+    const asset = {
+      ...newAsset,
+      id: `asset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      cost: costValue,
+      writtenDownValue: costValue,
+      allowances: [],
+      acquisitionYear: new Date(newAsset.acquisitionDate).getFullYear()
+    };
+    
+    const updatedAssets = [...assets, asset];
+    setAssets(updatedAssets);
+    calculateAllowancesForPeriods(updatedAssets);
+    onAssetsUpdate?.(updatedAssets);
+    
+    setNewAsset({
+      name: '',
+      category: 'motorVehicles',
+      acquisitionDate: new Date().toISOString().split('T')[0],
+      cost: '',
+      periodId: periods[0]?.id || ''
+    });
+  };
+  
+  const removeAsset = (assetId) => {
+    const updatedAssets = assets.filter(asset => asset.id !== assetId);
+    setAssets(updatedAssets);
+    calculateAllowancesForPeriods(updatedAssets);
+    onAssetsUpdate?.(updatedAssets);
+  };
+  
+  const calculateAllowancesForPeriods = (assetList) => {
+    const allowancesByPeriod = {};
+    
+    // Initialize allowances for all periods
+    periods.forEach(period => {
+      allowancesByPeriod[period.id] = 0;
+    });
+    
+    assetList.forEach(asset => {
+      const rates = ZIMBABWE_TAX_RULES.capitalAllowanceRates[asset.category];
+      if (!rates) return;
+      
+      // Determine which periods this asset qualifies for allowances
+      periods.forEach((period, periodIndex) => {
+        const periodYear = period.year || new Date().getFullYear() + Math.floor(periodIndex / (period.type === 'monthly' ? 12 : period.type === 'quarterly' ? 4 : 1));
+        
+        // Asset must be acquired before or during this period
+        if (asset.acquisitionYear <= periodYear) {
+          // For first year, use special or accelerated rate
+          if (asset.acquisitionYear === periodYear) {
+            const allowance = asset.cost * Math.max(rates.special, rates.accelerated);
+            allowancesByPeriod[period.id] += allowance;
+          } else {
+            // For subsequent years, use wear and tear rate on written down value
+            // Simplified calculation - would track written down value properly in real implementation
+            const allowance = asset.cost * rates.wearTear;
+            allowancesByPeriod[period.id] += allowance;
+          }
+        }
+      });
+    });
+    
+    onUpdate(allowancesByPeriod);
+  };
+  
+  const getCategoryLabel = (category) => {
+    return category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  };
+  
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl border border-[#EEEEEE] shadow-sm tutorial-capital-allowance">
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Asset Register & Capital Allowances</h3>
+        
+        {/* Add New Asset */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+          <input
+            type="text"
+            placeholder="Asset Name"
+            value={newAsset.name}
+            onChange={(e) => setNewAsset({...newAsset, name: e.target.value})}
+            className="p-3 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+          />
+          <select
+            value={newAsset.category}
+            onChange={(e) => setNewAsset({...newAsset, category: e.target.value})}
+            className="p-3 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+          >
+            <option value="motorVehicles">Motor Vehicles</option>
+            <option value="moveableAssets">Moveable Assets</option>
+            <option value="commercialBuildings">Commercial Buildings</option>
+            <option value="industrialBuildings">Industrial Buildings</option>
+            <option value="leaseImprovements">Lease Improvements</option>
+            <option value="itEquipment">IT Equipment</option>
+          </select>
+          <input
+            type="date"
+            value={newAsset.acquisitionDate}
+            onChange={(e) => setNewAsset({...newAsset, acquisitionDate: e.target.value})}
+            className="p-3 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+          />
+          <input
+            type="number"
+            placeholder="Cost ($)"
+            value={newAsset.cost}
+            onChange={(e) => setNewAsset({...newAsset, cost: e.target.value})}
+            className="p-3 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760] focus:ring-1 focus:ring-[#1ED760]"
+            min="0"
+            step="0.01"
+          />
+          <button
+            onClick={addAsset}
+            className="p-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90"
+          >
+            Add Asset
+          </button>
+        </div>
+        
+        {/* Asset List */}
+        {assets.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#0F2F4E]/5">
+                <tr>
+                  <th className="p-3 text-left">Asset</th>
+                  <th className="p-3 text-left">Category</th>
+                  <th className="p-3 text-left">Cost</th>
+                  <th className="p-3 text-left">Date</th>
+                  <th className="p-3 text-left">First Year Allowance</th>
+                  <th className="p-3 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assets.map(asset => {
+                  const rates = ZIMBABWE_TAX_RULES.capitalAllowanceRates[asset.category];
+                  const allowance = asset.cost * Math.max(rates.special, rates.accelerated, rates.wearTear);
+                  
+                  return (
+                    <tr key={asset.id} className="border-t border-[#EEEEEE] hover:bg-[#0F2F4E]/2">
+                      <td className="p-3">{asset.name}</td>
+                      <td className="p-3">
+                        <span className="px-2 py-1 bg-[#1ED760]/10 rounded text-xs">
+                          {getCategoryLabel(asset.category)}
+                        </span>
+                      </td>
+                      <td className="p-3">${asset.cost.toLocaleString()}</td>
+                      <td className="p-3">{asset.acquisitionDate}</td>
+                      <td className="p-3 text-[#1ED760] font-medium">
+                        ${allowance.toLocaleString()}
+                      </td>
+                      <td className="p-3">
+                        <button 
+                          onClick={() => removeAsset(asset.id)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 border-2 border-dashed border-[#EEEEEE] rounded-lg">
+            <div className="text-[#0F2F4E]/40 mb-2">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <p className="text-sm text-[#0F2F4E]/60">No assets added yet</p>
+            <p className="text-xs text-[#0F2F4E]/40 mt-1">Add assets above to calculate capital allowances</p>
+          </div>
+        )}
+        
+        {/* Period Allowance Summary */}
+        <div className="mt-6 pt-6 border-t border-[#EEEEEE]">
+          <h4 className="text-md font-medium text-[#0F2F4E] mb-3">Period Allowance Summary</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {periods.slice(0, 4).map(period => (
+              <div key={period.id} className="p-3 bg-[#0F2F4E]/5 rounded-lg">
+                <div className="text-xs text-[#0F2F4E]/70">{period.label}</div>
+                <div className="text-sm font-medium text-[#1ED760]">
+                  ${(period.adjustments?.capitalAllowances || 0).toLocaleString()}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 5. Tax Balance Sheet View
+const TaxBalanceSheet = ({ periods, activeScenario, scenarios }) => {
+  const scenario = scenarios.find(s => s.id === activeScenario);
+  
+  if (!scenario || !scenario.periods) {
+    return (
+      <div className="bg-white rounded-xl p-6 border border-[#EEEEEE] shadow-sm">
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Tax Balance Sheet View</h3>
+        <p className="text-[#0F2F4E]/60 text-center py-4">No scenario data available</p>
+      </div>
+    );
+  }
+  
+  const data = periods.map((period, index) => {
+    const periodData = scenario.periods[index];
+    const taxResult = periodData?.taxResult;
+    
+    return {
+      period: period.label,
+      taxLiability: taxResult?.totalTax || 0,
+      lossesCarriedForward: taxResult?.lossesCarriedForward || 0,
+      capitalAllowancePool: periodData?.adjustments?.capitalAllowances || 0,
+      payeLiability: 0,
+      accountingProfit: taxResult?.accountingProfit || 0,
+      taxableIncome: taxResult?.taxableIncome || 0
+    };
+  });
+  
+  // Calculate totals
+  const totals = data.reduce((acc, row) => ({
+    taxLiability: acc.taxLiability + row.taxLiability,
+    lossesCarriedForward: row.lossesCarriedForward,
+    capitalAllowancePool: acc.capitalAllowancePool + row.capitalAllowancePool,
+    accountingProfit: acc.accountingProfit + row.accountingProfit,
+    taxableIncome: acc.taxableIncome + row.taxableIncome
+  }), { taxLiability: 0, lossesCarriedForward: 0, capitalAllowancePool: 0, accountingProfit: 0, taxableIncome: 0 });
+  
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-[#0F2F4E]">Tax Balance Sheet View</h3>
+        <div className="text-sm text-[#0F2F4E]/70">
+          Scenario: <span className="font-medium">{scenario.name}</span>
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto mb-6">
+        <table className="w-full text-sm">
+          <thead className="bg-[#0F2F4E]/5">
+            <tr>
+              <th className="p-3 text-left">Period</th>
+              <th className="p-3 text-left">Accounting Profit</th>
+              <th className="p-3 text-left">Taxable Income</th>
+              <th className="p-3 text-left">Tax Liability</th>
+              <th className="p-3 text-left">Losses CF</th>
+              <th className="p-3 text-left">Allowance Pool</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, index) => (
+              <tr key={index} className="border-t border-[#EEEEEE] hover:bg-[#0F2F4E]/2">
+                <td className="p-3 font-medium">{row.period}</td>
+                <td className="p-3">${row.accountingProfit.toLocaleString()}</td>
+                <td className="p-3">
+                  <span className="text-blue-600">${row.taxableIncome.toLocaleString()}</span>
+                </td>
+                <td className="p-3">
+                  <span className="text-red-600 font-medium">${row.taxLiability.toLocaleString()}</span>
+                </td>
+                <td className="p-3">
+                  <span className="text-purple-600">${row.lossesCarriedForward.toLocaleString()}</span>
+                </td>
+                <td className="p-3">
+                  <span className="text-green-600">${row.capitalAllowancePool.toLocaleString()}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-[#0F2F4E]/5 font-semibold">
+            <tr>
+              <td className="p-3">Total</td>
+              <td className="p-3">${totals.accountingProfit.toLocaleString()}</td>
+              <td className="p-3">${totals.taxableIncome.toLocaleString()}</td>
+              <td className="p-3 text-red-600">${totals.taxLiability.toLocaleString()}</td>
+              <td className="p-3 text-purple-600">${totals.lossesCarriedForward.toLocaleString()}</td>
+              <td className="p-3 text-green-600">${totals.capitalAllowancePool.toLocaleString()}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      
+      {/* Summary Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-[#EEEEEE]">
+        <div className="text-center p-3 bg-red-50 rounded-lg">
+          <div className="text-sm text-red-700">Total Tax</div>
+          <div className="text-xl font-bold text-red-600">${totals.taxLiability.toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-sm text-blue-700">Total Profit</div>
+          <div className="text-xl font-bold text-blue-600">${totals.taxableIncome.toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-sm text-green-700">Allowances</div>
+          <div className="text-xl font-bold text-green-600">${totals.capitalAllowancePool.toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-purple-50 rounded-lg">
+          <div className="text-sm text-purple-700">Final Losses CF</div>
+          <div className="text-xl font-bold text-purple-600">${totals.lossesCarriedForward.toLocaleString()}</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 6. Employee Cost & PAYE Module (FIXED VERSION)
+const EmployeeCostModule = ({ periods, onUpdate }) => {
+  const [employeeData, setEmployeeData] = useState({
+    count: 10,
+    averageSalary: 50000,
+    annualIncrease: 0.1,
+    benefitsPercentage: 0.2,
+    bonusPercentage: 0.15,
+    nssaRate: 0.045,
+    pensionRate: 0.05
+  });
+  
+  const calculatePAYE = (salary) => {
+    const bands = ZIMBABWE_TAX_RULES.payeBands;
+    let remainingIncome = salary;
+    let totalTax = 0;
+    
+    for (const band of bands) {
+      if (remainingIncome <= 0) break;
+      
+      const bandWidth = band.max === Infinity ? remainingIncome : band.max - band.min + 1;
+      const taxableInBand = Math.min(remainingIncome, bandWidth);
+      
+      if (taxableInBand > 0 && taxableInBand > band.min) {
+        const taxInBand = (taxableInBand * band.rate) - band.deduct;
+        totalTax += Math.max(0, taxInBand);
+        remainingIncome -= taxableInBand;
+      }
+    }
+    
+    return Math.max(0, totalTax);
+  };
+  
+  // Calculate costs without calling onUpdate
+  const calculatePeriodCosts = () => {
+    const periodCosts = periods.map((period, index) => {
+      const salary = employeeData.averageSalary * Math.pow(1 + employeeData.annualIncrease, index);
+      const benefits = salary * employeeData.benefitsPercentage;
+      const bonus = salary * employeeData.bonusPercentage;
+      const totalCash = salary + benefits + bonus;
+      
+      const paye = calculatePAYE(totalCash) * employeeData.count;
+      const aidsLevy = paye * 0.03;
+      const nssa = salary * employeeData.nssaRate * employeeData.count;
+      const pension = salary * employeeData.pensionRate * employeeData.count;
+      
+      const totalCost = (totalCash * employeeData.count) + nssa + pension + paye + aidsLevy;
+      
+      return {
+        period: period.label,
+        periodId: period.id,
+        employeeCount: employeeData.count,
+        averageSalary: salary,
+        totalSalary: salary * employeeData.count,
+        benefits: benefits * employeeData.count,
+        bonus: bonus * employeeData.count,
+        paye,
+        aidsLevy,
+        nssa,
+        pension,
+        totalCost
+      };
+    });
+    
+    return periodCosts;
+  };
+  
+  const handleInputChange = (field, value) => {
+    const updatedData = {
+      ...employeeData,
+      [field]: parseFloat(value) || 0
+    };
+    setEmployeeData(updatedData);
+    
+    // Calculate and update parent AFTER state is set
+    setTimeout(() => {
+      const costs = calculatePeriodCosts();
+      onUpdate?.(costs);
+    }, 0);
+  };
+  
+  // Initialize with useEffect instead of calling in render
+  useEffect(() => {
+    const costs = calculatePeriodCosts();
+    onUpdate?.(costs);
+  }, [periods]); // Only run when periods change initially
+  
+  const costs = calculatePeriodCosts(); // This is OK now - just for display
+  const totalEmployeeCost = costs.reduce((sum, period) => sum + period.totalCost, 0);
+  const totalPAYE = costs.reduce((sum, period) => sum + period.paye + period.aidsLevy, 0);
+  
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm tutorial-employee-cost">
+      <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Employee Cost & PAYE Projections</h3>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div>
+          <label className="block text-sm text-[#0F2F4E] mb-2">Employee Count</label>
+          <input
+            type="number"
+            value={employeeData.count}
+            onChange={(e) => handleInputChange('count', e.target.value)}
+            className="w-full p-2 border border-[#EEEEEE] rounded-lg"
+            min="0"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-[#0F2F4E] mb-2">Avg Salary ($)</label>
+          <input
+            type="number"
+            value={employeeData.averageSalary}
+            onChange={(e) => handleInputChange('averageSalary', e.target.value)}
+            className="w-full p-2 border border-[#EEEEEE] rounded-lg"
+            min="0"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-[#0F2F4E] mb-2">Annual Increase (%)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={employeeData.annualIncrease * 100}
+            onChange={(e) => handleInputChange('annualIncrease', parseFloat(e.target.value) / 100)}
+            className="w-full p-2 border border-[#EEEEEE] rounded-lg"
+            min="0"
+            max="100"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-[#0F2F4E] mb-2">Benefits (%)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={employeeData.benefitsPercentage * 100}
+            onChange={(e) => handleInputChange('benefitsPercentage', parseFloat(e.target.value) / 100)}
+            className="w-full p-2 border border-[#EEEEEE] rounded-lg"
+            min="0"
+            max="100"
+          />
+        </div>
+      </div>
+      
+      {/* Cost Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-sm text-blue-700">Total Employee Cost</div>
+          <div className="text-xl font-bold text-blue-600">${totalEmployeeCost.toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-red-50 rounded-lg">
+          <div className="text-sm text-red-700">Total PAYE & Levy</div>
+          <div className="text-xl font-bold text-red-600">${totalPAYE.toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-sm text-green-700">Avg Cost/Employee</div>
+          <div className="text-xl font-bold text-green-600">${(totalEmployeeCost / (employeeData.count * periods.length)).toLocaleString()}</div>
+        </div>
+        <div className="text-center p-3 bg-purple-50 rounded-lg">
+          <div className="text-sm text-purple-700">PAYE % of Cost</div>
+          <div className="text-xl font-bold text-purple-600">
+            {totalEmployeeCost > 0 ? ((totalPAYE / totalEmployeeCost) * 100).toFixed(1) : 0}%
+          </div>
+        </div>
+      </div>
+      
+      {/* Period Breakdown */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-[#0F2F4E]/5">
+            <tr>
+              <th className="p-2 text-left">Period</th>
+              <th className="p-2 text-left">Employees</th>
+              <th className="p-2 text-left">Avg Salary</th>
+              <th className="p-2 text-left">PAYE</th>
+              <th className="p-2 text-left">Total Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {costs.map((period, index) => (
+              <tr key={index} className="border-t border-[#EEEEEE]">
+                <td className="p-2">{period.period}</td>
+                <td className="p-2">{period.employeeCount}</td>
+                <td className="p-2">${period.averageSalary.toLocaleString()}</td>
+                <td className="p-2 text-red-600">${((period.paye + period.aidsLevy) || 0).toLocaleString()}</td>
+                <td className="p-2 font-medium">${period.totalCost.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+// 7. Import Layer Component (CSV/Excel)
+const DataImportModule = ({ onDataImported }) => {
+  const fileRef = useRef(null);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [mapping, setMapping] = useState([]);
+  const [showMapping, setShowMapping] = useState(false);
+  const [parsedData, setParsedData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size too large. Maximum size is 10MB.');
+      return;
+    }
+    
+    setUploadedFile(file.name);
+    setIsLoading(true);
+    
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      
+      // Get first sheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON
+      const data = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      
+      if (data.length > 0) {
+        setParsedData(data);
+        setShowMapping(true);
+        
+        // Auto-detect columns and create initial mapping
+        const columns = Object.keys(data[0]);
+        const initialMapping = columns.map(col => ({
+          importedColumn: col,
+          internalCategory: '',
+          taxTreatment: 'neutral'
+        }));
+        setMapping(initialMapping);
+      }
+      
+    } catch (error) {
+      console.error("Error parsing file:", error);
+      alert("Error parsing file. Please check the format.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleMappingChange = (index, field, value) => {
+    const newMapping = [...mapping];
+    newMapping[index][field] = value;
+    setMapping(newMapping);
+  };
+  
+  const applyMapping = () => {
+    if (!parsedData) return;
+    
+    // Transform data based on mapping
+    const transformedData = parsedData.map(row => {
+      const transformedRow = {};
+      mapping.forEach(map => {
+        if (map.internalCategory && row[map.importedColumn] !== undefined) {
+          transformedRow[map.internalCategory] = row[map.importedColumn];
+        }
+      });
+      return transformedRow;
+    });
+    
+    onDataImported?.(transformedData);
+    setShowMapping(false);
+    alert('Data imported successfully!');
+  };
+  
+  const internalCategories = [
+    'revenue',
+    'costOfGoodsSold',
+    'operatingExpenses',
+    'salaries',
+    'depreciation',
+    'interestIncome',
+    'dividendReceived',
+    'capitalAllowances',
+    'nonDeductibleExpenses'
+  ];
+  
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm tutorial-data-import">
+      <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Import Accounting Data</h3>
+      
+      <div className="mb-4">
+        <p className="text-sm text-[#0F2F4E]/70 mb-3">
+          Upload CSV/Excel files from Xero, QuickBooks, Sage or other accounting systems
+        </p>
+        
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          onChange={handleFileUpload}
+          className="block w-full text-sm text-[#0F2F4E] file:mr-3 file:py-2 file:px-4 file:rounded-lg 
+                   file:border-0 file:text-sm file:font-semibold 
+                   file:bg-[#1ED760] file:text-white hover:file:bg-[#1ED760]/90"
+          disabled={isLoading}
+        />
+        
+        {isLoading && (
+          <div className="mt-2 text-sm text-[#1ED760]">
+            Loading...
+          </div>
+        )}
+        
+        {uploadedFile && !isLoading && (
+          <div className="mt-2 text-sm text-[#1ED760]">
+            Uploaded: {uploadedFile}
+          </div>
+        )}
+      </div>
+      
+      {/* Mapping Interface */}
+      {showMapping && parsedData && (
+        <div className="mt-6 border-t border-[#EEEEEE] pt-6">
+          <h4 className="text-md font-medium text-[#0F2F4E] mb-4">Map Imported Columns</h4>
+          
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#0F2F4E]/5">
+                <tr>
+                  <th className="p-3 text-left">Imported Column</th>
+                  <th className="p-3 text-left">Sample Value</th>
+                  <th className="p-3 text-left">Internal Category</th>
+                  <th className="p-3 text-left">Tax Treatment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mapping.map((item, index) => (
+                  <tr key={index} className="border-t border-[#EEEEEE]">
+                    <td className="p-3 font-mono">{item.importedColumn}</td>
+                    <td className="p-3 text-[#0F2F4E]/70">
+                      {parsedData[0]?.[item.importedColumn]?.toString().substring(0, 30) || ''}
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={item.internalCategory}
+                        onChange={(e) => handleMappingChange(index, 'internalCategory', e.target.value)}
+                        className="w-full p-2 border border-[#EEEEEE] rounded"
+                      >
+                        <option value="">-- Select Category --</option>
+                        {internalCategories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={item.taxTreatment}
+                        onChange={(e) => handleMappingChange(index, 'taxTreatment', e.target.value)}
+                        className="w-full p-2 border border-[#EEEEEE] rounded"
+                      >
+                        <option value="neutral">Neutral</option>
+                        <option value="nonDeductible">Non-Deductible</option>
+                        <option value="nonTaxable">Non-Taxable</option>
+                        <option value="capitalAllowance">Capital Allowance</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={applyMapping}
+              className="px-4 py-2 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90"
+            >
+              Apply Mapping & Import
+            </button>
+            <button
+              onClick={() => setShowMapping(false)}
+              className="px-4 py-2 border border-[#EEEEEE] text-[#0F2F4E] rounded-lg hover:bg-[#0F2F4E]/5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      
+      <div className="mt-4 text-xs text-[#0F2F4E]/50">
+        Supported formats: CSV, Excel (.xlsx, .xls). Max file size: 10MB
+      </div>
+    </div>
+  );
+};
 
 /* ---------- Enhanced Export Components ---------- */
 const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) => {
@@ -70,6 +1286,11 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
   if (!isOpen) return null;
 
   const handleExport = () => {
+    if (!companyName.trim()) {
+      alert('Please enter a company name');
+      return;
+    }
+    
     onExport({
       companyName,
       taxYear,
@@ -111,10 +1332,12 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
             <input
               type="number"
               value={taxYear}
-              onChange={(e) => setTaxYear(e.target.value)}
+              onChange={(e) => setTaxYear(parseInt(e.target.value) || new Date().getFullYear())}
               className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
                          placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
                          focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
+              min="2000"
+              max="2100"
             />
           </div>
 
@@ -158,8 +1381,7 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
           </button>
           <button
             onClick={handleExport}
-            disabled={!companyName.trim()}
-            className="flex-1 px-4 py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition"
           >
             Export {type === 'pdf' ? 'PDF' : 'Excel'}
           </button>
@@ -169,7 +1391,7 @@ const ExportModal = ({ isOpen, onClose, onExport, type, results, formState }) =>
   );
 };
 
-/* ---------- Professional PDF Export (Manual Table Implementation) ---------- */
+/* ---------- Professional PDF Export ---------- */
 const exportComprehensivePDF = (results, formState, options) => {
   import('jspdf').then(({ jsPDF }) => {
     const doc = new jsPDF();
@@ -186,10 +1408,10 @@ const exportComprehensivePDF = (results, formState, options) => {
     };
 
     // Header with Company Info
-    doc.setFillColor(15, 47, 78); // Primary Navy
+    doc.setFillColor(15, 47, 78);
     doc.rect(0, 0, pageWidth, 60, 'F');
     
-    doc.setTextColor(255, 255, 255); // White text
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     doc.text('TAX COMPUTATION REPORT', pageWidth / 2, 25, { align: 'center' });
@@ -204,7 +1426,7 @@ const exportComprehensivePDF = (results, formState, options) => {
 
     // Executive Summary
     doc.setFontSize(16);
-    doc.setTextColor(15, 47, 78); // Primary Navy
+    doc.setTextColor(15, 47, 78);
     doc.text('EXECUTIVE SUMMARY', 20, yPosition);
     yPosition += sectionSpacing;
 
@@ -239,175 +1461,6 @@ const exportComprehensivePDF = (results, formState, options) => {
 
     yPosition += sectionSpacing;
 
-    // Detailed Profit & Loss Breakdown
-    if (yPosition > pageHeight - 50) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(14);
-    doc.setTextColor(15, 47, 78);
-    doc.text('PROFIT & LOSS DETAILS', 20, yPosition);
-    yPosition += 10;
-
-    const profitLossData = [
-      { label: "Sales Revenue", value: `$${(parseFloat(formState.sales) || 0).toLocaleString()}` },
-      { label: "Other Trading Income", value: `$${(parseFloat(formState.otherTradingIncome) || 0).toLocaleString()}` },
-      { label: "Total Revenue", value: `$${((parseFloat(formState.sales) || 0) + (parseFloat(formState.otherTradingIncome) || 0)).toLocaleString()}` },
-      { label: "Cost of Goods Sold", value: `$${(parseFloat(formState.costOfGoodsSold) || 0).toLocaleString()}` },
-      { label: "Gross Profit", value: `$${(results.comprehensive?.grossProfit || 0).toLocaleString()}` },
-      { label: "Operating Expenses", value: `$${(results.comprehensive?.operatingExpenses || 0).toLocaleString()}` },
-      { label: "Operating Profit", value: `$${(results.comprehensive?.operatingProfit || 0).toLocaleString()}` }
-    ];
-
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    
-    profitLossData.forEach((item, index) => {
-      if (yPosition > pageHeight - 20) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      doc.text(item.label, 20, yPosition);
-      doc.text(item.value, pageWidth - 30, yPosition, { align: 'right' });
-      yPosition += lineHeight;
-    });
-
-    yPosition += sectionSpacing;
-
-    // Tax Adjustments
-    if (yPosition > pageHeight - 50) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(14);
-    doc.setTextColor(15, 47, 78);
-    doc.text('TAX ADJUSTMENTS', 20, yPosition);
-    yPosition += 10;
-
-    const taxAdjustments = [
-      { label: "Non-Taxable Income", value: "" },
-      { label: "  Dividends Received", value: `$${(parseFloat(formState.dividendReceived) || 0).toLocaleString()}` },
-      { label: "  Capital Receipts", value: `$${(parseFloat(formState.capitalReceipts) || 0).toLocaleString()}` },
-      { label: "  Profit on Asset Sales", value: `$${(parseFloat(formState.profitOnSale) || 0).toLocaleString()}` },
-      { label: "  Interest Income", value: `$${(parseFloat(formState.interestFinancial) || 0).toLocaleString()}` },
-      { label: "Non-Deductible Expenses", value: "" },
-      { label: "  Depreciation", value: `$${(parseFloat(formState.depreciation) || 0).toLocaleString()}` },
-      { label: "  Fines & Penalties", value: `$${(parseFloat(formState.finesPenaltiesTax) || 0).toLocaleString()}` },
-      { label: "  Donations", value: `$${(parseFloat(formState.donations) || 0).toLocaleString()}` }
-    ];
-
-    doc.setFontSize(9);
-    taxAdjustments.forEach((item) => {
-      if (yPosition > pageHeight - 20) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      doc.text(item.label, 20, yPosition);
-      if (item.value) {
-        doc.text(item.value, pageWidth - 30, yPosition, { align: 'right' });
-      }
-      yPosition += lineHeight;
-    });
-
-    yPosition += sectionSpacing;
-
-    // Capital Allowances
-    if (yPosition > pageHeight - 50) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(14);
-    doc.setTextColor(15, 47, 78);
-    doc.text('CAPITAL ALLOWANCES', 20, yPosition);
-    yPosition += 10;
-
-    const capitalAllowances = [
-      { label: "Motor Vehicles", value: `$${(parseFloat(formState.motorVehicles) || 0).toLocaleString()}` },
-      { label: "Moveable Assets", value: `$${(parseFloat(formState.moveableAssets) || 0).toLocaleString()}` },
-      { label: "Commercial Buildings", value: `$${(parseFloat(formState.commercialBuildings) || 0).toLocaleString()}` },
-      { label: "Industrial Buildings", value: `$${(parseFloat(formState.industrialBuildings) || 0).toLocaleString()}` },
-      { label: "Lease Improvements", value: `$${(parseFloat(formState.leaseImprovements) || 0).toLocaleString()}` },
-      { label: "Total Capital Allowances", value: `$${(results.comprehensive?.capitalAllowances || 0).toLocaleString()}` }
-    ];
-
-    doc.setFontSize(9);
-    capitalAllowances.forEach((item, index) => {
-      if (yPosition > pageHeight - 20) {
-        doc.addPage();
-        yPosition = 20;
-      }
-      
-      if (index === capitalAllowances.length - 1) {
-        doc.setFont('helvetica', 'bold');
-      }
-      
-      doc.text(item.label, 20, yPosition);
-      doc.text(item.value, pageWidth - 30, yPosition, { align: 'right' });
-      yPosition += lineHeight;
-      
-      doc.setFont('helvetica', 'normal');
-    });
-
-    // Tax Optimization Recommendations
-    if (options.includeAI && results.comprehensive?.aiExplanation) {
-      if (yPosition > pageHeight - 80) {
-        doc.addPage();
-        yPosition = 20;
-      } else {
-        yPosition += sectionSpacing;
-      }
-      
-      doc.setFontSize(16);
-      doc.setTextColor(15, 47, 78);
-      doc.text('TAX OPTIMIZATION RECOMMENDATIONS', 20, yPosition);
-      yPosition += 15;
-
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      
-      const aiText = cleanAIText(results.comprehensive.aiExplanation);
-      const sentences = aiText.split('. ').filter(sentence => sentence.trim().length > 10);
-      
-      sentences.forEach((sentence, index) => {
-        if (yPosition > pageHeight - 20) {
-          doc.addPage();
-          yPosition = 20;
-        }
-        
-        const bulletPoint = `• ${sentence.trim()}${sentence.trim().endsWith('.') ? '' : '.'}`;
-        yPosition = addTextWithBreaks(bulletPoint, 25, yPosition, pageWidth - 45);
-        yPosition += 2;
-      });
-
-      if (yPosition > pageHeight - 30) {
-        doc.addPage();
-        yPosition = 20;
-      } else {
-        yPosition += 10;
-      }
-      
-      doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
-      doc.setFont('helvetica', 'italic');
-      const disclaimer = "AI guidance is for informational purposes only.";
-      yPosition = addTextWithBreaks(disclaimer, 20, yPosition, pageWidth - 40);
-      doc.setFont('helvetica', 'normal');
-    }
-
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(128, 128, 128);
-      doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-      doc.text(`Confidential - ${options.companyName} Tax Computation`, 20, pageHeight - 10);
-    }
-
     doc.save(`tax-computation-${options.companyName.replace(/\s+/g, '-').toLowerCase()}-${options.taxYear}.pdf`);
   }).catch(error => {
     console.error('Error generating PDF:', error);
@@ -419,130 +1472,28 @@ const exportComprehensivePDF = (results, formState, options) => {
 const exportComprehensiveExcel = (results, formState, options) => {
   const wb = XLSX.utils.book_new();
   
-  // 1. Executive Summary Sheet
+  // Create summary sheet
   const summaryData = [
-    ['TAX COMPUTATION EXECUTIVE SUMMARY', '', '', ''],
-    ['', '', '', ''],
-    ['Company:', options.companyName, 'Tax Year:', options.taxYear],
-    ['Generated:', new Date().toLocaleDateString(), 'Period:', 'Annual'],
-    ['', '', '', ''],
-    ['FINANCIAL HIGHLIGHTS', '', 'AMOUNT ($)', ''],
-    ['Gross Profit', '', results.comprehensive?.grossProfit || 0, ''],
-    ['Operating Profit', '', results.comprehensive?.operatingProfit || 0, ''],
-    ['Taxable Income', '', results.comprehensive?.taxableIncome || 0, ''],
-    ['', '', '', ''],
-    ['TAX CALCULATION', '', 'AMOUNT ($)', 'RATE'],
-    ['Corporate Income Tax', '', results.comprehensive?.taxDue || 0, '25%'],
-    ['AIDS Levy', '', results.comprehensive?.aidsLevy || 0, '3%'],
-    ['Total Tax Liability', '', results.comprehensive?.totalTax || 0, ''],
-    ['', '', '', ''],
-    ['EFFECTIVE TAX RATES', '', 'VALUE', ''],
-    ['Effective Tax Rate', '', `${((results.comprehensive?.totalTax / (results.comprehensive?.taxableIncome || 1)) * 100).toFixed(2)}%`, ''],
-    ['Profit Margin', '', `${((results.comprehensive?.operatingProfit / (parseFloat(formState.sales) || 1)) * 100).toFixed(2)}%`, '']
+    ["Tax Planning Report", options.companyName, `Year: ${options.taxYear}`],
+    ["Generated:", new Date().toLocaleDateString()],
+    [],
+    ["Metric", "Amount"],
+    ["Gross Profit", results.comprehensive?.grossProfit || 0],
+    ["Operating Profit", results.comprehensive?.operatingProfit || 0],
+    ["Taxable Income", results.comprehensive?.taxableIncome || 0],
+    ["Corporate Tax", results.comprehensive?.taxDue || 0],
+    ["AIDS Levy", results.comprehensive?.aidsLevy || 0],
+    ["Total Tax Liability", results.comprehensive?.totalTax || 0]
   ];
-
-  const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, ws1, "Executive Summary");
-
-  // 2. Detailed Profit & Loss Sheet (QPD Format)
-  const profitLossData = [
-    ['PROFIT AND LOSS STATEMENT', '', '', ''],
-    ['For the year ended', '31 December', options.taxYear, ''],
-    ['', '', '', ''],
-    ['REVENUE', 'NOTES', `$${options.taxYear}`, ''],
-    ['Sales', '', parseFloat(formState.sales) || 0, ''],
-    ['Other Trading Income', '', parseFloat(formState.otherTradingIncome) || 0, ''],
-    ['TOTAL REVENUE', '', `=C6+C7`, ''],
-    ['', '', '', ''],
-    ['COST OF SALES', '', '', ''],
-    ['Cost of Goods Sold', '', parseFloat(formState.costOfGoodsSold) || 0, ''],
-    ['GROSS PROFIT', '', `=C8-C10`, ''],
-    ['', '', '', ''],
-    ['OPERATING EXPENSES', '', '', ''],
-    ['Advertising & Marketing', '', parseFloat(formState.advertisingMarketing) || 0, ''],
-    ['Training & Events', '', parseFloat(formState.trainingEvent) || 0, ''],
-    ['Bank Charges', '', parseFloat(formState.bankCharges) || 0, ''],
-    ['IMTT', '', parseFloat(formState.imtt) || 0, ''],
-    ['Salaries & Wages', '', parseFloat(formState.salaries) || 0, ''],
-    ['TOTAL OPERATING EXPENSES', '', `=SUM(C14:C18)`, ''],
-    ['', '', '', ''],
-    ['OPERATING PROFIT', '', `=C11-C19`, ''],
-  ];
-
-  const ws2 = XLSX.utils.aoa_to_sheet(profitLossData);
-  XLSX.utils.book_append_sheet(wb, ws2, "Profit & Loss");
-
-  // 3. Tax Computation Sheet (ZIMRA Format)
-  const taxComputationData = [
-    ['INCOME TAX COMPUTATION', '', '', ''],
-    ['In terms of Income Tax Act [Chapter 23:06]', '', '', ''],
-    ['', '', '', ''],
-    ['PROFIT BEFORE TAX', '', results.comprehensive?.operatingProfit || 0, 'A'],
-    ['', '', '', ''],
-    ['ADD: NON-DEDUCTIBLE EXPENSES', '', '', ''],
-    ['Depreciation', '', parseFloat(formState.depreciation) || 0, ''],
-    ['Fines & Penalties', '', parseFloat(formState.finesPenaltiesTax) || 0, ''],
-    ['Donations', '', parseFloat(formState.donations) || 0, ''],
-    ['Disallowable Subscriptions', '', parseFloat(formState.disallowableSubscriptions) || 0, ''],
-    ['TOTAL ADDITIONS', '', `=SUM(C7:C10)`, 'B'],
-    ['', '', '', ''],
-    ['DEDUCT: NON-TAXABLE INCOME', '', '', ''],
-    ['Dividends Received', '', parseFloat(formState.dividendReceived) || 0, ''],
-    ['Capital Receipts', '', parseFloat(formState.capitalReceipts) || 0, ''],
-    ['Profit on Sale of Assets', '', parseFloat(formState.profitOnSale) || 0, ''],
-    ['Interest from Financial Inst.', '', parseFloat(formState.interestFinancial) || 0, ''],
-    ['TOTAL DEDUCTIONS', '', `=SUM(C13:C16)`, 'C'],
-    ['', '', '', ''],
-    ['DEDUCT: CAPITAL ALLOWANCES', '', '', ''],
-    ['Motor Vehicles', '', parseFloat(formState.motorVehicles) || 0, ''],
-    ['Moveable Assets', '', parseFloat(formState.moveableAssets) || 0, ''],
-    ['Commercial Buildings', '', parseFloat(formState.commercialBuildings) || 0, ''],
-    ['Industrial Buildings', '', parseFloat(formState.industrialBuildings) || 0, ''],
-    ['Lease Improvements', '', parseFloat(formState.leaseImprovements) || 0, ''],
-    ['TOTAL CAPITAL ALLOWANCES', '', `=SUM(C19:C23)`, 'D'],
-    ['', '', '', ''],
-    ['ADJUSTED TAXABLE INCOME', '', `=C4+B11-C17-D24`, 'E'],
-    ['Corporate Tax @ 25%', '', `=E25*0.25`, 'F'],
-    ['AIDS Levy @ 3% of Tax', '', `=F26*0.03`, 'G'],
-    ['TOTAL TAX LIABILITY', '', `=F26+G27`, 'H']
-  ];
-
-  const ws3 = XLSX.utils.aoa_to_sheet(taxComputationData);
-  XLSX.utils.book_append_sheet(wb, ws3, "Tax Computation");
-
-  // 4. Capital Allowances Schedule
-  const capitalAllowanceData = [
-    ['CAPITAL ALLOWANCES SCHEDULE', '', '', ''],
-    ['Asset Class', 'Cost/Value', 'Allowance Rate', 'Allowance Amount'],
-    ['Motor Vehicles', parseFloat(formState.motorVehicles) || 0, '25%', `=B3*0.25`],
-    ['Moveable Assets', parseFloat(formState.moveableAssets) || 0, '25%', `=B4*0.25`],
-    ['Commercial Buildings', parseFloat(formState.commercialBuildings) || 0, '5%', `=B5*0.05`],
-    ['Industrial Buildings', parseFloat(formState.industrialBuildings) || 0, '10%', `=B6*0.1`],
-    ['Lease Improvements', parseFloat(formState.leaseImprovements) || 0, '10%', `=B7*0.1`],
-    ['TOTAL ALLOWANCES', '', '', `=SUM(D3:D7)`]
-  ];
-
-  const ws4 = XLSX.utils.aoa_to_sheet(capitalAllowanceData);
-  XLSX.utils.book_append_sheet(wb, ws4, "Capital Allowances");
-
-  // 5. Tax Planning Recommendations
-  if (results.comprehensive?.aiExplanation) {
-    const recommendationsData = [
-      ['TAX OPTIMIZATION RECOMMENDATIONS', '', '', ''],
-      ['Generated by AI Tax Assistant', '', '', ''],
-      ['', '', '', ''],
-      ...cleanAIText(results.comprehensive.aiExplanation).split('. ').map(rec => [rec.trim()])
-    ];
-    
-    const ws5 = XLSX.utils.aoa_to_sheet(recommendationsData);
-    XLSX.utils.book_append_sheet(wb, ws5, "Tax Optimization");
-  }
-
+  
+  const ws = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, ws, "Summary");
+  
   XLSX.writeFile(wb, `tax-planning-${options.companyName.replace(/\s+/g, '-').toLowerCase()}-${options.taxYear}.xlsx`);
 };
 
 /* ---------- Enhanced Export Buttons Component ---------- */
-const EnhancedExportButtons = ({ results, formState }) => {
+const EnhancedExportButtons = ({ results, formState, scenarios, periods }) => {
   const [exportModal, setExportModal] = useState({ open: false, type: '' });
 
   const handleExport = (options) => {
@@ -555,7 +1506,7 @@ const EnhancedExportButtons = ({ results, formState }) => {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-3 mt-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20">
+      <div className="flex flex-col sm:flex-row gap-3 mt-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20 tutorial-export">
         <div className="flex-1">
           <h4 className="text-lg font-semibold text-[#0F2F4E] mb-2">Professional Reports</h4>
             <p className="text-sm text-[#0F2F4E]">
@@ -593,152 +1544,6 @@ const EnhancedExportButtons = ({ results, formState }) => {
   );
 };
 
-/* ---------- Enhanced Capital Allowance Calculator ---------- */
-const CapitalAllowanceCalculator = ({ formState, onUpdate }) => {
-  const [assetDetails, setAssetDetails] = useState({
-    motorVehicles: {
-      totalCostPrice: formState.motorVehicles || "",
-      datePurchased: "",
-      normalDepreciationRate: 0.2,
-      specialInitialAllowance: 0.5,
-      acceleratedWearTear: 0.25,
-      wearTear: 0.2
-    },
-    moveableAssets: {
-      totalCostPrice: formState.moveableAssets || "",
-      datePurchased: "",
-      normalDepreciationRate: 0.25,
-      specialInitialAllowance: 0.5,
-      acceleratedWearTear: 0.25,
-      wearTear: 0.1
-    },
-    commercialBuildings: {
-      totalCostPrice: formState.commercialBuildings || "",
-      datePurchased: "",
-      normalDepreciationRate: 0.1,
-      specialInitialAllowance: 0,
-      acceleratedWearTear: 0,
-      wearTear: 0.025
-    },
-    industrialBuildings: {
-      totalCostPrice: formState.industrialBuildings || "",
-      datePurchased: "",
-      normalDepreciationRate: 0.1,
-      specialInitialAllowance: 0,
-      acceleratedWearTear: 0,
-      wearTear: 0.05
-    },
-    leaseImprovements: {
-      totalCostPrice: formState.leaseImprovements || "",
-      datePurchased: "",
-      normalDepreciationRate: 0,
-      specialInitialAllowance: 0.5,
-      acceleratedWearTear: 0.25,
-      wearTear: 0.05
-    }
-  });
-
-  const calculateAllowances = (assetType, details) => {
-    const cost = parseFloat(details.totalCostPrice) || 0;
-    
-    const specialInitialAllowance = cost * details.specialInitialAllowance;
-    const acceleratedWearTear = cost * details.acceleratedWearTear;
-    const wearTear = cost * details.wearTear;
-    
-    const totalAllowance = Math.max(specialInitialAllowance, acceleratedWearTear, wearTear);
-    
-    return {
-      specialInitialAllowance,
-      acceleratedWearTear,
-      wearTear,
-      totalAllowance
-    };
-  };
-
-  const updateAssetDetail = (assetType, field, value) => {
-    const updatedDetails = {
-      ...assetDetails,
-      [assetType]: {
-        ...assetDetails[assetType],
-        [field]: value
-      }
-    };
-    
-    setAssetDetails(updatedDetails);
-    
-    const allowances = calculateAllowances(assetType, updatedDetails[assetType]);
-    if (onUpdate) {
-      onUpdate(assetType, allowances.totalAllowance);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-[#0F2F4E]">Detailed Capital Allowance Calculation</h3>
-      
-      {Object.entries(assetDetails).map(([assetType, details]) => {
-        const allowances = calculateAllowances(assetType, details);
-        
-        return (
-          <div key={assetType} className="bg-white p-4 rounded-lg border border-[#EEEEEE] shadow-sm">
-            <h4 className="font-semibold text-[#0F2F4E] mb-3 capitalize">
-              {assetType.replace(/([A-Z])/g, ' $1')}
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm text-[#0F2F4E] mb-1">Total Cost Price ($)</label>
-                <input
-                  type="number"
-                  value={details.totalCostPrice}
-                  onChange={(e) => updateAssetDetail(assetType, 'totalCostPrice', e.target.value)}
-                  className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
-                             placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                             focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm text-[#0F2F4E] mb-1">Date Purchased</label>
-                <input
-                  type="date"
-                  value={details.datePurchased}
-                  onChange={(e) => updateAssetDetail(assetType, 'datePurchased', e.target.value)}
-                  className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
-                             placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                             focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
-                <div className="text-[#0F2F4E]/70">Special Initial</div>
-                <div className="text-[#1ED760] font-medium">${allowances.specialInitialAllowance.toLocaleString()}</div>
-              </div>
-              
-              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
-                <div className="text-[#0F2F4E]/70">Accelerated W&T</div>
-                <div className="text-[#1ED760] font-medium">${allowances.acceleratedWearTear.toLocaleString()}</div>
-              </div>
-              
-              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#EEEEEE]">
-                <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                <div className="text-[#1ED760] font-medium">${allowances.wearTear.toLocaleString()}</div>
-              </div>
-              
-              <div className="bg-[#0F2F4E]/5 p-3 rounded border border-[#FFD700]">
-                <div className="text-[#0F2F4E]/70">Total Allowance</div>
-                <div className="text-[#1ED760] font-semibold">${allowances.totalAllowance.toLocaleString()}</div>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 /* ---------- Shared UI Components ---------- */
 const ActionButton = ({ children, ...props }) => (
   <button
@@ -752,29 +1557,71 @@ const ActionButton = ({ children, ...props }) => (
   </button>
 );
 
-const InputField = ({ label, value, onChange, type = "number", className = "", placeholder = "" }) => (
-  <div className={`space-y-2 ${className}`}>
-    <label className="block text-sm font-medium text-[#0F2F4E]">{label}</label>
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className="w-full p-3 rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
-                 placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                 focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
-    />
-  </div>
-);
-
-// Add this component near the top with other components
 const AIDisclaimer = ({ className = "" }) => (
   <div className={`text-xs text-[#0F2F4E]/70 mt-2 ${className}`}>
     ⚠️ AI guidance is for informational purposes only. Consult a qualified tax professional for specific advice.
   </div>
 );
 
-/* ---------- NEW: Enhanced Tax Breakdown Visualization Component ---------- */
+/* ---------- Chat Assistant Component ---------- */
+const ChatAssistant = ({ aiHistory, setAIHistory }) => {
+  const [query, setQuery] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const send = async () => {
+    if (!query.trim()) return;
+    setSending(true);
+    try {
+      const res = await axios.post(`${API_BASE}/chatbot`, { query });
+      const assistant = res.data.response ?? "(no response)";
+      setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
+      setQuery("");
+    } catch {
+      setAIHistory((h) => [
+        { q: query, a: "(assistant error)" },
+        ...h,
+      ].slice(0, 50));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex gap-2">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ask about tax optimization..."
+          className="flex-1 p-1 text-sm rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
+                     placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
+                     focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
+          onKeyDown={(e) => e.key === 'Enter' && send()}
+        />
+        <button
+          onClick={send}
+          disabled={sending || !query.trim()}
+          className="px-3 text-sm py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition disabled:opacity-50"
+        >
+          {sending ? "..." : "Ask"}
+        </button>
+      </div>
+
+      <AIDisclaimer />
+
+      <div className="mt-3 max-h-40 overflow-auto space-y-2">
+        {aiHistory.map((h, i) => (
+          <div key={i} className="p-3 bg-white rounded-lg border border-[#EEEEEE]">
+            <div className="text-sm text-[#0F2F4E]">Q: {h.q}</div>
+            <div className="text-sm text-[#1ED760] mt-1">A: {cleanAIText(h.a)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ---------- Enhanced Tax Breakdown Visualization Component ---------- */
 const TaxBreakdownVisualization = ({ results, formState }) => {
   if (!results.comprehensive) {
     return (
@@ -953,38 +1800,40 @@ const TaxBreakdownVisualization = ({ results, formState }) => {
           <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
             Tax Efficiency Metrics
           </h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={taxEfficiencyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
-              <YAxis 
-                stroke="#0F2F4E" 
-                fontSize={12}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
-              />
-              <Tooltip 
-                formatter={(value, name) => [
-                  `${value.toFixed(2)}%`,
-                  name === 'value' ? 'Percentage' : name
-                ]}
-                labelFormatter={(label) => `Metric: ${label}`}
-              />
-              <Bar 
-                dataKey="value" 
-                radius={[4, 4, 0, 0]}
-              >
-                {taxEfficiencyData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-                <LabelList 
-                  dataKey="value" 
-                  position="top" 
-                  fill="#0F2F4E"
-                  fontSize={11}
-                  formatter={(value) => `${value.toFixed(1)}%`}
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={taxEfficiencyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
+                <YAxis 
+                  stroke="#0F2F4E" 
+                  fontSize={12}
+                  tickFormatter={(value) => `${value.toFixed(1)}%`}
                 />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                <Tooltip 
+                  formatter={(value, name) => [
+                    `${value.toFixed(2)}%`,
+                    name === 'value' ? 'Percentage' : name
+                  ]}
+                  labelFormatter={(label) => `Metric: ${label}`}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[4, 4, 0, 0]}
+                >
+                  {taxEfficiencyData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                  <LabelList 
+                    dataKey="value" 
+                    position="top" 
+                    fill="#0F2F4E"
+                    fontSize={11}
+                    formatter={(value) => `${value.toFixed(1)}%`}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
           <div className="text-xs text-[#0F2F4E]/70 mt-2 text-center">
             Lower percentages indicate better tax efficiency
           </div>
@@ -995,35 +1844,37 @@ const TaxBreakdownVisualization = ({ results, formState }) => {
           <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
             Profit Margin Analysis
           </h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={profitMarginData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE" />
-              <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
-              <YAxis 
-                stroke="#0F2F4E" 
-                fontSize={12}
-                tickFormatter={(value) => `${value.toFixed(1)}%`}
-              />
-              <Tooltip 
-                formatter={(value) => [`${value.toFixed(2)}%`, 'Margin']}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="value" 
-                stroke="#0F2F4E"
-                strokeWidth={2}
-                dot={{ fill: '#0F2F4E', strokeWidth: 2, r: 4 }}
-              >
-                <LabelList 
-                  dataKey="value" 
-                  position="top" 
-                  fill="#0F2F4E"
-                  fontSize={11}
-                  formatter={(value) => `${value.toFixed(1)}%`}
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={profitMarginData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE" />
+                <XAxis dataKey="name" stroke="#0F2F4E" fontSize={12} />
+                <YAxis 
+                  stroke="#0F2F4E" 
+                  fontSize={12}
+                  tickFormatter={(value) => `${value.toFixed(1)}%`}
                 />
-              </Line>
-            </LineChart>
-          </ResponsiveContainer>
+                <Tooltip 
+                  formatter={(value) => [`${value.toFixed(2)}%`, 'Margin']}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke="#0F2F4E"
+                  strokeWidth={2}
+                  dot={{ fill: '#0F2F4E', strokeWidth: 2, r: 4 }}
+                >
+                  <LabelList 
+                    dataKey="value" 
+                    position="top" 
+                    fill="#0F2F4E"
+                    fontSize={11}
+                    formatter={(value) => `${value.toFixed(1)}%`}
+                  />
+                </Line>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
           <div className="text-xs text-[#0F2F4E]/70 mt-2 text-center">
             Impact of taxes on profitability
           </div>
@@ -1036,44 +1887,46 @@ const TaxBreakdownVisualization = ({ results, formState }) => {
           <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
             Expense Breakdown
           </h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={expenseBreakdownData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                label={renderCustomizedLabel}
-                labelLine={false}
-              >
-                {expenseBreakdownData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    stroke="#FFFFFF"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value, name) => [
-                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                  name
-                ]}
-              />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36}
-                formatter={(value, entry) => (
-                  <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={expenseBreakdownData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  label={renderCustomizedLabel}
+                  labelLine={false}
+                >
+                  {expenseBreakdownData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      stroke="#FFFFFF"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name) => [
+                    `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                    name
+                  ]}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value, entry) => (
+                    <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Revenue & Tax Distribution */}
@@ -1081,44 +1934,46 @@ const TaxBreakdownVisualization = ({ results, formState }) => {
           <h4 className="text-md font-semibold text-[#0F2F4E] mb-4 text-center">
             Revenue & Tax Distribution
           </h4>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={revenueBreakdownData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
-                label={renderCustomizedLabel}
-                labelLine={false}
-              >
-                {revenueBreakdownData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.color}
-                    stroke="#FFFFFF"
-                    strokeWidth={2}
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value, name) => [
-                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                  name
-                ]}
-              />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36}
-                formatter={(value, entry) => (
-                  <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
-                )}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={revenueBreakdownData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  label={renderCustomizedLabel}
+                  labelLine={false}
+                >
+                  {revenueBreakdownData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color}
+                      stroke="#FFFFFF"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value, name) => [
+                    `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                    name
+                  ]}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value, entry) => (
+                    <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -1277,267 +2132,291 @@ const ComprehensiveChartPanel = ({ results }) => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col md:flex-row gap-4">
+    <div className="w-full flex flex-col md:flex-row gap-4">
       {/* Tax Breakdown Pie Chart */}
-      <div className="flex-1 min-h-[160px]">
+      <div className="flex-1">
         <div className="text-center text-sm text-[#0F2F4E] mb-2">Tax Breakdown</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie
-              data={taxBreakdownData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              innerRadius={40}
-              outerRadius={80}
-              paddingAngle={2}
-              label={renderCustomizedLabel}
-              labelLine={false}
-              animationDuration={800}
-            >
-              {taxBreakdownData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
-                />
-              ))}
-            </Pie>
-            <Tooltip 
-              formatter={(value, name) => [
-                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                name
-              ]}
-            />
-            <Legend 
-              verticalAlign="bottom" 
-              height={36}
-              formatter={(value, entry) => (
-                <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
-              )}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={taxBreakdownData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                innerRadius={40}
+                outerRadius={80}
+                paddingAngle={2}
+                label={renderCustomizedLabel}
+                labelLine={false}
+                animationDuration={800}
+              >
+                {taxBreakdownData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                    stroke="#FFFFFF"
+                    strokeWidth={2}
+                  />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value, name) => [
+                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                  name
+                ]}
+              />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                formatter={(value, entry) => (
+                  <span style={{ color: '#0F2F4E', fontSize: '12px' }}>{value}</span>
+                )}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Capital Allowance Bar Chart */}
-      <div className="flex-1 min-h-[160px]">
+      <div className="flex-1">
         <div className="text-center text-sm text-[#0F2F4E] mb-2">Capital Allowances</div>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart 
-            data={capitalAllowanceData} 
-            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
-            animationDuration={800}
-          >
-            <XAxis 
-              dataKey="name" 
-              stroke="#0F2F4E" 
-              fontSize={12}
-              angle={-45}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis 
-              stroke="#0F2F4E" 
-              fontSize={12}
-              tickFormatter={(value) => `$${value.toLocaleString()}`}
-            />
-            <Tooltip 
-              formatter={(value, name) => [
-                `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
-                'Allowance'
-              ]}
-              labelFormatter={(label) => `Asset: ${label}`}
-              contentStyle={{ 
-                backgroundColor: '#FFFFFF', 
-                border: '1px solid #EEEEEE',
-                borderRadius: '8px',
-                color: '#0F2F4E'
-              }}
-            />
-            <Bar 
-              dataKey="value" 
-              fill="#1ED760" 
-              radius={[4, 4, 0, 0]}
-              stroke="#0F2F4E"
-              strokeWidth={1}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart 
+              data={capitalAllowanceData} 
+              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              animationDuration={800}
             >
-              <LabelList 
-                dataKey="value" 
-                position="top" 
-                fill="#0F2F4E"
-                fontSize={11}
-                formatter={(value) => `$${value > 1000 ? `${(value/1000).toFixed(0)}k` : value.toLocaleString()}`}
+              <XAxis 
+                dataKey="name" 
+                stroke="#0F2F4E" 
+                fontSize={12}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-};
-
-const ComprehensiveSummaryPanel = ({ results }) => {
-  if (!results.comprehensive) {
-    return (
-      <div className="text-[#0F2F4E]/40 text-sm">
-        Complete the tax computation form to see summary
-      </div>
-    );
-  }
-
-  const { comprehensive } = results;
-  
-  const items = [
-    { label: "Gross Profit", value: comprehensive.grossProfit || 0 },
-    { label: "Operating Profit", value: comprehensive.operatingProfit || 0 },
-    { label: "Taxable Income", value: comprehensive.taxableIncome || 0 },
-    { label: "Capital Allowances", value: comprehensive.capitalAllowances || 0 },
-    { label: "Total Tax", value: comprehensive.totalTax || 0 },
-  ];
-  
-  const maxValue = Math.max(...items.map((i) => i.value), 1);
-
-  return (
-    <div className="space-y-3">
-      {items.map((item, idx) => (
-        <div key={idx}>
-          <div className="flex justify-between text-sm text-[#0F2F4E]">
-            <span>{item.label}</span>
-            <span className="text-[#1ED760] font-medium">
-              {typeof item.value === 'number' ? `$${item.value.toLocaleString()}` : item.value}
-            </span>
-          </div>
-          <div className="h-2 bg-[#EEEEEE] rounded">
-            <div
-              className="h-2 bg-[#1ED760] rounded"
-              style={{ width: `${(item.value / maxValue) * 100}%` }}
-            ></div>
-          </div>
+              <YAxis 
+                stroke="#0F2F4E" 
+                fontSize={12}
+                tickFormatter={(value) => `$${value.toLocaleString()}`}
+              />
+              <Tooltip 
+                formatter={(value, name) => [
+                  `$${typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}`,
+                  'Allowance'
+                ]}
+                labelFormatter={(label) => `Asset: ${label}`}
+                contentStyle={{ 
+                  backgroundColor: '#FFFFFF', 
+                  border: '1px solid #EEEEEE',
+                  borderRadius: '8px',
+                  color: '#0F2F4E'
+                }}
+              />
+              <Bar 
+                dataKey="value" 
+                fill="#1ED760" 
+                radius={[4, 4, 0, 0]}
+                stroke="#0F2F4E"
+                strokeWidth={1}
+              >
+                <LabelList 
+                  dataKey="value" 
+                  position="top" 
+                  fill="#0F2F4E"
+                  fontSize={11}
+                  formatter={(value) => `$${value > 1000 ? `${(value/1000).toFixed(0)}k` : value.toLocaleString()}`}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      ))}
+      </div>
     </div>
   );
 };
 
-/* ---------- Chat Assistant Component ---------- */
-const ChatAssistant = ({ aiHistory, setAIHistory }) => {
-  const [query, setQuery] = useState("");
-  const [sending, setSending] = useState(false);
+// Tutorial Overlay Component with Tab Switching
+const TutorialOverlay = ({ 
+  isOpen, 
+  currentStep, 
+  onNext, 
+  onPrev, 
+  onClose, 
+  onSkip,
+  activeTab, // Receive current active tab
+  onSwitchTab // Function to switch tabs
+}) => {
+  const [targetElement, setTargetElement] = useState(null);
+  const [highlightStyle, setHighlightStyle] = useState({});
+  
+  // Get current step safely
+  const step = currentStep < TUTORIAL_STEPS.length 
+    ? TUTORIAL_STEPS[currentStep] 
+    : null;
+  
+  // Auto-switch to the required tab for this tutorial step
+  useEffect(() => {
+    if (!isOpen || !step) return;
+    
+    // If step requires a specific tab and we're not on it, switch
+    if (step.tab && step.tab !== activeTab) {
+      onSwitchTab?.(step.tab);
+      
+      // Wait a bit for tab to switch and component to render
+      const timer = setTimeout(() => {
+        findAndHighlightElement(step);
+      }, 300); // Short delay for tab switch animation
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Already on correct tab, highlight immediately
+      findAndHighlightElement(step);
+    }
+  }, [isOpen, currentStep, activeTab]); // Add activeTab as dependency
 
-  const send = async () => {
-    if (!query.trim()) return;
-    setSending(true);
-    try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query });
-      const assistant = res.data.response ?? "(no response)";
-      setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
-      setQuery("");
-    } catch {
-      setAIHistory((h) => [
-        { q: query, a: "(assistant error)" },
-        ...h,
-      ].slice(0, 50));
-    } finally {
-      setSending(false);
+  const findAndHighlightElement = (step) => {
+    if (!step || !step.target || typeof document === 'undefined') {
+      setHighlightStyle({ display: 'none' });
+      return;
+    }
+    
+    const element = document.querySelector(step.target);
+    setTargetElement(element);
+    
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      
+      // Check if element is actually visible (not display: none)
+      const style = window.getComputedStyle(element);
+      const isVisible = style.display !== 'none' && 
+                       style.visibility !== 'hidden' && 
+                       rect.width > 0 && 
+                       rect.height > 0;
+      
+      if (isVisible) {
+        setHighlightStyle({
+          top: `${rect.top}px`,
+          left: `${rect.left}px`,
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+          display: 'block'
+        });
+      } else {
+        // Element exists but not visible
+        setHighlightStyle({ display: 'none' });
+        console.warn(`Tutorial target ${step.target} is not visible`);
+      }
+    } else {
+      // Element not found at all
+      setHighlightStyle({ display: 'none' });
+      console.warn(`Tutorial target ${step.target} not found`);
     }
   };
-
+  
+  // Early return AFTER hooks
+  if (!isOpen || !step) {
+    return null;
+  }
+  
+  const progress = ((currentStep + 1) / TUTORIAL_STEPS.length) * 100;
+  
+  // Simple positioning - always center for now to avoid coordinate issues
+  const positionClass = 'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2';
+  
   return (
-    <div>
-      <div className="flex gap-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask about tax optimization..."
-          className="flex-1 p-1 text-sm rounded-lg bg-white border border-[#EEEEEE] text-[#0F2F4E] 
-                     placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                     focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
-        />
-        <button
-          onClick={send}
-          disabled={sending}
-          className="px-3 text-sm py-3 bg-[#1ED760] text-white rounded-lg font-medium hover:bg-[#1ED760]/90 transition"
+    <div className="fixed inset-0 z-[100]">
+      <div className="absolute inset-0 bg-black/50" />
+      
+      {/* Highlight Overlay - only if element is visible */}
+      {highlightStyle.display === 'block' && (
+        <div 
+          className="absolute border-2 border-[#1ED760] rounded-lg z-[101] shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+          style={highlightStyle}
         >
-          {sending ? "..." : "Ask"}
-        </button>
-      </div>
-
-      <AIDisclaimer />
-
-      <div className="mt-3 max-h-40 overflow-auto space-y-2">
-        {aiHistory.map((h, i) => (
-          <div key={i} className="p-3 bg-white rounded-lg border border-[#EEEEEE]">
-            <div className="text-sm text-[#0F2F4E]">Q: {h.q}</div>
-            <div className="text-sm text-[#1ED760] mt-1">A: {cleanAIText(h.a)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ---------- Excel Uploader Component ---------- */
-const ExcelUploader = ({ onParse }) => {
-  const fileRef = useRef(null);
-  const [uploadedFile, setUploadedFile] = useState(null);
-
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    setUploadedFile(file.name);
-    
-    try {
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      
-      const profitLossSheet = workbook.Sheets['Profit and Loss'];
-      const taxComputationSheet = workbook.Sheets['Tax Computation'];
-      const capitalAllowanceSheet = workbook.Sheets['Capital Allowance Schedule'];
-      
-      const parsedData = {
-        profitLoss: profitLossSheet ? XLSX.utils.sheet_to_json(profitLossSheet, { defval: "" }) : [],
-        taxComputation: taxComputationSheet ? XLSX.utils.sheet_to_json(taxComputationSheet, { defval: "" }) : [],
-        capitalAllowance: capitalAllowanceSheet ? XLSX.utils.sheet_to_json(capitalAllowanceSheet, { defval: "" }) : [],
-      };
-      
-      onParse?.(parsedData);
-      
-    } catch (error) {
-      console.error("Error parsing Excel file:", error);
-      alert("Error parsing Excel file. Please check the format.");
-    }
-  };
-
-  return (
-    <div>
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".xlsx,.xls"
-        onChange={handleFile}
-        className="block w-full text-sm text-[#0F2F4E] file:mr-3 file:py-2 file:px-4 file:rounded-lg 
-                   file:border-0 file:text-sm file:font-semibold 
-                   file:bg-[#1ED760] file:text-white hover:file:bg-[#1ED760]/90"
-      />
-      {uploadedFile && (
-        <div className="mt-2 text-sm text-[#1ED760]">
-          Uploaded: {uploadedFile}
+          <div className="absolute inset-0 bg-[#1ED760]/10 animate-pulse" />
         </div>
       )}
-      <div className="mt-2 text-xs text-[#0F2F4E]/70">
-        Upload QPD Income Tax Computation Excel template
+      
+      {/* Tutorial Card */}
+      <div className={`absolute w-96 bg-white rounded-2xl p-6 shadow-2xl border-2 border-[#1ED760] z-[102] ${positionClass}`}>
+        {/* Show current tab info */}
+        {step.tab && (
+          <div className="mb-3 px-3 py-1 bg-[#1ED760]/10 text-[#1ED760] text-sm rounded-lg inline-block">
+            {step.tab === 'overview' && '📊 Overview Tab'}
+            {step.tab === 'scenarios' && '📈 Scenarios Tab'}
+            {step.tab === 'data-input' && '📝 Data Input Tab'}
+            {step.tab === 'tax-engine' && '⚙️ Tax Engine Tab'}
+            {step.tab === 'reports' && '📄 Reports Tab'}
+          </div>
+        )}
+        
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-[#0F2F4E]/70 mb-1">
+            <span>Step {currentStep + 1} of {TUTORIAL_STEPS.length}</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+          <div className="h-2 bg-[#EEEEEE] rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#1ED760] to-[#1ED760]/80"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+        
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-[#0F2F4E] mb-2">
+            {step.title}
+          </h3>
+          <p className="text-[#0F2F4E]/80">{step.description}</p>
+        </div>
+        
+        <div className="flex justify-between">
+          <button
+            onClick={onSkip}
+            className="px-4 py-2 text-sm text-[#0F2F4E]/70 hover:text-[#0F2F4E] hover:bg-[#EEEEEE] rounded-lg"
+          >
+            Skip Tutorial
+          </button>
+          
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <button
+                onClick={onPrev}
+                className="px-4 py-2 text-sm text-[#0F2F4E] hover:bg-[#EEEEEE] rounded-lg"
+              >
+                ← Previous
+              </button>
+            )}
+            
+            {currentStep < TUTORIAL_STEPS.length - 1 ? (
+              <button
+                onClick={onNext}
+                className="px-4 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90"
+              >
+                Next Step →
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-[#0F2F4E] text-white rounded-lg hover:bg-[#0F2F4E]/90"
+              >
+                Start Using TaxCul
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-/* ---------- Main Page ---------- */
+/* ---------- MAIN TAX PLANNING PAGE COMPONENT ---------- */
 export default function TaxPlanningPage() {
-  const [activeTab, setActiveTab] = useState("profit-loss");
+  // ============= EXISTING STATE =============
+  const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState({});
   const [aiHistory, setAIHistory] = useState([]);
@@ -1545,104 +2424,162 @@ export default function TaxPlanningPage() {
   // Comprehensive form state matching Excel structure exactly
   const [formState, setFormState] = useState({
     // Profit and Loss - Operating Income
-    sales: "",
-    otherTradingIncome: "",
+    sales: "1000000",
+    otherTradingIncome: "50000",
     
     // Cost of Goods Sold
-    costOfGoodsSold: "",
+    costOfGoodsSold: "400000",
     
     // Operating Expenses - Updated to match Excel document
-    advertisingMarketing: "",
-    trainingEvent: "",
-    automobileExpense: "",
-    vehicleInsurance: "",
-    managementMileage: "",
-    staffMileage: "",
-    fuelExpense: "",
-    vehicleMaintenance: "",
-    bankCharges: "",
-    imtt: "",
-    salaries: "",
-    consultantExpense: "",
-    accountingFees: "",
-    equipmentRental: "",
-    finesPenalties: "",
-    itInternet: "",
-    janitorial: "",
-    warehouse: "",
-    cottage: "",
-    mealsEntertainment: "",
-    officeSupplies: "",
-    otherExpenses: "",
-    parking: "",
-    printingStationery: "",
-    repairsMaintenance: "",
-    telephoneExpense: "",
-    travelExpense: "",
-    flights: "",
-    taxi: "",
-    tollFee: "",
-    rentExpense: "",
-    cottageRent: "",
-    warehouseRent: "",
+    advertisingMarketing: "50000",
+    trainingEvent: "10000",
+    automobileExpense: "20000",
+    vehicleInsurance: "5000",
+    managementMileage: "3000",
+    staffMileage: "2000",
+    fuelExpense: "8000",
+    vehicleMaintenance: "3000",
+    bankCharges: "2000",
+    imtt: "1000",
+    salaries: "300000",
+    consultantExpense: "20000",
+    accountingFees: "15000",
+    equipmentRental: "10000",
+    finesPenalties: "0",
+    itInternet: "12000",
+    janitorial: "4000",
+    warehouse: "20000",
+    cottage: "0",
+    mealsEntertainment: "8000",
+    officeSupplies: "5000",
+    otherExpenses: "15000",
+    parking: "1000",
+    printingStationery: "2000",
+    repairsMaintenance: "8000",
+    telephoneExpense: "4000",
+    travelExpense: "10000",
+    flights: "3000",
+    taxi: "1000",
+    tollFee: "500",
+    rentExpense: "48000",
+    cottageRent: "0",
+    warehouseRent: "0",
     
     // Tax Computation
-    dividendReceived: "",
-    capitalReceipts: "",
-    profitOnSale: "",
-    interestFinancial: "",
-    depreciation: "",
-    disallowableSubscriptions: "",
-    disallowableLegal: "",
-    finesPenaltiesTax: "",
-    donations: "",
-    recoupment: "",
-    incomeReceivedAdvance: "",
-    doubtfulDebts: "",
-    dividendsNet: "",
+    dividendReceived: "20000",
+    capitalReceipts: "10000",
+    profitOnSale: "15000",
+    interestFinancial: "5000",
+    depreciation: "50000",
+    disallowableSubscriptions: "2000",
+    disallowableLegal: "3000",
+    finesPenaltiesTax: "0",
+    donations: "5000",
+    recoupment: "0",
+    incomeReceivedAdvance: "0",
+    doubtfulDebts: "3000",
+    dividendsNet: "0",
     
     // Capital Allowance
-    motorVehicles: "",
-    moveableAssets: "",
-    commercialBuildings: "",
-    industrialBuildings: "",
-    leaseImprovements: "",
+    motorVehicles: "100000",
+    moveableAssets: "50000",
+    commercialBuildings: "0",
+    industrialBuildings: "0",
+    leaseImprovements: "20000",
   });
+
+  // ============= PHASE 2 NEW STATE =============
+  const [periodType, setPeriodType] = useState('annually');
+  const [periods, setPeriods] = useState(() => createPeriods(3, periodType));
+  const [activePeriod, setActivePeriod] = useState(periods[0]?.id);
+  const [scenarios, setScenarios] = useState([
+    createScenario('Base Case', 'base', { periods: [...periods] })
+  ]);
+  const [activeScenario, setActiveScenario] = useState(scenarios[0]?.id);
+  const [assets, setAssets] = useState([]);
+  const [capitalAllowancesByPeriod, setCapitalAllowancesByPeriod] = useState({});
+  const [employeeCosts, setEmployeeCosts] = useState([]);
+  const [assessedLossesForward, setAssessedLossesForward] = useState(0);
+  const [importedData, setImportedData] = useState(null);
+  // ==============================================
+
+  // tutorial states
+  // Add tutorial state
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState(0);
+  
+  // Initialize tutorial on first load
+  useEffect(() => {
+    const status = getTutorialStatus();
+    if (!status.completed) {
+      // Show tutorial after a short delay for better UX
+      const timer = setTimeout(() => {
+        setShowTutorial(true);
+        setTutorialStep(status.step);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // In your TaxPlanningPage component, add:
+  useEffect(() => {
+    if (showTutorial) {
+      console.log('Current tutorial step:', TUTORIAL_STEPS[tutorialStep]);
+      console.log('Looking for element:', TUTORIAL_STEPS[tutorialStep]?.target);
+      
+      if (TUTORIAL_STEPS[tutorialStep]?.target) {
+        const element = document.querySelector(TUTORIAL_STEPS[tutorialStep].target);
+        console.log('Found element:', element);
+      }
+    }
+  }, [showTutorial, tutorialStep]);
+  
+  // Tutorial control functions
+  const handleNextTutorial = () => {
+    if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+      setTutorialStep(prev => {
+        const nextStep = prev + 1;
+        saveTutorialStatus(false, nextStep);
+        return nextStep;
+      });
+    } else {
+      handleCompleteTutorial();
+    }
+  };
+  
+  const handlePrevTutorial = () => {
+    if (tutorialStep > 0) {
+      setTutorialStep(prev => {
+        const prevStep = prev - 1;
+        saveTutorialStatus(false, prevStep);
+        return prevStep;
+      });
+    }
+  };
+  
+  const handleSkipTutorial = () => {
+    handleCompleteTutorial();
+  };
+  
+  const handleCompleteTutorial = () => {
+    setShowTutorial(false);
+    saveTutorialStatus(true, 0);
+  };
+  
+  const handleRestartTutorial = () => {
+    setShowTutorial(true);
+    setTutorialStep(0);
+    saveTutorialStatus(false, 0);
+  };
 
   const handleChange = (k) => (e) =>
     setFormState((s) => ({ ...s, [k]: e.target.value }));
-
-  const handleCapitalAllowanceUpdate = (assetType, allowance) => {
-    setFormState(prev => ({
-      ...prev,
-      [assetType]: allowance.toString()
-    }));
-  };
 
   const callApi = async (endpoint, payload) => {
     const url = `${API_BASE}${endpoint}`;
     const res = await axios.post(url, payload);
     return res.data;
   };
-
-  function buildContextMessage(type, inputs, result) {
-    const fmt = (v) =>
-      typeof v === "number"
-        ? v.toLocaleString(undefined, { maximumFractionDigits: 2 })
-        : v;
-
-    if (type === "comprehensive") {
-      return `Comprehensive Corporate Tax Calculation for Zimbabwe. 
-      Inputs: Sales=${fmt(inputs.sales)}, COGS=${fmt(inputs.costOfGoodsSold)}, Expenses=${fmt(inputs.totalExpenses)}. 
-      Result: Taxable Income=${fmt(result.taxableIncome)}, Tax=${fmt(result.taxDue)}, AIDS levy=${fmt(result.aidsLevy)}. 
-      Please explain in the Zimbabwean context, under 160 words, and suggest tax optimization strategies.`;
-    }
-    return `Tax calculation summary for Zimbabwe: Inputs ${JSON.stringify(
-      inputs
-    )}, Result ${JSON.stringify(
-      result
-    )}. Provide guidance on deductions or optimization in Zimbabwean context, ≤160 words.`;
-  }
 
   async function sendToAI(message) {
     try {
@@ -1657,737 +2594,711 @@ export default function TaxPlanningPage() {
     setAIHistory((h) => [{ q: question, a: answer }, ...h].slice(0, 50));
   }
 
-  // Enhanced calculation with detailed capital allowances
-  const calculateComprehensiveTaxLocal = (payload) => {
-    const { profitLoss, taxComputation, capitalAllowance } = payload;
+  // ============= PHASE 2 FUNCTIONS =============
+  
+  const handlePeriodTypeChange = (type) => {
+    setPeriodType(type);
+    const newPeriods = createPeriods(3, type);
+    setPeriods(newPeriods);
     
-    // Calculate Gross Profit
-    const sales = parseFloat(profitLoss?.sales) || 0;
-    const otherTradingIncome = parseFloat(profitLoss?.otherTradingIncome) || 0;
-    const costOfGoodsSold = parseFloat(profitLoss?.costOfGoodsSold) || 0;
+    // Update all scenarios with new periods
+    const updatedScenarios = scenarios.map(scenario => ({
+      ...scenario,
+      periods: newPeriods.map((period, index) => ({
+        ...period,
+        taxResult: scenario.periods?.[index]?.taxResult || null,
+        adjustments: scenario.periods?.[index]?.adjustments || period.adjustments
+      }))
+    }));
+    setScenarios(updatedScenarios);
     
-    const grossProfit = (sales + otherTradingIncome) - costOfGoodsSold;
+    if (newPeriods.length > 0 && !newPeriods.find(p => p.id === activePeriod)) {
+      setActivePeriod(newPeriods[0].id);
+    }
+  };
+  
+  const handleAddPeriod = () => {
+    const newYear = Math.max(...periods.map(p => p.year)) + 1;
+    const newPeriods = createPeriods(1, periodType).map(p => ({
+      ...p,
+      year: newYear,
+      label: p.label.replace(/\d+$/, newYear.toString())
+    }));
     
-    // Calculate Operating Profit - Sum all operating expenses
-    let totalOperatingExpenses = 0;
+    setPeriods([...periods, ...newPeriods]);
+  };
+  
+  const handleCreateScenario = (name, type) => {
+    const baseScenario = scenarios.find(s => s.type === 'base');
+    const newScenario = createScenario(name, type, baseScenario || { periods: [...periods] });
     
-    // Add all individual expense categories
-    const expenseFields = [
-      'advertisingMarketing', 'trainingEvent', 'automobileExpense', 
-      'vehicleInsurance', 'managementMileage', 'staffMileage', 'fuelExpense',
-      'vehicleMaintenance', 'bankCharges', 'imtt', 'salaries', 'consultantExpense',
-      'accountingFees', 'equipmentRental', 'finesPenalties', 'itInternet',
-      'janitorial', 'warehouse', 'cottage', 'mealsEntertainment', 'officeSupplies',
-      'otherExpenses', 'parking', 'printingStationery', 'repairsMaintenance',
-      'telephoneExpense', 'travelExpense', 'flights', 'taxi', 'tollFee',
-      'rentExpense', 'cottageRent', 'warehouseRent'
-    ];
-    
-    expenseFields.forEach(field => {
-      totalOperatingExpenses += parseFloat(profitLoss?.[field] || 0);
-    });
-    
-    const operatingProfit = grossProfit - totalOperatingExpenses;
-    
-    // Tax Computation
-    let totalNonTaxableIncome = 0;
-    const nonTaxableFields = ['dividendReceived', 'capitalReceipts', 'profitOnSale', 'interestFinancial'];
-    nonTaxableFields.forEach(field => {
-      totalNonTaxableIncome += parseFloat(taxComputation?.[field] || 0);
-    });
-    
-    let totalNonDeductibleExpenses = 0;
-    const nonDeductibleFields = ['depreciation', 'disallowableSubscriptions', 'finesPenaltiesTax', 'donations'];
-    nonDeductibleFields.forEach(field => {
-      totalNonDeductibleExpenses += parseFloat(taxComputation?.[field] || 0);
-    });
-    
-    let taxableIncome = operatingProfit - totalNonTaxableIncome + totalNonDeductibleExpenses;
-    
-    // Apply capital allowances with enhanced calculation
-    let totalCapitalAllowance = 0;
-    let detailedCapitalAllowances = {};
-    
-    if (capitalAllowance) {
-      const assetRates = {
-        motorVehicles: { special: 0.5, accelerated: 0.25, wearTear: 0.2 },
-        moveableAssets: { special: 0.5, accelerated: 0.25, wearTear: 0.1 },
-        commercialBuildings: { special: 0, accelerated: 0, wearTear: 0.025 },
-        industrialBuildings: { special: 0, accelerated: 0, wearTear: 0.05 },
-        leaseImprovements: { special: 0.5, accelerated: 0.25, wearTear: 0.05 }
-      };
-      
-      Object.entries(capitalAllowance).forEach(([assetType, cost]) => {
-        const rates = assetRates[assetType];
-        const assetCost = parseFloat(cost) || 0;
-        
-        const specialAllowance = assetCost * rates.special;
-        const acceleratedAllowance = assetCost * rates.accelerated;
-        const wearTearAllowance = assetCost * rates.wearTear;
-        
-        const assetAllowance = Math.max(specialAllowance, acceleratedAllowance, wearTearAllowance);
-        
-        detailedCapitalAllowances[assetType] = {
-          cost: assetCost,
-          specialAllowance,
-          acceleratedAllowance,
-          wearTearAllowance,
-          totalAllowance: assetAllowance
-        };
-        
-        totalCapitalAllowance += assetAllowance;
-      });
+    // Apply scenario drivers
+    if (type === 'growth') {
+      newScenario.drivers.revenueGrowth = 0.2;
+    } else if (type === 'cost-cutting') {
+      newScenario.drivers.expensePercentage = -0.15;
     }
     
-    taxableIncome -= totalCapitalAllowance;
-    
-    taxableIncome = Math.max(0, taxableIncome);
-    
-    const taxDue = taxableIncome * 0.25;
-    const aidsLevy = taxDue * 0.03;
-    const totalTax = taxDue + aidsLevy;
-    
-    return {
-      grossProfit,
-      operatingProfit,
-      taxableIncome,
-      taxDue: Math.max(taxDue, 0),
-      aidsLevy: Math.max(aidsLevy, 0),
-      totalTax: Math.max(totalTax, 0),
-      costOfGoodsSold,
-      operatingExpenses: totalOperatingExpenses,
-      nonDeductibleExpenses: totalNonDeductibleExpenses,
-      capitalAllowances: Math.max(totalCapitalAllowance, 0),
-      detailedCapitalAllowances: Object.keys(detailedCapitalAllowances).length > 0 ? detailedCapitalAllowances : null
-    };
+    setScenarios([...scenarios, newScenario]);
+    setActiveScenario(newScenario.id);
   };
-
-  // Main calculation function
-  const calculateComprehensiveTax = async () => {
+  
+  const handleDeleteScenario = (scenarioId) => {
+    if (scenarios.find(s => s.id === scenarioId)?.isBase) {
+      alert('Cannot delete base scenario');
+      return;
+    }
+    
+    const updatedScenarios = scenarios.filter(s => s.id !== scenarioId);
+    setScenarios(updatedScenarios);
+    
+    if (activeScenario === scenarioId && updatedScenarios.length > 0) {
+      setActiveScenario(updatedScenarios[0].id);
+    }
+  };
+  
+  const calculateMultiPeriodTax = async () => {
     setLoading(true);
+    
     try {
-      const payload = {
-        profitLoss: formState,
-        taxComputation: {
-          nonTaxableIncome: {
-            dividendReceived: parseFloat(formState.dividendReceived) || 0,
-            capitalReceipts: parseFloat(formState.capitalReceipts) || 0,
-            profitOnSale: parseFloat(formState.profitOnSale) || 0,
-            interestFinancial: parseFloat(formState.interestFinancial) || 0,
-          },
-          nonDeductibleExpenses: {
-            depreciation: parseFloat(formState.depreciation) || 0,
-            disallowableSubscriptions: parseFloat(formState.disallowableSubscriptions) || 0,
-            finesPenalties: parseFloat(formState.finesPenaltiesTax) || 0,
-            donations: parseFloat(formState.donations) || 0,
-          }
-        },
-        capitalAllowance: {
-          motorVehicles: parseFloat(formState.motorVehicles) || 0,
-          moveableAssets: parseFloat(formState.moveableAssets) || 0,
-          commercialBuildings: parseFloat(formState.commercialBuildings) || 0,
-          industrialBuildings: parseFloat(formState.industrialBuildings) || 0,
-          leaseImprovements: parseFloat(formState.leaseImprovements) || 0,
-        }
-      };
+      const updatedScenarios = [...scenarios];
+      const activeScenarioIndex = scenarios.findIndex(s => s.id === activeScenario);
       
-      let data;
-      try {
-        data = await callApi("/calculate/comprehensive-corporate-tax", payload);
-      } catch (apiError) {
-        console.log("API call failed, using local calculation:", apiError);
-        data = calculateComprehensiveTaxLocal(payload);
+      if (activeScenarioIndex === -1) return;
+      
+      // Get base accounting data from form
+      const baseRevenue = parseFloat(formState.sales || 0) + parseFloat(formState.otherTradingIncome || 0);
+      const baseCOGS = parseFloat(formState.costOfGoodsSold || 0);
+      const baseExpenses = Object.entries(formState)
+        .filter(([key, value]) => key !== 'sales' && key !== 'otherTradingIncome' && key !== 'costOfGoodsSold')
+        .reduce((sum, [key, value]) => sum + (parseFloat(value) || 0), 0);
+      
+      const scenario = scenarios[activeScenarioIndex];
+      let lossesToCarryForward = assessedLossesForward;
+      
+      // Calculate for each period
+      const updatedPeriods = periods.map((period, index) => {
+        // Apply scenario drivers
+        const revenueMultiplier = Math.pow(1 + scenario.drivers.revenueGrowth, index);
+        const expenseMultiplier = 1 + scenario.drivers.expensePercentage;
+        
+        const periodRevenue = baseRevenue * revenueMultiplier;
+        const periodCOGS = baseCOGS * revenueMultiplier;
+        const periodExpenses = baseExpenses * expenseMultiplier;
+        
+        const accountingProfit = periodRevenue - periodCOGS - periodExpenses;
+        
+        // Get adjustments for this period
+        const nonDeductible = parseFloat(formState.depreciation || 0) + 
+                            parseFloat(formState.donations || 0) + 
+                            parseFloat(formState.finesPenaltiesTax || 0);
+        const nonTaxable = parseFloat(formState.dividendReceived || 0) + 
+                          parseFloat(formState.capitalReceipts || 0) + 
+                          parseFloat(formState.profitOnSale || 0) + 
+                          parseFloat(formState.interestFinancial || 0);
+        
+        const capitalAllowances = capitalAllowancesByPeriod[period.id] || 0;
+        
+        // Calculate tax for this period
+        const taxResult = calculateTaxProfit(
+          accountingProfit, 
+          { nonDeductible, nonTaxable }, 
+          capitalAllowances, 
+          lossesToCarryForward
+        );
+        
+        lossesToCarryForward = taxResult.lossesCarriedForward;
+        
+        // Update period with results
+        return {
+          ...period,
+          actuals: {
+            revenue: periodRevenue,
+            cogs: periodCOGS,
+            expenses: periodExpenses
+          },
+          taxResult,
+          adjustments: {
+            nonDeductible,
+            nonTaxable,
+            capitalAllowances
+          }
+        };
+      });
+      
+      // Update periods
+      setPeriods(updatedPeriods);
+      
+      // Update active scenario
+      updatedScenarios[activeScenarioIndex] = {
+        ...updatedScenarios[activeScenarioIndex],
+        periods: updatedPeriods
+      };
+      setScenarios(updatedScenarios);
+      
+      // Update current view results
+      const currentPeriod = updatedPeriods.find(p => p.id === activePeriod);
+      if (currentPeriod?.taxResult) {
+        setResults({
+          comprehensive: {
+            ...currentPeriod.taxResult,
+            grossProfit: currentPeriod.actuals.revenue - currentPeriod.actuals.cogs,
+            operatingProfit: currentPeriod.taxResult.accountingProfit,
+            taxableIncome: currentPeriod.taxResult.taxableIncome,
+            taxDue: currentPeriod.taxResult.taxDue,
+            aidsLevy: currentPeriod.taxResult.aidsLevy,
+            totalTax: currentPeriod.taxResult.totalTax,
+            operatingExpenses: currentPeriod.actuals.expenses,
+            capitalAllowances: currentPeriod.adjustments.capitalAllowances
+          }
+        });
       }
       
-      setResults((r) => ({ ...r, comprehensive: data }));
+      // AI Analysis
+      const totalTax = updatedPeriods.reduce((sum, period) => 
+        sum + (period.taxResult?.totalTax || 0), 0);
+      const totalProfit = updatedPeriods.reduce((sum, period) => 
+        sum + (period.taxResult?.taxableIncome || 0), 0);
       
-      const summary = buildContextMessage("comprehensive", payload, data);
-      const aiReply = await sendToAI(summary);
-      pushAIHistory(summary, aiReply);
+      const aiMessage = `Multi-period tax analysis completed for ${scenario.name}. ` +
+        `Total tax liability across ${periods.length} periods: $${totalTax.toLocaleString()}. ` +
+        `Effective tax rate: ${totalProfit > 0 ? ((totalTax / totalProfit) * 100).toFixed(1) : 0}%. ` +
+        `Losses carried forward: $${lossesToCarryForward.toLocaleString()}. ` +
+        `Provide Zimbabwe-specific tax optimization advice for this scenario.`;
       
-      setResults((r) => ({
-        ...r,
-        comprehensive: { ...data, aiExplanation: aiReply },
-      }));
+      const aiReply = await sendToAI(aiMessage);
+      pushAIHistory(aiMessage, aiReply);
+      
+    } catch (error) {
+      console.error('Multi-period calculation error:', error);
+      alert('Error calculating tax: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
-
-  function handleExcelImport(data) {
-    if (data.profitLoss && data.profitLoss.length > 0) {
-      const firstRow = data.profitLoss[0];
+  
+  const handleDataImported = (data) => {
+    setImportedData(data);
+    console.log('Imported data:', data);
+    
+    // Auto-populate form fields if possible
+    if (data && data.length > 0) {
+      const firstRow = data[0];
       const updates = {};
       
-      // Map Excel columns to form fields
-      if (firstRow['Sales']) updates.sales = firstRow['Sales'];
-      if (firstRow['Other Trading Income']) updates.otherTradingIncome = firstRow['Other Trading Income'];
-      if (firstRow['Cost of Goods Sold']) updates.costOfGoodsSold = firstRow['Cost of Goods Sold'];
+      // Map imported fields to form state
+      if (firstRow.revenue) updates.sales = firstRow.revenue;
+      if (firstRow.costOfGoodsSold) updates.costOfGoodsSold = firstRow.costOfGoodsSold;
+      if (firstRow.salaries) updates.salaries = firstRow.salaries;
+      if (firstRow.depreciation) updates.depreciation = firstRow.depreciation;
       
       setFormState(prev => ({ ...prev, ...updates }));
     }
-  }
+  };
+  
+  const handleEmployeeCostsUpdate = (periodCosts) => {
+    if (periodCosts && periodCosts.length > 0) {
+      setEmployeeCosts(periodCosts);
+    }
+  };
+
+  // ============= RENDER =============
 
   return (
-    <div className="min-h-screen bg-[#EEEEEE] py-12 px-6">
+    <div className="min-h-screen bg-[#EEEEEE] py-12 px-4 md:px-6">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto"
       >
-        <header className="text-center mb-8">
-          <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg">
-            <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
-              Comprehensive Tax Planning
+        {/* Header */}
+        <header className="text-center mb-8 relative">
+          <div className="bg-white rounded-2xl p-6 md:p-8 border border-[#FFD700] shadow-lg">
+            {/* Help Button - Now outside the main div but still in header */}
+            <button
+              onClick={handleRestartTutorial}
+              className="absolute top-2 right-2 md:top-4 md:right-4 p-2 bg-white text-[#1ED760] rounded-lg border border-[#1ED760]/30 hover:bg-[#1ED760]/10 hover:border-[#1ED760] transition-all shadow-md z-10"
+              title="Show Tutorial"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
+              Multi-Period Tax Planning
             </h1>
-            <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto">
-              Professional tax computation with enhanced capital allowance calculations for Zimbabwe
+            <p className="text-lg md:text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto">
+              Professional tax planning and analysis platform for Zimbabwe
             </p>
+            <div className="mt-6 flex flex-wrap gap-2 justify-center">
+              <span className="px-3 py-1 bg-[#1ED760]/10 text-[#0F2F4E] text-sm rounded-full">
+                Multi-Period Projections
+              </span>
+              <span className="px-3 py-1 bg-[#FFD700]/10 text-[#0F2F4E] text-sm rounded-full">
+                Scenario Planning
+              </span>
+              <span className="px-3 py-1 bg-[#0F2F4E]/10 text-[#0F2F4E] text-sm rounded-full">
+                Capital Allowance Module
+              </span>
+              <span className="px-3 py-1 bg-purple-100 text-[#0F2F4E] text-sm rounded-full">
+                Zimbabwe Tax Rules
+              </span>
+            </div>
+            
+            {/* Optional: Add a "New User?" prompt */}
+            {!showTutorial && (
+              <div className="mt-4">
+                <button
+                  onClick={handleRestartTutorial}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#1ED760] to-[#1ED760]/80 text-white rounded-lg font-medium hover:from-[#1ED760]/90 hover:to-[#1ED760]/70 transition text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  New User? Take a Quick Tour
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
+        {/* Main Navigation */}
+        <div className="mb-6 bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                activeTab === "overview"
+                  ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                  : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
+              }`}
+            >
+              📊 Overview
+            </button>
+            <button
+              onClick={() => setActiveTab("scenarios")}
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                activeTab === "scenarios"
+                  ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                  : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
+              }`}
+            >
+              📈 Scenarios
+            </button>
+            <button
+              onClick={() => setActiveTab("data-input")}
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                activeTab === "data-input"
+                  ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                  : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
+              }`}
+            >
+              📝 Data Input
+            </button>
+            <button
+              onClick={() => setActiveTab("tax-engine")}
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                activeTab === "tax-engine"
+                  ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                  : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
+              }`}
+            >
+              ⚙️ Tax Engine
+            </button>
+            <button
+              onClick={() => setActiveTab("reports")}
+              className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                activeTab === "reports"
+                  ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
+                  : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
+              }`}
+            >
+              📄 Reports
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-6">
-            {/* Calculator */}
-            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-xl">
-              {/* Fixed Calculate Button - Always Visible */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 rounded-lg border border-[#1ED760]/20">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#0F2F4E]">Ready to Calculate?</h3>
-                    <p className="text-sm text-[#0F2F4E]/70 mt-1">
-                      Fill in data across all tabs, then click Calculate to see your comprehensive tax results
-                    </p>
-                  </div>
-                  <ActionButton 
-                    onClick={calculateComprehensiveTax} 
-                    disabled={loading}
-                    className="whitespace-nowrap"
-                  >
-                    {loading ? "🔄 Calculating..." : "🚀 Calculate Comprehensive Tax"}
-                  </ActionButton>
-                </div>
-              </div>
-
-              <nav className="flex gap-2 mb-6 flex-wrap">
-                {[
-                  ["profit-loss", "Profit & Loss"],
-                  ["tax-computation", "Tax Computation"],
-                  ["capital-allowance", "Capital Allowance"],
-                  ["quick-calc", "Quick Calc"],
-                ].map(([k, label]) => (
-                  <button
-                    key={k}
-                    onClick={() => setActiveTab(k)}
-                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                      activeTab === k
-                        ? "bg-[#1ED760] text-white shadow-lg shadow-[#1ED760]/25"
-                        : "text-[#0F2F4E] hover:bg-[#0F2F4E]/5 border border-[#EEEEEE]"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </nav>
-
-              {/* Tab Instructions */}
-              <div className="mb-6">
-                {activeTab === "profit-loss" && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <p className="text-sm text-[#0F2F4E]">
-                      💡 <strong>Profit & Loss Data:</strong> Enter your business income and expenses. This forms the foundation for your tax calculation.
-                    </p>
-                  </div>
-                )}
-                {activeTab === "tax-computation" && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <p className="text-sm text-[#0F2F4E]">
-                      💡 <strong>Tax Adjustments:</strong> Add non-taxable income and non-deductible expenses. These adjust your accounting profit to arrive at taxable income.
-                    </p>
-                  </div>
-                )}
-                {activeTab === "capital-allowance" && (
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <p className="text-sm text-[#0F2F4E]">
-                      💡 <strong>Capital Allowances:</strong> Enter asset values to claim tax deductions using enhanced calculation methods from the Excel template.
-                    </p>
-                  </div>
-                )}
-                {activeTab === "quick-calc" && (
-                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                    <p className="text-sm text-[#0F2F4E]">
-                      💡 <strong>Quick Calculation:</strong> Simplified version for quick estimates. Use when you don't need detailed breakdowns.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Profit & Loss Form - Updated to match Excel document */}
-              {activeTab === "profit-loss" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E]">Operating Income</h3>
-                    <InputField
-                      label="Sales"
-                      value={formState.sales}
-                      onChange={handleChange("sales")}
-                      placeholder="Enter total sales revenue"
-                    />
-                    <InputField
-                      label="Other Trading Income"
-                      value={formState.otherTradingIncome}
-                      onChange={handleChange("otherTradingIncome")}
-                      placeholder="Other business income"
-                    />
-                    
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Cost of Goods Sold</h3>
-                    <InputField
-                      label="Cost of Goods Sold"
-                      value={formState.costOfGoodsSold}
-                      onChange={handleChange("costOfGoodsSold")}
-                      placeholder="Direct production costs"
-                    />
-                    
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Operating Expenses</h3>
-                    
-                    <InputField
-                      label="Advertising & Marketing"
-                      value={formState.advertisingMarketing}
-                      onChange={handleChange("advertisingMarketing")}
-                      placeholder="Marketing expenses"
-                    />
-                    <InputField
-                      label="Training Event"
-                      value={formState.trainingEvent}
-                      onChange={handleChange("trainingEvent")}
-                      placeholder="Staff training costs"
-                    />
-                    
-                    <InputField
-                      label="Automobile Expense"
-                      value={formState.automobileExpense}
-                      onChange={handleChange("automobileExpense")}
-                      placeholder="Vehicle expenses"
-                    />
-                    <InputField
-                      label="Vehicle Insurance"
-                      value={formState.vehicleInsurance}
-                      onChange={handleChange("vehicleInsurance")}
-                      placeholder="Insurance costs"
-                    />
-                    <InputField
-                      label="Management Mileage"
-                      value={formState.managementMileage}
-                      onChange={handleChange("managementMileage")}
-                      placeholder="Management travel"
-                    />
-                    <InputField
-                      label="Staff Mileage"
-                      value={formState.staffMileage}
-                      onChange={handleChange("staffMileage")}
-                      placeholder="Staff travel"
-                    />
-                    <InputField
-                      label="Fuel Expense"
-                      value={formState.fuelExpense}
-                      onChange={handleChange("fuelExpense")}
-                      placeholder="Fuel costs"
-                    />
-                    <InputField
-                      label="Vehicle Maintenance"
-                      value={formState.vehicleMaintenance}
-                      onChange={handleChange("vehicleMaintenance")}
-                      placeholder="Maintenance costs"
-                    />
-                    
-                    <InputField
-                      label="Bank Charges"
-                      value={formState.bankCharges}
-                      onChange={handleChange("bankCharges")}
-                      placeholder="Bank fees and charges"
-                    />
-                    <InputField
-                      label="IMTT"
-                      value={formState.imtt}
-                      onChange={handleChange("imtt")}
-                      placeholder="Intermediated Money Transfer Tax"
-                    />
-                    <InputField
-                      label="Salaries"
-                      value={formState.salaries}
-                      onChange={handleChange("salaries")}
-                      placeholder="Employee salaries"
-                    />
-                    <InputField
-                      label="Consultant Expense"
-                      value={formState.consultantExpense}
-                      onChange={handleChange("consultantExpense")}
-                      placeholder="Consultant fees"
-                    />
-                    <InputField
-                      label="Accounting Fees"
-                      value={formState.accountingFees}
-                      onChange={handleChange("accountingFees")}
-                      placeholder="Accounting services"
-                    />
-                    
-                    <InputField
-                      label="Equipment Rental"
-                      value={formState.equipmentRental}
-                      onChange={handleChange("equipmentRental")}
-                      placeholder="Equipment rental costs"
-                    />
-                    <InputField
-                      label="Fines & Penalties"
-                      value={formState.finesPenalties}
-                      onChange={handleChange("finesPenalties")}
-                      placeholder="Fines and penalties"
-                    />
-                    <InputField
-                      label="IT & Internet Expenses"
-                      value={formState.itInternet}
-                      onChange={handleChange("itInternet")}
-                      placeholder="Technology costs"
-                    />
-                    <InputField
-                      label="Janitorial Expense"
-                      value={formState.janitorial}
-                      onChange={handleChange("janitorial")}
-                      placeholder="Cleaning services"
-                    />
-                    <InputField
-                      label="Warehouse"
-                      value={formState.warehouse}
-                      onChange={handleChange("warehouse")}
-                      placeholder="Warehouse costs"
-                    />
-                    <InputField
-                      label="Cottage"
-                      value={formState.cottage}
-                      onChange={handleChange("cottage")}
-                      placeholder="Cottage expenses"
-                    />
-                    
-                    <InputField
-                      label="Meals & Entertainment"
-                      value={formState.mealsEntertainment}
-                      onChange={handleChange("mealsEntertainment")}
-                      placeholder="Entertainment costs"
-                    />
-                    <InputField
-                      label="Office Supplies"
-                      value={formState.officeSupplies}
-                      onChange={handleChange("officeSupplies")}
-                      placeholder="Office supplies"
-                    />
-                    <InputField
-                      label="Other Expenses"
-                      value={formState.otherExpenses}
-                      onChange={handleChange("otherExpenses")}
-                      placeholder="Miscellaneous expenses"
-                    />
-                    
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Rent & Rates</h3>
-                    <InputField
-                      label="Rent Expense"
-                      value={formState.rentExpense}
-                      onChange={handleChange("rentExpense")}
-                      placeholder="Office rent"
-                    />
-                    <InputField
-                      label="Cottage Rent"
-                      value={formState.cottageRent}
-                      onChange={handleChange("cottageRent")}
-                      placeholder="Cottage rental"
-                    />
-                    <InputField
-                      label="Warehouse Rent"
-                      value={formState.warehouseRent}
-                      onChange={handleChange("warehouseRent")}
-                      placeholder="Warehouse rental"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Tax Computation Form */}
-              {activeTab === "tax-computation" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E]">Non-Taxable Income</h3>
-                    <InputField
-                      label="Dividend Received"
-                      value={formState.dividendReceived}
-                      onChange={handleChange("dividendReceived")}
-                      placeholder="Dividend income"
-                    />
-                    <InputField
-                      label="Capital Receipts"
-                      value={formState.capitalReceipts}
-                      onChange={handleChange("capitalReceipts")}
-                      placeholder="Capital receipts"
-                    />
-                    <InputField
-                      label="Profit on Sale of Assets"
-                      value={formState.profitOnSale}
-                      onChange={handleChange("profitOnSale")}
-                      placeholder="Asset sale profits"
-                    />
-                    <InputField
-                      label="Interest from Financial Institution"
-                      value={formState.interestFinancial}
-                      onChange={handleChange("interestFinancial")}
-                      placeholder="Bank interest income"
-                    />
-                    
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Non-Deductible Expenses</h3>
-                    <InputField
-                      label="Depreciation"
-                      value={formState.depreciation}
-                      onChange={handleChange("depreciation")}
-                      placeholder="Accounting depreciation"
-                    />
-                    <InputField
-                      label="Disallowable Subscriptions"
-                      value={formState.disallowableSubscriptions}
-                      onChange={handleChange("disallowableSubscriptions")}
-                      placeholder="Non-deductible subscriptions"
-                    />
-                    <InputField
-                      label="Disallowable Legal Expenses"
-                      value={formState.disallowableLegal}
-                      onChange={handleChange("disallowableLegal")}
-                      placeholder="Non-deductible legal"
-                    />
-                    <InputField
-                      label="Fines & Penalties"
-                      value={formState.finesPenaltiesTax}
-                      onChange={handleChange("finesPenaltiesTax")}
-                      placeholder="Fines and penalties"
-                    />
-                    <InputField
-                      label="Donations"
-                      value={formState.donations}
-                      onChange={handleChange("donations")}
-                      placeholder="Charitable donations"
-                    />
-                    
-                    <h3 className="md:col-span-2 text-lg font-semibold text-[#0F2F4E] mt-4">Other Tax Items</h3>
-                    <InputField
-                      label="Recoupment"
-                      value={formState.recoupment}
-                      onChange={handleChange("recoupment")}
-                      placeholder="Tax recoupment"
-                    />
-                    <InputField
-                      label="Income Received in Advance"
-                      value={formState.incomeReceivedAdvance}
-                      onChange={handleChange("incomeReceivedAdvance")}
-                      placeholder="Deferred income"
-                    />
-                    <InputField
-                      label="Doubtful Debts"
-                      value={formState.doubtfulDebts}
-                      onChange={handleChange("doubtfulDebts")}
-                      placeholder="Bad debt provision"
-                    />
-                    <InputField
-                      label="Dividends (Net)"
-                      value={formState.dividendsNet}
-                      onChange={handleChange("dividendsNet")}
-                      placeholder="Net dividends"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Capital Allowance Form */}
-              {activeTab === "capital-allowance" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 hidden">
-                    <InputField
-                      label="Motor Vehicles Cost"
-                      value={formState.motorVehicles}
-                      onChange={handleChange("motorVehicles")}
-                      placeholder="Vehicle purchase costs"
-                    />
-                    <InputField
-                      label="Moveable Assets Cost"
-                      value={formState.moveableAssets}
-                      onChange={handleChange("moveableAssets")}
-                      placeholder="Equipment and machinery"
-                    />
-                    <InputField
-                      label="Commercial Buildings Cost"
-                      value={formState.commercialBuildings}
-                      onChange={handleChange("commercialBuildings")}
-                      placeholder="Commercial property costs"
-                    />
-                    <InputField
-                      label="Industrial Buildings Cost"
-                      value={formState.industrialBuildings}
-                      onChange={handleChange("industrialBuildings")}
-                      placeholder="Industrial property costs"
-                    />
-                    <InputField
-                      label="Lease Improvements Cost"
-                      value={formState.leaseImprovements}
-                      onChange={handleChange("leaseImprovements")}
-                      placeholder="Leasehold improvements"
-                    />
-                  </div>
-                  
-                  <CapitalAllowanceCalculator 
-                    formState={formState} 
-                    onUpdate={handleCapitalAllowanceUpdate}
-                  />
-                </div>
-              )}
-
-              {/* Quick Calculation */}
-              {activeTab === "quick-calc" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputField
-                      label="Gross Profit"
-                      value={formState.sales}
-                      onChange={handleChange("sales")}
-                      placeholder="Total revenue"
-                    />
-                    <InputField
-                      label="Total Expenses"
-                      value={formState.costOfGoodsSold}
-                      onChange={handleChange("costOfGoodsSold")}
-                      placeholder="Business expenses"
-                    />
-                    <InputField
-                      label="Non-Taxable Income"
-                      value={formState.otherTradingIncome}
-                      onChange={handleChange("otherTradingIncome")}
-                      placeholder="Exempt income"
-                    />
-                    <InputField
-                      label="Non-Deductible Expenses"
-                      value={formState.imtt}
-                      onChange={handleChange("imtt")}
-                      placeholder="Non-deductible costs"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Enhanced Results Display with Capital Allowance Details */}
-              {results.comprehensive && (
-                <div className="mt-8 p-6 bg-white rounded-xl border border-[#1ED760]/30 shadow-lg">
-                  <h3 className="text-2xl font-bold text-[#0F2F4E] mb-6 text-center">
-                    Tax Computation Results
+            {/* Period Manager */}
+            <PeriodManager
+              periods={periods}
+              activePeriod={activePeriod}
+              onSelectPeriod={setActivePeriod}
+              onAddPeriod={handleAddPeriod}
+              onPeriodTypeChange={handlePeriodTypeChange}
+            />
+            
+            {/* Main Content Area */}
+            {activeTab === "overview" && (
+              <>
+                <ScenarioComparison 
+                  scenarios={scenarios} 
+                  periods={periods} 
+                />
+                
+                {/* Multi-Period Tax Chart */}
+                <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+                  <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+                    Multi-Period Tax Projection
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
-                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Taxable Income</div>
-                      <div className="text-[#1ED760] font-bold text-xl">
-                        ${(results.comprehensive.taxableIncome || 0).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
-                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Tax @ 25%</div>
-                      <div className="text-[#1ED760] font-bold text-xl">
-                        ${(results.comprehensive.taxDue || 0).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
-                      <div className="text-[#0F2F4E]/70 text-sm mb-1">AIDS Levy @ 3%</div>
-                      <div className="text-[#FFD700] font-bold text-xl">
-                        ${(results.comprehensive.aidsLevy || 0).toLocaleString()}
-                      </div>
-                    </div>
-                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg text-center border border-[#EEEEEE]">
-                      <div className="text-[#0F2F4E]/70 text-sm mb-1">Total Tax</div>
-                      <div className="text-[#0F2F4E] font-bold text-xl">
-                        ${(results.comprehensive.totalTax || 0).toLocaleString()}
-                      </div>
-                    </div>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={periods.map(p => ({
+                        period: p.label,
+                        tax: p.taxResult?.totalTax || 0,
+                        profit: p.taxResult?.taxableIncome || 0,
+                        revenue: p.actuals?.revenue || 0
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#EEEEEE" />
+                        <XAxis 
+                          dataKey="period" 
+                          stroke="#0F2F4E" 
+                          fontSize={12}
+                        />
+                        <YAxis 
+                          stroke="#0F2F4E" 
+                          fontSize={12}
+                          tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value, name) => [
+                            `$${value.toLocaleString()}`,
+                            name === 'tax' ? 'Tax Liability' : 
+                            name === 'profit' ? 'Taxable Income' : 'Revenue'
+                          ]}
+                          labelFormatter={(label) => `Period: ${label}`}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="revenue" 
+                          stroke="#1ED760" 
+                          strokeWidth={2}
+                          name="Revenue"
+                          dot={{ r: 4 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="profit" 
+                          stroke="#0F2F4E" 
+                          strokeWidth={2}
+                          name="Taxable Income"
+                          dot={{ r: 4 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="tax" 
+                          stroke="#FFD700" 
+                          strokeWidth={2}
+                          name="Tax Liability"
+                          dot={{ r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
-                  
-                  {/* Capital Allowance Breakdown */}
-                  {results.comprehensive.detailedCapitalAllowances && (
-                    <div className="mt-4 p-4 bg-[#0F2F4E]/5 rounded-lg border border-[#EEEEEE]">
-                      <h4 className="text-md font-semibold text-[#0F2F4E] mb-3">Capital Allowance Breakdown</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                        {Object.entries(results.comprehensive.detailedCapitalAllowances).map(([assetType, details]) => (
-                          <div key={assetType} className="bg-white p-3 rounded border border-[#EEEEEE]">
-                            <div className="font-medium text-[#0F2F4E] capitalize mb-2">
-                              {assetType.replace(/([A-Z])/g, ' $1')}
+                </div>
+              </>
+            )}
+            
+            {activeTab === "scenarios" && (
+              <>
+                <ScenarioBuilder
+                  scenarios={scenarios}
+                  activeScenario={activeScenario}
+                  onSelectScenario={setActiveScenario}
+                  onCreateScenario={handleCreateScenario}
+                  onDeleteScenario={handleDeleteScenario}
+                />
+              </>
+            )}
+            
+            {activeTab === "data-input" && (
+              <>
+                {/* Data Import Module */}
+                <DataImportModule onDataImported={handleDataImported} />
+                
+                {/* Enhanced Capital Allowance Module */}
+                <EnhancedCapitalAllowanceModule
+                  periods={periods}
+                  onUpdate={setCapitalAllowancesByPeriod}
+                  assets={assets}
+                  onAssetsUpdate={setAssets}
+                />
+                
+                {/* Employee Cost Module */}
+                <EmployeeCostModule
+                  periods={periods}
+                  onUpdate={handleEmployeeCostsUpdate}
+                />
+              </>
+            )}
+            
+            {activeTab === "tax-engine" && (
+              <>
+                <TaxBalanceSheet 
+                  periods={periods} 
+                  activeScenario={activeScenario}
+                  scenarios={scenarios} 
+                />
+                
+                {/* Tax Adjustments Manager */}
+                <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+                  <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+                    Tax Adjustments & Rules
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-[#0F2F4E] mb-2">
+                        Assessed Losses Brought Forward ($)
+                      </label>
+                      <input
+                        type="number"
+                        value={assessedLossesForward}
+                        onChange={(e) => setAssessedLossesForward(parseFloat(e.target.value) || 0)}
+                        className="w-full p-3 border border-[#EEEEEE] rounded-lg focus:border-[#1ED760]"
+                        placeholder="Enter prior year losses"
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 border border-[#EEEEEE] rounded-lg">
+                        <h4 className="text-md font-medium text-[#0F2F4E] mb-3">Non-Deductible Expenses</h4>
+                        <div className="space-y-2">
+                          {[
+                            { name: 'Depreciation', value: parseFloat(formState.depreciation) || 0 },
+                            { name: 'Fines & Penalties', value: parseFloat(formState.finesPenaltiesTax) || 0 },
+                            { name: 'Donations', value: parseFloat(formState.donations) || 0 },
+                            { name: 'Disallowable Subscriptions', value: parseFloat(formState.disallowableSubscriptions) || 0 }
+                          ].map(item => (
+                            <div key={item.name} className="flex justify-between items-center">
+                              <span className="text-sm">{item.name}</span>
+                              <span className="text-sm font-medium text-red-600">
+                                ${item.value.toLocaleString()}
+                              </span>
                             </div>
-                            <div className="text-[#0F2F4E] space-y-1">
-                              <div>Cost: ${details.cost.toLocaleString()}</div>
-                              <div>Allowance: ${details.totalAllowance.toLocaleString()}</div>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                      <div className="mt-3 pt-3 border-t border-[#EEEEEE]">
-                        <div className="flex justify-between font-semibold text-[#0F2F4E]">
-                          <span>Total Capital Allowances:</span>
-                          <span>${(results.comprehensive.capitalAllowances || 0).toLocaleString()}</span>
+                      
+                      <div className="p-4 border border-[#EEEEEE] rounded-lg">
+                        <h4 className="text-md font-medium text-[#0F2F4E] mb-3">Non-Taxable Income</h4>
+                        <div className="space-y-2">
+                          {[
+                            { name: 'Dividends Received', value: parseFloat(formState.dividendReceived) || 0 },
+                            { name: 'Capital Receipts', value: parseFloat(formState.capitalReceipts) || 0 },
+                            { name: 'Profit on Asset Sales', value: parseFloat(formState.profitOnSale) || 0 },
+                            { name: 'Interest Income', value: parseFloat(formState.interestFinancial) || 0 }
+                          ].map(item => (
+                            <div key={item.name} className="flex justify-between items-center">
+                              <span className="text-sm">{item.name}</span>
+                              <span className="text-sm font-medium text-green-600">
+                                ${item.value.toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  )}
-                  
-                  {results.comprehensive.aiExplanation && (
-                    <div className="mt-6 p-4 bg-[#0F2F4E]/5 rounded-lg border border-[#EEEEEE]">
-                      <h4 className="text-md font-semibold text-[#0F2F4E] mb-2">AI Tax Guidance</h4>
-                      <div className="text-sm text-[#0F2F4E] leading-relaxed">
-                        {formatAIExplanation(cleanAIText(results.comprehensive.aiExplanation))}
-                      </div>
-                      <AIDisclaimer className="mt-3" />
-                    </div>
-                  )}
+                  </div>
                 </div>
-              )}
-
-              {/* Enhanced Export Buttons */}
-              {results.comprehensive && (
-                <EnhancedExportButtons results={results} formState={formState} />
-              )}
-            </div>
-
-            {/* NEW: Enhanced Tax Breakdown Visualization */}
-            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
-              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
-                Tax Breakdown Visualization
-              </h3>
-              <div className="min-h-[600px]">
-                <TaxBreakdownVisualization results={results} formState={formState} />
+              </>
+            )}
+            
+            {activeTab === "reports" && (
+              <>
+                <EnhancedExportButtons 
+                  results={results} 
+                  formState={formState}
+                  scenarios={scenarios}
+                  periods={periods}
+                />
+                
+                {/* Multi-Period Report Preview */}
+                <div className="bg-white rounded-xl p-4 border border-[#EEEEEE] shadow-sm">
+                  <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+                    Report Preview
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-[#0F2F4E]/5">
+                        <tr>
+                          <th className="p-3 text-left">Period</th>
+                          <th className="p-3 text-left">Revenue</th>
+                          <th className="p-3 text-left">Expenses</th>
+                          <th className="p-3 text-left">Profit</th>
+                          <th className="p-3 text-left">Taxable Income</th>
+                          <th className="p-3 text-left">Tax Due</th>
+                          <th className="p-3 text-left">Effective Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {periods.map((period, index) => {
+                          const revenue = period.actuals?.revenue || (parseFloat(formState.sales || 0) / periods.length);
+                          const expenses = period.actuals?.expenses || (Object.values(formState).filter(v => typeof v === 'string' && !isNaN(v))
+                            .reduce((sum, val) => sum + (parseFloat(val) || 0), 0) / periods.length) - revenue;
+                          const profit = period.taxResult?.accountingProfit || (revenue - expenses);
+                          const taxableIncome = period.taxResult?.taxableIncome || 0;
+                          const taxDue = period.taxResult?.totalTax || 0;
+                          const effectiveRate = period.taxResult?.effectiveTaxRate || 0;
+                          
+                          return (
+                            <tr key={index} className="border-t border-[#EEEEEE] hover:bg-[#0F2F4E]/2">
+                              <td className="p-3 font-medium">{period.label}</td>
+                              <td className="p-3">${revenue.toLocaleString()}</td>
+                              <td className="p-3">${expenses.toLocaleString()}</td>
+                              <td className="p-3">${profit.toLocaleString()}</td>
+                              <td className="p-3">
+                                <span className="text-blue-600">${taxableIncome.toLocaleString()}</span>
+                              </td>
+                              <td className="p-3">
+                                <span className="text-red-600 font-medium">${taxDue.toLocaleString()}</span>
+                              </td>
+                              <td className="p-3">
+                                <span className="font-medium">{effectiveRate.toFixed(1)}%</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Calculate Button */}
+            <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-6 rounded-xl border border-[#1ED760]/20 tutorial-calculate">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-[#0F2F4E]">Ready to Calculate?</h3>
+                  <p className="text-sm text-[#0F2F4E]/70 mt-1">
+                    Run multi-period tax projections across all scenarios
+                  </p>
+                </div>
+                <ActionButton 
+                  onClick={calculateMultiPeriodTax} 
+                  disabled={loading}
+                  className="whitespace-nowrap"
+                >
+                  {loading ? "🔄 Calculating..." : "🚀 Run Multi-Period Analysis"}
+                </ActionButton>
               </div>
-            </div>
-
-            {/* Excel Uploader */}
-            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
-              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
-                Import QPD Excel Template
-              </h3>
-              <ExcelUploader onParse={(data) => handleExcelImport(data)} />
             </div>
           </div>
 
           {/* Sidebar */}
           <aside className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
-              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
-                Tax Summary
+            {/* Scenario Summary */}
+            <div className="bg-white rounded-xl p-6 border border-[#EEEEEE] shadow-sm">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+                Active Scenario
               </h3>
-              <ComprehensiveSummaryPanel results={results} />
-              <div className="mt-4 w-full max-w-full">
+              {activeScenario && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-[#0F2F4E]/5 rounded-lg">
+                    <div className="font-medium text-[#0F2F4E]">
+                      {scenarios.find(s => s.id === activeScenario)?.name}
+                    </div>
+                    <div className="text-sm text-[#0F2F4E]/70 mt-1">
+                      {scenarios.find(s => s.id === activeScenario)?.type === 'base' ? 'Base Case' : 
+                       scenarios.find(s => s.id === activeScenario)?.type === 'growth' ? 'Growth Plan' : 
+                       scenarios.find(s => s.id === activeScenario)?.type === 'cost-cutting' ? 'Cost Cutting' : 'Custom'}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="text-center p-3 bg-[#1ED760]/5 rounded">
+                      <div className="text-[#0F2F4E]/70">Periods</div>
+                      <div className="font-medium text-[#1ED760] text-lg">{periods.length}</div>
+                    </div>
+                    <div className="text-center p-3 bg-[#FFD700]/5 rounded">
+                      <div className="text-[#0F2F4E]/70">Scenarios</div>
+                      <div className="font-medium text-[#FFD700] text-lg">{scenarios.length}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-[#EEEEEE]">
+                    <div className="text-sm text-[#0F2F4E]/70 mb-2">Drivers Applied:</div>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>Revenue Growth:</span>
+                        <span className="font-medium">{(scenarios.find(s => s.id === activeScenario)?.drivers.revenueGrowth * 100 || 0).toFixed(1)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Expense Change:</span>
+                        <span className="font-medium">{(scenarios.find(s => s.id === activeScenario)?.drivers.expensePercentage * 100 || 0).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Period Summary */}
+            <div className="bg-white rounded-xl p-6 border border-[#EEEEEE] shadow-sm">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+                Active Period Summary
+              </h3>
+              {activePeriod && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-[#0F2F4E]/5 rounded-lg">
+                    <div className="font-medium text-[#0F2F4E] text-center">
+                      {periods.find(p => p.id === activePeriod)?.label}
+                    </div>
+                  </div>
+                  
+                  {periods.find(p => p.id === activePeriod)?.taxResult && (
+                    <>
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#0F2F4E]/70">Taxable Income:</span>
+                          <span className="text-[#1ED760] font-medium">
+                            ${(periods.find(p => p.id === activePeriod)?.taxResult?.taxableIncome || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#0F2F4E]/70">Tax Liability:</span>
+                          <span className="text-red-600 font-medium">
+                            ${(periods.find(p => p.id === activePeriod)?.taxResult?.totalTax || 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#0F2F4E]/70">Effective Rate:</span>
+                          <span className="font-medium">
+                            {(periods.find(p => p.id === activePeriod)?.taxResult?.effectiveTaxRate || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#0F2F4E]/70">Losses CF:</span>
+                          <span className="text-purple-600 font-medium">
+                            ${(periods.find(p => p.id === activePeriod)?.taxResult?.lossesCarriedForward || 0).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Chat Assistant */}
+            <div className="bg-white rounded-xl p-6 border border-[#EEEEEE] shadow-sm">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
+                AI Tax Assistant
+              </h3>
+              <div className="tutorial-ai-assistant">
                 <ChatAssistant
                   aiHistory={aiHistory}
                   setAIHistory={setAIHistory}
                 />
               </div>
             </div>
-
-            <div className="bg-white rounded-2xl p-6 border border-[#FFD700] shadow-lg">
+            
+            {/* Capital Allowance Rates */}
+            <div className="bg-white rounded-xl p-6 border border-[#EEEEEE] shadow-sm">
               <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4 flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -2396,120 +3307,58 @@ export default function TaxPlanningPage() {
               </h3>
               
               <div className="space-y-3">
-                {/* Motor Vehicles */}
-                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#0F2F4E] text-sm">Motor Vehicles</span>
-                    <span className="text-xs bg-[#1ED760]/20 text-[#0F2F4E] px-2 py-1 rounded-full">Best Value</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Special</div>
-                      <div className="text-[#1ED760] font-semibold">50%</div>
+                {Object.entries(ZIMBABWE_TAX_RULES.capitalAllowanceRates).map(([category, rates]) => (
+                  <div key={category} className={`p-3 rounded-lg border ${
+                    rates.special > 0 
+                      ? 'bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 border-[#1ED760]/20' 
+                      : 'bg-[#EEEEEE]/50 border-[#EEEEEE]'
+                  }`}>
+                    <div className="font-medium text-[#0F2F4E] text-sm mb-2">
+                      {category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                     </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Accelerated</div>
-                      <div className="text-[#1ED760] font-semibold">25%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                      <div className="text-[#1ED760] font-semibold">20%</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Moveable Assets */}
-                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#0F2F4E] text-sm">Moveable Assets</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Special</div>
-                      <div className="text-[#1ED760] font-semibold">50%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Accelerated</div>
-                      <div className="text-[#1ED760] font-semibold">25%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                      <div className="text-[#1ED760] font-semibold">10%</div>
+                    <div className="grid grid-cols-3 gap-1 text-xs">
+                      {rates.special > 0 && (
+                        <div className="text-center">
+                          <div className="text-[#0F2F4E]/70">Special</div>
+                          <div className="text-[#1ED760] font-semibold">{(rates.special * 100).toFixed(0)}%</div>
+                        </div>
+                      )}
+                      {rates.accelerated > 0 && (
+                        <div className="text-center">
+                          <div className="text-[#0F2F4E]/70">Accelerated</div>
+                          <div className="text-[#1ED760] font-semibold">{(rates.accelerated * 100).toFixed(0)}%</div>
+                        </div>
+                      )}
+                      <div className="text-center">
+                        <div className="text-[#0F2F4E]/70">Wear & Tear</div>
+                        <div className="text-[#1ED760] font-semibold">{(rates.wearTear * 100).toFixed(1)}%</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Commercial Buildings */}
-                <div className="bg-gradient-to-r from-[#EEEEEE] to-[#EEEEEE]/50 p-3 rounded-lg border border-[#EEEEEE]">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#0F2F4E] text-sm">Commercial Buildings</span>
-                  </div>
-                  <div className="flex justify-center">
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                      <div className="text-[#1ED760] font-semibold text-lg">2.5%</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Industrial Buildings */}
-                <div className="bg-gradient-to-r from-[#EEEEEE] to-[#EEEEEE]/50 p-3 rounded-lg border border-[#EEEEEE]">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#0F2F4E] text-sm">Industrial Buildings</span>
-                  </div>
-                  <div className="flex justify-center">
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                      <div className="text-[#1ED760] font-semibold text-lg">5%</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lease Improvements */}
-                <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#0F2F4E]/5 p-3 rounded-lg border border-[#1ED760]/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-[#0F2F4E] text-sm">Lease Improvements</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Special</div>
-                      <div className="text-[#1ED760] font-semibold">50%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Accelerated</div>
-                      <div className="text-[#1ED760] font-semibold">25%</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-[#0F2F4E]/70">Wear & Tear</div>
-                      <div className="text-[#1ED760] font-semibold">5%</div>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
-
-              {/* Legend */}
-              <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
-                <div className="flex items-center justify-between text-xs text-[#0F2F4E]/70">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#1ED760]/30 rounded"></div>
-                    <span>Multiple Allowances</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-[#EEEEEE] rounded"></div>
-                    <span>Single Allowance</span>
-                  </div>
-                </div>
-              </div>
-              {/* Disclaimer */}
-              <div className="mt-4 pt-3 border-t border-[#EEEEEE]">
-                <div className="text-xs text-[#0F2F4E]/50 text-center">
-                  Rates based on current Zimbabwe tax legislation. Subject to change.
+              
+              <div className="mt-4 pt-4 border-t border-[#EEEEEE] text-center">
+                <div className="text-xs text-[#0F2F4E]/50">
+                  Zimbabwe Revenue Authority approved rates
                 </div>
               </div>
             </div>
           </aside>
         </div>
       </motion.div>
+      {/* Tutorial Overlay */}
+      {/* // In TaxPlanningPage component, pass activeTab and onSwitchTab: */}
+      <TutorialOverlay
+        isOpen={showTutorial}
+        currentStep={tutorialStep}
+        onNext={handleNextTutorial}
+        onPrev={handlePrevTutorial}
+        onClose={handleCompleteTutorial}
+        onSkip={handleSkipTutorial}
+        activeTab={activeTab} // Pass current tab
+        onSwitchTab={setActiveTab} // Pass tab switcher function
+      />
     </div>
   );
 }
