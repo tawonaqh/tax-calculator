@@ -54,8 +54,11 @@ const Header = () => {
             <Link href="/paye-calculator" className="text-white hover:text-[#1ED760] transition">
               Pay As You Earn
             </Link>
+            <Link href="/income-tax-calculator-single" className="text-white hover:text-[#1ED760] transition">
+              Single-Period Tax Planning
+            </Link>
             <Link href="/income-tax-calculator" className="text-white hover:text-[#1ED760] transition">
-              Tax Planning
+              Multi-Period Tax Planning
             </Link>
             <Link href="/contact" className="text-white hover:text-[#1ED760] transition">
               Contact
