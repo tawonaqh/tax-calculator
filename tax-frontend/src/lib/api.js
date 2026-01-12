@@ -1,8 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL =
-  // process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://147.93.85.179";
+const API_BASE_URL = "https://api.taxcul.com"
 
 // Enhanced axios instance for elite endpoints
 const eliteApi = axios.create({
