@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://api.taxcul.com"
+const API_BASE_URL = "https://api.taxculapi.com"
 
 // Enhanced axios instance for elite endpoints
 const eliteApi = axios.create({
