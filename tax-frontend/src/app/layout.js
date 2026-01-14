@@ -50,6 +50,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div className="w-full min-h-screen flex flex-col bg-[#EEEEEE] text-[#0F2F4E]">
+          <SpeedInsights />
           <Header />
           {children}
           <Chatbot />
