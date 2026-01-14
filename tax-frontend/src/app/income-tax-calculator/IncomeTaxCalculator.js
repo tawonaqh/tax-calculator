@@ -27,6 +27,7 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis
 } from "recharts";
+import { eliteTaxAPI } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const COLORS = ["#1ED760", "#FFD700", "#0F2F4E", "#84cc16", "#f97316", "#8b5cf6", "#ec4899"];
@@ -148,6 +149,10 @@ const ZIMBABWE_TAX_RULES = {
   corporateTaxRate: 0.25,
   aidsLevyRate: 0.03,
   
+  // Updated 2025/2026 Tax Year
+  taxYear: '2025/2026',
+  lastUpdated: 'January 2026',
+  
   capitalAllowanceRates: {
     motorVehicles: { special: 0.5, accelerated: 0.25, wearTear: 0.2 },
     moveableAssets: { special: 0.5, accelerated: 0.25, wearTear: 0.1 },
@@ -157,21 +162,56 @@ const ZIMBABWE_TAX_RULES = {
     itEquipment: { special: 0.5, accelerated: 0.25, wearTear: 0.333 }
   },
   
-  payeBands: [
-    { min: 0, max: 75000, rate: 0.00, deduct: 0 },
-    { min: 75001, max: 150000, rate: 0.20, deduct: 15000 },
-    { min: 150001, max: 300000, rate: 0.25, deduct: 22500 },
-    { min: 300001, max: 600000, rate: 0.30, deduct: 37500 },
-    { min: 600001, max: Infinity, rate: 0.40, deduct: 97500 },
+  // Updated PAYE Bands for 2025/2026 (Monthly USD)
+  payeBandsUSD: [
+    { min: 0, max: 100, rate: 0.00, deduct: 0 },
+    { min: 100.01, max: 300, rate: 0.20, deduct: 20 },
+    { min: 300.01, max: 1000, rate: 0.25, deduct: 35 },
+    { min: 1000.01, max: 2000, rate: 0.30, deduct: 85 },
+    { min: 2000.01, max: 3000, rate: 0.35, deduct: 185 },
+    { min: 3000.01, max: Infinity, rate: 0.40, deduct: 335 },
   ],
   
-  vatRate: 0.145,
+  // Updated PAYE Bands for 2025/2026 (Monthly ZiG)
+  payeBandsZIG: [
+    { min: 0, max: 2800, rate: 0.00, deduct: 0 },
+    { min: 2800.01, max: 8400, rate: 0.20, deduct: 560 },
+    { min: 8400.01, max: 28000, rate: 0.25, deduct: 980 },
+    { min: 28000.01, max: 56000, rate: 0.30, deduct: 2380 },
+    { min: 56000.01, max: 84000, rate: 0.35, deduct: 5180 },
+    { min: 84000.01, max: Infinity, rate: 0.40, deduct: 9380 },
+  ],
+  
+  // Legacy bands for backward compatibility (Annual)
+  payeBands: [
+    { min: 0, max: 1200, rate: 0.00, deduct: 0 },
+    { min: 1200.01, max: 3600, rate: 0.20, deduct: 240 },
+    { min: 3600.01, max: 12000, rate: 0.25, deduct: 420 },
+    { min: 12000.01, max: 24000, rate: 0.30, deduct: 1020 },
+    { min: 24000.01, max: 36000, rate: 0.35, deduct: 2220 },
+    { min: 36000.01, max: Infinity, rate: 0.40, deduct: 4020 },
+  ],
+  
+  vatRate: 0.15, // Updated to 15% (2025)
   
   withholdingTaxRates: {
     royalties: 0.15,
     fees: 0.15,
     interest: 0.10,
     tenders: 0.10,
+    digitalServices: 0.15, // NEW: Digital Services Withholding Tax (2026)
+  },
+  
+  // NEW: 2026 Digital Services Tax
+  digitalServicesTax: {
+    rate: 0.15,
+    effectiveDate: 'January 2026',
+    applicableTo: [
+      'Netflix', 'Spotify', 'Amazon Prime', 'Disney+',
+      'Apple Music', 'YouTube Premium', 'Starlink',
+      'Bolt', 'InDrive', 'Uber', 'Other foreign digital platforms'
+    ],
+    description: 'Withholding tax on payments to foreign digital service providers'
   },
   
   baseCurrency: 'USD',
@@ -2967,18 +3007,42 @@ const AIDisclaimer = ({ className = "" }) => (
 const ChatAssistant = ({ aiHistory, setAIHistory }) => {
   const [query, setQuery] = useState("");
   const [sending, setSending] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+
+  useEffect(() => {
+    // Initialize elite session
+    const initSession = async () => {
+      try {
+        const session = await eliteTaxAPI.startEliteSession({
+          expertise_level: "expert_legal",
+          practice_area: "tax_planning",
+          preferred_detail: "comprehensive",
+        });
+        setSessionId(session.session_id);
+      } catch (error) {
+        console.error("Failed to start elite session:", error);
+      }
+    };
+    initSession();
+  }, []);
 
   const send = async () => {
     if (!query.trim()) return;
     setSending(true);
     try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query });
-      const assistant = res.data.response ?? "(no response)";
+      const response = await eliteTaxAPI.askEliteQuestion(
+        query,
+        sessionId,
+        "elite",
+        "comprehensive"
+      );
+      const assistant = response.response ?? "(no response)";
       setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
       setQuery("");
-    } catch {
+    } catch (error) {
+      console.error("Elite API error:", error);
       setAIHistory((h) => [
-        { q: query, a: "(assistant error)" },
+        { q: query, a: "(assistant error - please try again)" },
         ...h,
       ].slice(0, 50));
     } finally {
@@ -3675,13 +3739,24 @@ const TutorialOverlay = ({
                        rect.height > 0;
       
       if (isVisible) {
-        setHighlightStyle({
-          top: `${rect.top}px`,
-          left: `${rect.left}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
-          display: 'block'
+        // Scroll element into view centered
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center'
         });
+        
+        // Wait for scroll to complete before setting highlight
+        setTimeout(() => {
+          const updatedRect = element.getBoundingClientRect();
+          setHighlightStyle({
+            top: `${updatedRect.top}px`,
+            left: `${updatedRect.left}px`,
+            width: `${updatedRect.width}px`,
+            height: `${updatedRect.height}px`,
+            display: 'block'
+          });
+        }, 300);
       } else {
         setHighlightStyle({ display: 'none' });
       }
@@ -3700,18 +3775,18 @@ const TutorialOverlay = ({
   
   return (
     <div className="fixed inset-0 z-[100]">
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/40" />
       
       {highlightStyle.display === 'block' && (
         <div 
-          className="absolute border-2 border-[#1ED760] rounded-lg z-[101] shadow-[0_0_0_9999px_rgba(0,0,0,0.5)]"
+          className="absolute border-2 border-[#1ED760] rounded-lg z-[101] shadow-[0_0_0_9999px_rgba(0,0,0,0.4)]"
           style={highlightStyle}
         >
           <div className="absolute inset-0 bg-[#1ED760]/10 animate-pulse" />
         </div>
       )}
       
-      <div className={`absolute w-96 bg-white rounded-2xl p-6 shadow-2xl border-2 border-[#1ED760] z-[102] ${positionClass}`}>
+      <div className={`absolute w-96 bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border-2 border-[#1ED760]/80 z-[102] ${positionClass}`}>
         {step.tab && (
           <div className="mb-3 px-3 py-1 bg-[#1ED760]/10 text-[#1ED760] text-sm rounded-lg inline-block">
             {step.tab === 'overview' && '📊 Overview Tab'}
@@ -3938,10 +4013,16 @@ export default function TaxPlanningPage() {
 
   async function sendToAI(message) {
     try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query: message });
-      return res.data?.response ?? "(no response)";
+      const response = await eliteTaxAPI.askEliteQuestion(
+        message,
+        null, // No session needed for one-off questions
+        "elite",
+        "comprehensive"
+      );
+      return response.response ?? "(no response)";
     } catch (err) {
-      return "(assistant error)";
+      console.error("Elite API error in sendToAI:", err);
+      return "(assistant error - please try again)";
     }
   }
 
