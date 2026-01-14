@@ -20,6 +20,7 @@ import {
   Line,
   CartesianGrid
 } from "recharts";
+import { eliteTaxAPI } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "";
 const COLORS = ["#1ED760", "#FFD700", "#0F2F4E", "#84cc16", "#f97316"];
@@ -1426,18 +1427,42 @@ const ComprehensiveSummaryPanel = ({ results }) => {
 const ChatAssistant = ({ aiHistory, setAIHistory }) => {
   const [query, setQuery] = useState("");
   const [sending, setSending] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+
+  useEffect(() => {
+    // Initialize elite session
+    const initSession = async () => {
+      try {
+        const session = await eliteTaxAPI.startEliteSession({
+          expertise_level: "expert_legal",
+          practice_area: "tax_calculation",
+          preferred_detail: "comprehensive",
+        });
+        setSessionId(session.session_id);
+      } catch (error) {
+        console.error("Failed to start elite session:", error);
+      }
+    };
+    initSession();
+  }, []);
 
   const send = async () => {
     if (!query.trim()) return;
     setSending(true);
     try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query });
-      const assistant = res.data.response ?? "(no response)";
+      const response = await eliteTaxAPI.askEliteQuestion(
+        query,
+        sessionId,
+        "elite",
+        "comprehensive"
+      );
+      const assistant = response.response ?? "(no response)";
       setAIHistory((h) => [{ q: query, a: assistant }, ...h].slice(0, 50));
       setQuery("");
-    } catch {
+    } catch (error) {
+      console.error("Elite API error:", error);
       setAIHistory((h) => [
-        { q: query, a: "(assistant error)" },
+        { q: query, a: "(assistant error - please try again)" },
         ...h,
       ].slice(0, 50));
     } finally {
@@ -1646,10 +1671,16 @@ export default function TaxPlanningPage() {
 
   async function sendToAI(message) {
     try {
-      const res = await axios.post(`${API_BASE}/chatbot`, { query: message });
-      return res.data?.response ?? "(no response)";
+      const response = await eliteTaxAPI.askEliteQuestion(
+        message,
+        null, // No session needed for one-off questions
+        "elite",
+        "comprehensive"
+      );
+      return response.response ?? "(no response)";
     } catch (err) {
-      return "(assistant error)";
+      console.error("Elite API error in sendToAI:", err);
+      return "(assistant error - please try again)";
     }
   }
 

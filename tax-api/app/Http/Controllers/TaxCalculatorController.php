@@ -495,14 +495,15 @@ class TaxCalculatorController extends Controller
             ->orderBy('min_income')
             ->get();
         
-        // If no bands in database, use Zimbabwe default bands (2024)
+        // If no bands in database, use Zimbabwe 2025/2026 bands (Monthly USD)
         if ($bands->isEmpty()) {
             $bands = collect([
-                (object) ['min_income' => 0, 'max_income' => 75000, 'rate' => 0.00, 'deduct' => 0],
-                (object) ['min_income' => 75001, 'max_income' => 150000, 'rate' => 0.20, 'deduct' => 15000],
-                (object) ['min_income' => 150001, 'max_income' => 300000, 'rate' => 0.25, 'deduct' => 22500],
-                (object) ['min_income' => 300001, 'max_income' => 600000, 'rate' => 0.30, 'deduct' => 37500],
-                (object) ['min_income' => 600001, 'max_income' => null, 'rate' => 0.40, 'deduct' => 97500]
+                (object) ['min_income' => 0, 'max_income' => 100, 'rate' => 0.00, 'deduct' => 0],
+                (object) ['min_income' => 100.01, 'max_income' => 300, 'rate' => 0.20, 'deduct' => 20],
+                (object) ['min_income' => 300.01, 'max_income' => 1000, 'rate' => 0.25, 'deduct' => 35],
+                (object) ['min_income' => 1000.01, 'max_income' => 2000, 'rate' => 0.30, 'deduct' => 85],
+                (object) ['min_income' => 2000.01, 'max_income' => 3000, 'rate' => 0.35, 'deduct' => 185],
+                (object) ['min_income' => 3000.01, 'max_income' => null, 'rate' => 0.40, 'deduct' => 335]
             ]);
         }
 
