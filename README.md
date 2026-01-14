@@ -2,6 +2,23 @@
 
 A comprehensive web application for calculating various types of taxes in Zimbabwe. Built with Next.js, React, and modern web technologies.
 
+## 🎉 NEW: Modularized Architecture
+
+This project is undergoing a major refactoring to improve code quality, maintainability, and developer experience. **Phase 1 & 2 are complete!**
+
+📚 **[View Modularization Documentation](./MODULARIZATION_INDEX.md)** - Complete guide to the new architecture
+
+### Quick Stats
+- ✅ **25% Complete** - Foundation and PAYE module done
+- ✅ **44% Code Reduction** - PAYE module optimized
+- ✅ **15+ Reusable Components** - Shared component library
+- ✅ **7 Documentation Files** - Comprehensive guides
+
+### For Developers
+- 🚀 [Quick Start Guide](./DEVELOPER_QUICK_START.md) - Get started in 30 minutes
+- 📊 [Progress Tracker](./MODULARIZATION_PROGRESS.md) - See current status
+- 🏗️ [Architecture Comparison](./ARCHITECTURE_COMPARISON.md) - Before/after
+
 ## 🌟 Features
 
 ### Tax Calculators
@@ -69,6 +86,32 @@ A comprehensive web application for calculating various types of taxes in Zimbab
 
 ## 📁 Project Structure
 
+### New Modular Structure (✨ Recommended)
+```
+tax-frontend/src/
+├── modules/                          # ✨ NEW: Modular components
+│   ├── shared/                       # Reusable across all modules
+│   │   ├── components/              # UI components (InputField, Button, etc.)
+│   │   ├── utils/                   # Utilities (formatters, validators)
+│   │   └── constants/               # Shared constants (tax rates)
+│   ├── paye-calculator/             # ✅ COMPLETED
+│   ├── capital-allowance/           # 📋 Planned
+│   ├── income-tax-single/           # 📋 Planned
+│   └── income-tax-multi/            # 📋 Planned
+└── app/                             # Next.js pages (thin wrappers)
+    ├── paye-calculator/
+    ├── individual-income-tax/
+    └── ...
+
+tax-api/                             # Laravel Backend
+├── app/
+│   ├── Http/Controllers/            # Thin controllers
+│   ├── Services/                    # ✨ NEW: Business logic
+│   ├── Models/                      # Data models
+│   └── Utilities/                   # ✨ NEW: Helper functions
+```
+
+### Legacy Structure (Being Migrated)
 ```
 src/
 ├── app/
@@ -84,6 +127,8 @@ src/
 └── lib/
     └── (utility functions)
 ```
+
+📖 **[Learn more about the new structure](./MODULARIZATION_INDEX.md)**
 
 ## 🎯 Component Architecture
 
@@ -250,6 +295,15 @@ For support and questions:
 
 ## 🔮 Future Enhancements
 
+### Modularization Roadmap (In Progress)
+- [x] ✅ Shared component library
+- [x] ✅ PAYE calculator module
+- [ ] 📋 Capital allowance module (Week 5-7)
+- [ ] 📋 Single period income tax module (Week 8-11)
+- [ ] 📋 Multi-period income tax module (Week 12-16)
+- [ ] 📋 Backend refactoring (Week 17-18)
+
+### Feature Enhancements
 - [ ] Additional tax calculators
 - [ ] Tax saving suggestions
 - [ ] Historical tax rate data
@@ -258,6 +312,19 @@ For support and questions:
 - [ ] Offline functionality
 - [ ] User accounts for saving calculations
 
+## 📚 Documentation
+
+### Modularization Documentation
+- 📖 [Complete Index](./MODULARIZATION_INDEX.md) - Start here
+- 🚀 [Developer Quick Start](./DEVELOPER_QUICK_START.md) - Get coding fast
+- 📊 [Progress Tracker](./MODULARIZATION_PROGRESS.md) - Current status
+- 🏗️ [Architecture Comparison](./ARCHITECTURE_COMPARISON.md) - Before/after
+- 📝 [Work Completed](./WORK_COMPLETED_SUMMARY.md) - What's done
+- 📋 [Full Summary](./MODULARIZATION_SUMMARY.md) - Complete overview
+- 🔧 [Backend Plan](./tax-api/BACKEND_MODULARIZATION_PLAN.md) - Backend refactoring
+
 ---
 
 Built with ❤️ for Zimbabwe taxpayers and financial professionals.
+
+**Modularization Project:** Making the codebase more maintainable, one module at a time. 🚀
