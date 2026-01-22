@@ -67,8 +67,9 @@ const SimplePAYECalculator = () => {
     const insurableEarnings = Math.min(grossSalary, NSSA_CONFIG.monthlyCapUSD);
     
     // Calculate NSSA contributions (4.5% each for employee and employer)
-    const employeeContribution = insurableEarnings * NSSA_CONFIG.employeeRate;
-    const employerContribution = insurableEarnings * NSSA_CONFIG.employerRate;
+    // Maximum contribution is $31.50 per month (4.5% of $700)
+    const employeeContribution = Math.min(insurableEarnings * NSSA_CONFIG.employeeRate, 31.50);
+    const employerContribution = Math.min(insurableEarnings * NSSA_CONFIG.employerRate, 31.50);
     
     return {
       employee: employeeContribution,
@@ -476,14 +477,19 @@ const SimplePAYECalculator = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
+      {/* Standard Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-[#0F2F4E] mb-2">
-          Simple PAYE Calculator
-        </h1>
-        <p className="text-gray-600">
-          Non-FDS Method | Monthly Basis | PAYE + NSSA + Payslip Generation
-        </p>
+        <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
+            Simple PAYE Calculator
+          </h1>
+          <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto mb-2">
+            Streamlined PAYE calculation for small businesses and individuals in Zimbabwe
+          </p>
+          <p className="text-lg text-[#0F2F4E]/60 max-w-2xl mx-auto">
+            Non-FDS Method | Monthly Basis | PAYE + NSSA + Payslip Generation
+          </p>
+        </div>
       </div>
 
       {/* Method Selection */}
