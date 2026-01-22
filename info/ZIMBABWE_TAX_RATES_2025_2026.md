@@ -134,11 +134,11 @@ Total Tax:          $25,750
 
 | Contribution | Rate | Cap (Annual) |
 |--------------|------|--------------|
-| **Employer** | 3.5% | $700 USD |
-| **Employee** | 3.5% | $700 USD |
-| **Total** | 7% | $1,400 USD |
+| **Employer** | 4.5% | $700 USD |
+| **Employee** | 4.5% | $700 USD |
+| **Total** | 9% | $1,400 USD |
 
-**Note:** Contributions capped at $700 per person per year
+**Note:** Contributions capped at $700 per person per year ($58.33 per month)
 
 ### Other Payroll Levies
 
