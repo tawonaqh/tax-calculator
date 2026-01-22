@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
+import { Calculator } from 'lucide-react'
 
 // Move InputField component OUTSIDE to prevent recreation
 const InputField = ({ label, value, onChange, placeholder, type = "number", required = false }) => (
@@ -1127,6 +1129,24 @@ const PAYETaxCalculator = () => {
                   </>
                 )}
               </div>
+            </div>
+
+            {/* Simple PAYE Alternative */}
+            <div className="bg-gradient-to-br from-[#1ED760]/5 to-[#1ED760]/10 rounded-2xl p-6 border border-[#1ED760]/30 shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
+                Need Something Simpler?
+              </h3>
+              <p className="text-sm text-[#0F2F4E]/80 mb-4">
+                For basic PAYE + NSSA calculations with payslip generation, try our simplified calculator designed for SMEs.
+              </p>
+              <Link 
+                href="/simple-paye-calculator"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#1ED760] text-white rounded-lg 
+                           hover:bg-[#1ED760]/90 transition-all duration-300 text-sm font-medium"
+              >
+                <Calculator className="w-4 h-4" />
+                Simple PAYE Calculator
+              </Link>
             </div>
 
             {/* Tax Tips */}

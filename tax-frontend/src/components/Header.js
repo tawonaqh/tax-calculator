@@ -53,9 +53,30 @@ const Header = () => {
               Home
             </Link>
 
-            <Link href="/paye-calculator" className="text-white hover:text-[#1ED760] transition">
-              Pay As You Earn
-            </Link>
+            {/* PAYE Dropdown */}
+            <div className="relative group">
+              <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1">
+                PAYE
+                <MdOutlineArrowDropDown />
+              </button>
+
+              {/* Dropdown Menu */}
+              <div className="absolute left-0 top-full mt-3 w-56 rounded-xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                <Link
+                  href="/paye-calculator"
+                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-t-xl"
+                >
+                  PAYE Calculator
+                </Link>
+
+                <Link
+                  href="/simple-paye-calculator"
+                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-b-xl"
+                >
+                  Simple PAYE Calculator
+                </Link>
+              </div>
+            </div>
 
             {/* Tax Planning Dropdown */}
             <div className="relative group">

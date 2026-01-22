@@ -35,6 +35,7 @@ Route::post('/chatbot', [ChatbotController::class, 'chat']);
 
 //paye
 Route::post('/calculate/paye', [TaxCalculatorController::class, 'calculatePAYE']);
+Route::post('/calculate/simple-paye', [TaxCalculatorController::class, 'calculateSimplePAYE']);
 
 // feedback
 Route::post('/feedback', [FeedbackController::class, 'store']);

@@ -184,6 +184,117 @@ class TaxCalculatorController extends Controller
         return response()->json(['taxDue' => $taxDue]);
     }
 
+    public function calculateSimplePAYE(Request $request) {
+        try {
+            $method = $request->input('method', 'gross'); // 'gross' or 'net'
+            $amount = floatval($request->input('amount', 0));
+            
+            if ($amount <= 0) {
+                return response()->json(['error' => 'Invalid amount'], 400);
+            }
+            
+            if ($method === 'gross') {
+                $result = $this->calculateFromGross($amount);
+            } else {
+                $result = $this->calculateFromNet($amount);
+            }
+            
+            return response()->json($result);
+            
+        } catch (\Exception $e) {
+            Log::error('Simple PAYE calculation error: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Calculation failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    private function calculateFromGross($grossSalary) {
+        // NSSA calculation (capped at $58.33 monthly)
+        $nssaEmployee = min($grossSalary * 0.035, 58.33);
+        $nssaEmployer = min($grossSalary * 0.035, 58.33);
+        
+        // Taxable income after NSSA
+        $taxableGross = $grossSalary - $nssaEmployee;
+        
+        // PAYE calculation using 2025/2026 bands
+        $paye = $this->calculatePAYESimple($taxableGross);
+        
+        // AIDS Levy (3% of PAYE)
+        $aidsLevy = $paye * 0.03;
+        $totalTax = $paye + $aidsLevy;
+        
+        // Net salary
+        $netSalary = $grossSalary - $nssaEmployee - $totalTax;
+        
+        return [
+            'grossSalary' => round($grossSalary, 2),
+            'nssaEmployee' => round($nssaEmployee, 2),
+            'nssaEmployer' => round($nssaEmployer, 2),
+            'taxableGross' => round($taxableGross, 2),
+            'paye' => round($paye, 2),
+            'aidsLevy' => round($aidsLevy, 2),
+            'totalTax' => round($totalTax, 2),
+            'netSalary' => round($netSalary, 2),
+            'totalCostToEmployer' => round($grossSalary + $nssaEmployer, 2),
+            'method' => 'gross'
+        ];
+    }
+    
+    private function calculateFromNet($targetNet) {
+        $grossSalary = $targetNet;
+        $iterations = 0;
+        $maxIterations = 50;
+        
+        // Iterative approach to find gross salary that gives target net
+        while ($iterations < $maxIterations) {
+            $result = $this->calculateFromGross($grossSalary);
+            $netDifference = $result['netSalary'] - $targetNet;
+            
+            if (abs($netDifference) < 0.01) {
+                $result['method'] = 'net';
+                return $result; // Close enough
+            }
+            
+            // Adjust gross salary based on difference
+            if ($netDifference > 0) {
+                $grossSalary -= abs($netDifference) * 0.5;
+            } else {
+                $grossSalary += abs($netDifference) * 1.5;
+            }
+            
+            $iterations++;
+        }
+        
+        $result = $this->calculateFromGross($grossSalary);
+        $result['method'] = 'net';
+        return $result;
+    }
+    
+    private function calculatePAYESimple($taxableIncome) {
+        // 2025/2026 PAYE bands (Monthly USD) - Non-FDS method
+        $bands = [
+            ['min' => 0, 'max' => 100, 'rate' => 0.00, 'deduct' => 0],
+            ['min' => 100.01, 'max' => 300, 'rate' => 0.20, 'deduct' => 20],
+            ['min' => 300.01, 'max' => 1000, 'rate' => 0.25, 'deduct' => 35],
+            ['min' => 1000.01, 'max' => 2000, 'rate' => 0.30, 'deduct' => 85],
+            ['min' => 2000.01, 'max' => 3000, 'rate' => 0.35, 'deduct' => 185],
+            ['min' => 3000.01, 'max' => PHP_FLOAT_MAX, 'rate' => 0.40, 'deduct' => 335]
+        ];
+        
+        $paye = 0;
+        
+        foreach ($bands as $band) {
+            if ($taxableIncome > $band['min']) {
+                $paye = ($taxableIncome * $band['rate']) - $band['deduct'];
+                break; // Use the applicable band
+            }
+        }
+        
+        return max(0, $paye);
+    }
+
     public function calculatePAYE(Request $request) {
         try {
             $calculatorType = $request->input('calculatorType', 'individual');
