@@ -259,7 +259,7 @@ php artisan db:seed --class=PayeBandsSeeder --force
 
 **Input:**
 - Monthly salary: $5,000 USD
-- NSSA: $58.33 (capped)
+- NSSA: $31.50 (capped at $700 insurable earnings)
 - Pension: $250
 
 **Expected:**
