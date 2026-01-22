@@ -117,6 +117,13 @@ export default function Home() {
       featured: true
     },
     { 
+      href: "/simple-paye-calculator", 
+      label: "Simple PAYE Calculator", 
+      description: "Quick PAYE & NSSA calculations for SMEs",
+      icon: FaCalculator,
+      featured: true
+    },
+    { 
       href: "/capital-allowance-calculator", 
       label: "Capital Allowances", 
       description: "Periodic capital allowances computation",
@@ -127,6 +134,12 @@ export default function Home() {
 
   // All general calculators (complete list)
   const allCalculators = [
+    { 
+      href: "/simple-paye-calculator", 
+      label: "Simple PAYE Calculator", 
+      description: "Quick PAYE & NSSA for SMEs",
+      icon: FaCalculator,
+    },
     { 
       href: "/self-employment-tax-calculator", 
       label: "Individual Income Tax", 
