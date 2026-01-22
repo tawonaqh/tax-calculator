@@ -9,8 +9,8 @@ export const TAX_RATES = {
   VAT: 0.15,
   ZIMDEF: 0.01,
   SDF: 0.005,
-  NSSA_EMPLOYEE: 0.03,
-  NSSA_EMPLOYER: 0.045,
+  NSSA_EMPLOYEE: 0.045, // Updated to 4.5%
+  NSSA_EMPLOYER: 0.045, // Updated to 4.5%
   NSSA_CAP_USD: 700,
   MEDICAL_AID_CREDIT: 0.50
 }
