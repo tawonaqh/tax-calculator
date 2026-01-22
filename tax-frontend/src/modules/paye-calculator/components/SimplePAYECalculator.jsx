@@ -20,10 +20,11 @@ const PAYE_BANDS = [
   { min: 3000.01, max: Infinity, rate: 0.40, deduct: 335 }
 ];
 
-// NSSA Configuration
+// NSSA Configuration - Updated to current Zimbabwe regulations
 const NSSA_CONFIG = {
-  employeeRate: 0.035, // 3.5%
-  employerRate: 0.035, // 3.5%
+  employeeRate: 0.045, // 4.5% (employee contribution)
+  employerRate: 0.045, // 4.5% (employer contribution)
+  totalRate: 0.09, // 9% total (4.5% + 4.5%)
   monthlyCapUSD: 58.33, // $700 annual / 12 months
   annualCapUSD: 700
 };
@@ -60,12 +61,22 @@ const SimplePAYECalculator = () => {
     return 0;
   };
 
-  // Calculate NSSA (capped at monthly limit)
+  // Calculate NSSA with proper capping (based on insurable earnings up to $700 annual / $58.33 monthly)
   const calculateNSSA = (grossSalary) => {
-    const nssaBase = Math.min(grossSalary, NSSA_CONFIG.monthlyCapUSD / NSSA_CONFIG.employeeRate);
+    // NSSA is calculated on insurable earnings up to the monthly cap of $58.33
+    // This means the maximum salary subject to NSSA is $58.33 / 4.5% = $1,296.67
+    const maxInsurableEarnings = NSSA_CONFIG.monthlyCapUSD / NSSA_CONFIG.employeeRate;
+    const insurableEarnings = Math.min(grossSalary, maxInsurableEarnings);
+    
+    // Calculate NSSA contributions
+    const employeeContribution = insurableEarnings * NSSA_CONFIG.employeeRate;
+    const employerContribution = insurableEarnings * NSSA_CONFIG.employerRate;
+    
+    // Ensure contributions don't exceed the monthly cap
     return {
-      employee: Math.min(grossSalary * NSSA_CONFIG.employeeRate, NSSA_CONFIG.monthlyCapUSD),
-      employer: Math.min(grossSalary * NSSA_CONFIG.employerRate, NSSA_CONFIG.monthlyCapUSD)
+      employee: Math.min(employeeContribution, NSSA_CONFIG.monthlyCapUSD),
+      employer: Math.min(employerContribution, NSSA_CONFIG.monthlyCapUSD),
+      insurableEarnings: insurableEarnings
     };
   };
 
@@ -211,7 +222,7 @@ const SimplePAYECalculator = () => {
       doc.text(`Basic Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
       
       // Deductions column
-      doc.text(`NSSA (3.5%): ${formatCurrency(results.nssaEmployee)}`, pageWidth / 2 - 20, yPosition);
+      doc.text(`NSSA (4.5%): ${formatCurrency(results.nssaEmployee)}`, pageWidth / 2 - 20, yPosition);
       yPosition += 6;
       
       doc.text(`Gross Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
@@ -272,7 +283,7 @@ const SimplePAYECalculator = () => {
       doc.setFont('helvetica', 'normal');
       doc.text(`Employee Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
       yPosition += 5;
-      doc.text(`Employer NSSA (3.5%): ${formatCurrency(results.nssaEmployer)}`, 20, yPosition);
+      doc.text(`Employer NSSA (4.5%): ${formatCurrency(results.nssaEmployer)}`, 20, yPosition);
       yPosition += 5;
       
       doc.setFont('helvetica', 'bold');
@@ -391,7 +402,7 @@ const SimplePAYECalculator = () => {
               <h4 className="font-medium text-gray-700 mb-2">DEDUCTIONS</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
-                  <span>NSSA (3.5%):</span>
+                  <span>NSSA (4.5%):</span>
                   <span>({formatCurrency(results.nssaEmployee)})</span>
                 </div>
                 <div className="flex justify-between">
@@ -447,7 +458,7 @@ const SimplePAYECalculator = () => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p>Employee Salary: {formatCurrency(results.grossSalary)}</p>
-              <p>Employer NSSA (3.5%): {formatCurrency(results.nssaEmployer)}</p>
+              <p>Employer NSSA (4.5%): {formatCurrency(results.nssaEmployer)}</p>
             </div>
             <div>
               <p className="font-bold text-[#0F2F4E]">
@@ -648,7 +659,7 @@ const SimplePAYECalculator = () => {
                 <h4 className="font-medium text-gray-700 mb-3">Employee Deductions</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>NSSA Employee (3.5%):</span>
+                    <span>NSSA Employee (4.5%):</span>
                     <span className="font-medium">{formatCurrency(results.nssaEmployee)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -674,7 +685,7 @@ const SimplePAYECalculator = () => {
                     <span className="font-medium">{formatCurrency(results.grossSalary)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>NSSA Employer (3.5%):</span>
+                    <span>NSSA Employer (4.5%):</span>
                     <span className="font-medium">{formatCurrency(results.nssaEmployer)}</span>
                   </div>
                   <div className="flex justify-between border-t pt-2 font-semibold">
@@ -718,6 +729,40 @@ const SimplePAYECalculator = () => {
           </div>
         </motion.div>
       )}
+
+      {/* NSSA Information */}
+      <div className="bg-white rounded-xl p-6 shadow-lg mt-6">
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+          NSSA Contribution Rules (2025/2026)
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-medium text-[#0F2F4E] mb-2">Contribution Rates</h4>
+            <div className="space-y-1 text-sm">
+              <p>• Employee: <strong>4.5%</strong> of insurable earnings</p>
+              <p>• Employer: <strong>4.5%</strong> of insurable earnings</p>
+              <p>• Total: <strong>9%</strong> of insurable earnings</p>
+            </div>
+          </div>
+          
+          <div>
+            <h4 className="font-medium text-[#0F2F4E] mb-2">Contribution Limits</h4>
+            <div className="space-y-1 text-sm">
+              <p>• Annual Cap: <strong>USD 700</strong></p>
+              <p>• Monthly Cap: <strong>USD 58.33</strong></p>
+              <p>• Max Insurable Earnings: <strong>USD 1,296.22</strong>/month</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> NSSA contributions are calculated on insurable earnings up to the monthly cap. 
+            For salaries above USD 1,296.22/month, NSSA is capped at USD 58.33 per month per person.
+          </p>
+        </div>
+      </div>
 
       {/* Tax Bands Reference */}
       <div className="bg-white rounded-xl p-6 shadow-lg mt-6">
