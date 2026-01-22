@@ -122,8 +122,8 @@ MIN BAND    NET EQUIV    RATE    GROSS TAX ADJ
 
 **Step 1: NSSA Calculation**
 ```php
-$nssaEmployee = min($grossSalary * 0.035, 58.33); // Capped at $58.33/month
-$nssaEmployer = min($grossSalary * 0.035, 58.33);
+$nssaEmployee = min($grossSalary * 0.045, 31.50); // Capped at $31.50/month (4.5% of $700)
+$nssaEmployer = min($grossSalary * 0.045, 31.50);
 ```
 
 **Step 2: Taxable Income**
@@ -206,9 +206,9 @@ Expected:
 ```
 Input: $5,000 gross
 Expected:
-- NSSA: $58.33 (capped)
-- Taxable: $4,941.67
-- PAYE: $1,631.67 (($4,941.67 × 40%) - $335)
+- NSSA: $31.50 (capped at $700 insurable earnings)
+- Taxable: $4,968.50
+- PAYE: $1,639.40 (($4,968.50 × 40%) - $335)
 - AIDS: $48.95
 - Net: $3,261.05
 ```
@@ -307,7 +307,7 @@ curl -X POST http://localhost:8000/api/calculate/simple-paye \
 | **Tax Bands** | ✅ Matches exactly | ✅ Matches exactly |
 | **Gross Method** | ✅ $200 → $172.25 | ✅ $200 → $172.25 |
 | **Net Method** | ✅ $3,500 → $5,306 | ✅ $3,500 → $5,306 |
-| **NSSA Cap** | ✅ $58.33/month | ✅ $58.33/month |
+| **NSSA Cap** | ✅ $31.50/month | ✅ $31.50/month |
 | **AIDS Levy** | ✅ 3% of PAYE | ✅ 3% of PAYE |
 | **Payslip** | ❌ Manual | ✅ Auto-generated |
 | **Web Access** | ❌ Excel only | ✅ Any device |

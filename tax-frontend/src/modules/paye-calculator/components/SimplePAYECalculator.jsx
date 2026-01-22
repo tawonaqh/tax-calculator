@@ -25,8 +25,8 @@ const NSSA_CONFIG = {
   employeeRate: 0.045, // 4.5% (employee contribution)
   employerRate: 0.045, // 4.5% (employer contribution)
   totalRate: 0.09, // 9% total (4.5% + 4.5%)
-  monthlyCapUSD: 58.33, // $700 annual / 12 months
-  annualCapUSD: 700
+  monthlyCapUSD: 700, // $700 monthly maximum insurable earnings
+  annualCapUSD: 8400 // $700 × 12 months
 };
 
 const AIDS_LEVY_RATE = 0.03; // 3%
@@ -61,21 +61,18 @@ const SimplePAYECalculator = () => {
     return 0;
   };
 
-  // Calculate NSSA with proper capping (based on insurable earnings up to $700 annual / $58.33 monthly)
+  // Calculate NSSA with proper capping (based on insurable earnings up to $700 monthly)
   const calculateNSSA = (grossSalary) => {
-    // NSSA is calculated on insurable earnings up to the monthly cap of $58.33
-    // This means the maximum salary subject to NSSA is $58.33 / 4.5% = $1,296.67
-    const maxInsurableEarnings = NSSA_CONFIG.monthlyCapUSD / NSSA_CONFIG.employeeRate;
-    const insurableEarnings = Math.min(grossSalary, maxInsurableEarnings);
+    // NSSA is calculated on insurable earnings up to the monthly cap of $700
+    const insurableEarnings = Math.min(grossSalary, NSSA_CONFIG.monthlyCapUSD);
     
-    // Calculate NSSA contributions
+    // Calculate NSSA contributions (4.5% each for employee and employer)
     const employeeContribution = insurableEarnings * NSSA_CONFIG.employeeRate;
     const employerContribution = insurableEarnings * NSSA_CONFIG.employerRate;
     
-    // Ensure contributions don't exceed the monthly cap
     return {
-      employee: Math.min(employeeContribution, NSSA_CONFIG.monthlyCapUSD),
-      employer: Math.min(employerContribution, NSSA_CONFIG.monthlyCapUSD),
+      employee: employeeContribution,
+      employer: employerContribution,
       insurableEarnings: insurableEarnings
     };
   };
@@ -749,17 +746,17 @@ const SimplePAYECalculator = () => {
           <div>
             <h4 className="font-medium text-[#0F2F4E] mb-2">Contribution Limits</h4>
             <div className="space-y-1 text-sm">
-              <p>• Annual Cap: <strong>USD 700</strong></p>
-              <p>• Monthly Cap: <strong>USD 58.33</strong></p>
-              <p>• Max Insurable Earnings: <strong>USD 1,296.22</strong>/month</p>
+              <p>• Max Insurable Earnings: <strong>USD 700</strong>/month</p>
+              <p>• Max Employee Contribution: <strong>USD 31.50</strong>/month (4.5% of $700)</p>
+              <p>• Max Employer Contribution: <strong>USD 31.50</strong>/month (4.5% of $700)</p>
             </div>
           </div>
         </div>
         
         <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> NSSA contributions are calculated on insurable earnings up to the monthly cap. 
-            For salaries above USD 1,296.22/month, NSSA is capped at USD 58.33 per month per person.
+            <strong>Note:</strong> NSSA contributions are calculated on insurable earnings up to USD 700 per month. 
+            For salaries above USD 700, NSSA is capped at USD 31.50 per month per person (employee and employer each).
           </p>
         </div>
       </div>

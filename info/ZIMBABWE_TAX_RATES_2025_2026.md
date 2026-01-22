@@ -132,13 +132,13 @@ Total Tax:          $25,750
 
 ### NSSA (National Social Security Authority)
 
-| Contribution | Rate | Cap (Annual) |
-|--------------|------|--------------|
-| **Employer** | 4.5% | $700 USD |
-| **Employee** | 4.5% | $700 USD |
-| **Total** | 9% | $1,400 USD |
+| Contribution | Rate | Max Insurable Earnings |
+|--------------|------|------------------------|
+| **Employer** | 4.5% | $700 USD/month |
+| **Employee** | 4.5% | $700 USD/month |
+| **Total** | 9% | $700 USD/month |
 
-**Note:** Contributions capped at $700 per person per year ($58.33 per month)
+**Maximum Contributions:** $31.50 per person per month (4.5% of $700)
 
 ### Other Payroll Levies
 
@@ -169,7 +169,7 @@ Total Tax:          $25,750
 
 ```
 Monthly Salary:              $2,500
-NSSA (3.5%, capped):         $58.33
+NSSA (4.5%, capped):         $31.50
 Medical Aid:                 $200
 Pension:                     $125
 
