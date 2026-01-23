@@ -33,17 +33,32 @@ const AIDS_LEVY_RATE = 0.03; // 3%
 
 const SimplePAYECalculator = () => {
   const [calculationMethod, setCalculationMethod] = useState('gross'); // 'gross' or 'net'
+  const [payrollMode, setPayrollMode] = useState('single'); // 'single' or 'batch'
   const [formData, setFormData] = useState({
     grossSalary: '',
     netSalary: '',
     employeeName: '',
     employeeNumber: '',
     department: '',
-    position: ''
+    position: '',
+    // Allowances
+    livingAllowance: '',
+    medicalAllowance: '',
+    transportAllowance: '',
+    housingAllowance: '',
+    commission: '',
+    bonus: '',
+    overtime: ''
   });
   
+  const [employees, setEmployees] = useState([]);
+  const [currentEmployee, setCurrentEmployee] = useState(0);
   const [results, setResults] = useState(null);
+  const [batchResults, setBatchResults] = useState([]);
   const [showPayslip, setShowPayslip] = useState(false);
+  const [showReports, setShowReports] = useState(false);
+  const [isGeneratingPayslips, setIsGeneratingPayslips] = useState(false);
+  const [payslipProgress, setPayslipProgress] = useState(0);
 
   // Calculate PAYE using Non-FDS method (monthly basis)
   // Uses the deduction method: Tax = (Taxable Income × Rate) - Deduction
@@ -78,17 +93,51 @@ const SimplePAYECalculator = () => {
     };
   };
 
-  // Gross Method: Start with gross salary, calculate net
-  const calculateFromGross = (grossSalary) => {
-    const nssa = calculateNSSA(grossSalary);
-    const taxableGross = grossSalary - nssa.employee;
+  // Calculate total gross including allowances
+  const calculateTotalGross = (basicSalary, allowances = {}) => {
+    const {
+      livingAllowance = 0,
+      medicalAllowance = 0,
+      transportAllowance = 0,
+      housingAllowance = 0,
+      commission = 0,
+      bonus = 0,
+      overtime = 0
+    } = allowances;
+
+    return parseFloat(basicSalary) + 
+           parseFloat(livingAllowance || 0) + 
+           parseFloat(medicalAllowance || 0) + 
+           parseFloat(transportAllowance || 0) + 
+           parseFloat(housingAllowance || 0) + 
+           parseFloat(commission || 0) + 
+           parseFloat(bonus || 0) + 
+           parseFloat(overtime || 0);
+  };
+
+  // Enhanced gross method calculation with allowances breakdown
+  const calculateFromGross = (basicSalary, allowances = {}) => {
+    const totalGross = calculateTotalGross(basicSalary, allowances);
+    const nssa = calculateNSSA(totalGross);
+    const taxableGross = totalGross - nssa.employee;
     const paye = calculatePAYE(taxableGross);
     const aidsLevy = paye * AIDS_LEVY_RATE;
     const totalTax = paye + aidsLevy;
-    const netSalary = grossSalary - nssa.employee - totalTax;
+    const netSalary = totalGross - nssa.employee - totalTax;
     
     return {
-      grossSalary,
+      basicSalary: parseFloat(basicSalary),
+      allowances: {
+        living: parseFloat(allowances.livingAllowance || 0),
+        medical: parseFloat(allowances.medicalAllowance || 0),
+        transport: parseFloat(allowances.transportAllowance || 0),
+        housing: parseFloat(allowances.housingAllowance || 0),
+        commission: parseFloat(allowances.commission || 0),
+        bonus: parseFloat(allowances.bonus || 0),
+        overtime: parseFloat(allowances.overtime || 0)
+      },
+      totalAllowances: totalGross - parseFloat(basicSalary),
+      grossSalary: totalGross,
       nssaEmployee: nssa.employee,
       nssaEmployer: nssa.employer,
       taxableGross,
@@ -96,7 +145,7 @@ const SimplePAYECalculator = () => {
       aidsLevy,
       totalTax,
       netSalary,
-      totalCostToEmployer: grossSalary + nssa.employer
+      totalCostToEmployer: totalGross + nssa.employer
     };
   };
 
@@ -108,7 +157,7 @@ const SimplePAYECalculator = () => {
     
     // Iterative approach to find gross salary that gives target net
     while (iterations < maxIterations) {
-      const result = calculateFromGross(grossSalary);
+      const result = calculateFromGross(grossSalary, {});
       const netDifference = result.netSalary - targetNet;
       
       if (Math.abs(netDifference) < 0.01) {
@@ -125,10 +174,91 @@ const SimplePAYECalculator = () => {
       iterations++;
     }
     
-    return calculateFromGross(grossSalary);
+    return calculateFromGross(grossSalary, {});
+  };
+
+  // Add employee to batch processing
+  const addEmployeeToBatch = () => {
+    if (employees.length >= 20) {
+      alert('Maximum 20 employees allowed in batch processing');
+      return;
+    }
+
+    const basicSalary = parseFloat(formData.grossSalary);
+    if (!basicSalary || basicSalary <= 0) {
+      alert('Please enter a valid basic salary');
+      return;
+    }
+
+    if (!formData.employeeName.trim()) {
+      alert('Please enter employee name');
+      return;
+    }
+
+    const allowances = {
+      livingAllowance: formData.livingAllowance,
+      medicalAllowance: formData.medicalAllowance,
+      transportAllowance: formData.transportAllowance,
+      housingAllowance: formData.housingAllowance,
+      commission: formData.commission,
+      bonus: formData.bonus,
+      overtime: formData.overtime
+    };
+
+    const employeeData = {
+      id: Date.now(),
+      ...formData,
+      basicSalary,
+      allowances,
+      calculation: calculateFromGross(basicSalary, allowances)
+    };
+
+    setEmployees(prev => [...prev, employeeData]);
+    
+    // Reset form for next employee
+    setFormData({
+      grossSalary: '',
+      netSalary: '',
+      employeeName: '',
+      employeeNumber: '',
+      department: '',
+      position: '',
+      livingAllowance: '',
+      medicalAllowance: '',
+      transportAllowance: '',
+      housingAllowance: '',
+      commission: '',
+      bonus: '',
+      overtime: ''
+    });
+  };
+
+  // Remove employee from batch
+  const removeEmployee = (id) => {
+    setEmployees(prev => prev.filter(emp => emp.id !== id));
+  };
+
+  // Calculate batch payroll
+  const calculateBatchPayroll = () => {
+    if (employees.length === 0) {
+      alert('Please add employees to the batch first');
+      return;
+    }
+
+    const batchCalcs = employees.map(emp => ({
+      ...emp,
+      calculation: calculateFromGross(emp.basicSalary, emp.allowances)
+    }));
+
+    setBatchResults(batchCalcs);
   };
 
   const handleCalculate = () => {
+    if (payrollMode === 'batch') {
+      calculateBatchPayroll();
+      return;
+    }
+
     const inputValue = calculationMethod === 'gross' 
       ? parseFloat(formData.grossSalary) 
       : parseFloat(formData.netSalary);
@@ -138,8 +268,18 @@ const SimplePAYECalculator = () => {
       return;
     }
 
+    const allowances = {
+      livingAllowance: formData.livingAllowance,
+      medicalAllowance: formData.medicalAllowance,
+      transportAllowance: formData.transportAllowance,
+      housingAllowance: formData.housingAllowance,
+      commission: formData.commission,
+      bonus: formData.bonus,
+      overtime: formData.overtime
+    };
+
     const result = calculationMethod === 'gross' 
-      ? calculateFromGross(inputValue)
+      ? calculateFromGross(inputValue, allowances)
       : calculateFromNet(inputValue);
     
     setResults(result);
@@ -147,6 +287,385 @@ const SimplePAYECalculator = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Generate batch payslips as ZIP file
+  const generateBatchPayslips = async () => {
+    if (batchResults.length === 0) {
+      alert('No payroll data available. Please calculate batch payroll first.');
+      return;
+    }
+
+    setIsGeneratingPayslips(true);
+    setPayslipProgress(0);
+
+    try {
+      // Import required libraries
+      const [{ jsPDF }, JSZip] = await Promise.all([
+        import('jspdf'),
+        import('jszip')
+      ]);
+
+      const zip = new JSZip.default();
+      const currentDate = new Date();
+      const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      // Generate individual payslips for each employee
+      for (let i = 0; i < batchResults.length; i++) {
+        const emp = batchResults[i];
+        setPayslipProgress(Math.round((i / batchResults.length) * 100));
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let yPosition = 20;
+
+        // Header
+        doc.setFillColor(15, 47, 78);
+        doc.rect(0, 0, pageWidth, 50, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PAYSLIP', pageWidth / 2, 25, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 40, { align: 'center' });
+        
+        yPosition = 60;
+        
+        // Employee Details
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('EMPLOYEE DETAILS', 20, yPosition);
+        yPosition += 10;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Employee Name: ${emp.employeeName || 'N/A'}`, 20, yPosition);
+        doc.text(`Department: ${emp.department || 'N/A'}`, pageWidth / 2 + 10, yPosition);
+        yPosition += 6;
+        
+        doc.text(`Employee Number: ${emp.employeeNumber || 'N/A'}`, 20, yPosition);
+        doc.text(`Position: ${emp.position || 'N/A'}`, pageWidth / 2 + 10, yPosition);
+        yPosition += 15;
+        
+        // Earnings & Deductions
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('EARNINGS & DEDUCTIONS', 20, yPosition);
+        yPosition += 10;
+        
+        // Earnings column
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('EARNINGS', 20, yPosition);
+        doc.text('DEDUCTIONS', pageWidth / 2 - 20, yPosition);
+        doc.text('NET PAY', pageWidth - 60, yPosition);
+        yPosition += 8;
+        
+        const contentStartY = yPosition;
+        
+        // Earnings breakdown
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Basic Salary: ${formatCurrency(emp.calculation.basicSalary)}`, 20, yPosition);
+        
+        // Show allowances if they exist
+        if (emp.calculation.allowances.living > 0) {
+          yPosition += 5;
+          doc.text(`Living Allow.: ${formatCurrency(emp.calculation.allowances.living)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.medical > 0) {
+          yPosition += 5;
+          doc.text(`Medical Allow.: ${formatCurrency(emp.calculation.allowances.medical)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.transport > 0) {
+          yPosition += 5;
+          doc.text(`Transport Allow.: ${formatCurrency(emp.calculation.allowances.transport)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.housing > 0) {
+          yPosition += 5;
+          doc.text(`Housing Allow.: ${formatCurrency(emp.calculation.allowances.housing)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.commission > 0) {
+          yPosition += 5;
+          doc.text(`Commission: ${formatCurrency(emp.calculation.allowances.commission)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.bonus > 0) {
+          yPosition += 5;
+          doc.text(`Bonus: ${formatCurrency(emp.calculation.allowances.bonus)}`, 20, yPosition);
+        }
+        if (emp.calculation.allowances.overtime > 0) {
+          yPosition += 5;
+          doc.text(`Overtime: ${formatCurrency(emp.calculation.allowances.overtime)}`, 20, yPosition);
+        }
+        
+        yPosition += 8;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Gross Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
+        
+        // Reset position for deductions
+        yPosition = contentStartY;
+        
+        // Deductions column
+        doc.setFont('helvetica', 'normal');
+        doc.text(`NSSA (4.5%): ${formatCurrency(emp.calculation.nssaEmployee)}`, pageWidth / 2 - 20, yPosition);
+        yPosition += 6;
+        doc.text(`PAYE: ${formatCurrency(emp.calculation.paye)}`, pageWidth / 2 - 20, yPosition);
+        yPosition += 6;
+        doc.text(`AIDS Levy: ${formatCurrency(emp.calculation.aidsLevy)}`, pageWidth / 2 - 20, yPosition);
+        yPosition += 6;
+        
+        // Net Pay box
+        doc.setFillColor(255, 255, 255);
+        doc.rect(pageWidth - 80, contentStartY - 2, 70, 20, 'F');
+        doc.setDrawColor(30, 215, 96);
+        doc.setLineWidth(1);
+        doc.rect(pageWidth - 80, contentStartY - 2, 70, 20);
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('NET SALARY', pageWidth - 60, contentStartY + 6, { align: 'center' });
+        doc.setFontSize(14);
+        doc.text(formatCurrency(emp.calculation.netSalary), pageWidth - 60, contentStartY + 12, { align: 'center' });
+        
+        yPosition += 10;
+        
+        // Tax Calculation Details
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('TAX CALCULATION (Non-FDS Method)', 20, yPosition);
+        yPosition += 8;
+        
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Gross Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
+        doc.text(`PAYE: ${formatCurrency(emp.calculation.paye)}`, pageWidth / 2, yPosition);
+        yPosition += 5;
+        doc.text(`Less: NSSA: ${formatCurrency(emp.calculation.nssaEmployee)}`, 20, yPosition);
+        doc.text(`AIDS Levy (3%): ${formatCurrency(emp.calculation.aidsLevy)}`, pageWidth / 2, yPosition);
+        yPosition += 5;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Taxable Income: ${formatCurrency(emp.calculation.taxableGross)}`, 20, yPosition);
+        doc.text(`Total Tax: ${formatCurrency(emp.calculation.totalTax)}`, pageWidth / 2, yPosition);
+        yPosition += 15;
+        
+        // Employer Costs
+        doc.setFontSize(12);
+        doc.text('EMPLOYER COSTS', 20, yPosition);
+        yPosition += 8;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Employee Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
+        yPosition += 5;
+        doc.text(`Employer NSSA (4.5%): ${formatCurrency(emp.calculation.nssaEmployer)}`, 20, yPosition);
+        yPosition += 5;
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Total Cost to Employer: ${formatCurrency(emp.calculation.totalCostToEmployer)}`, 20, yPosition);
+        yPosition += 15;
+        
+        // Summary Section
+        doc.setFillColor(245, 245, 245);
+        doc.rect(20, yPosition, pageWidth - 40, 35, 'F');
+        doc.setDrawColor(30, 215, 96);
+        doc.setLineWidth(2);
+        doc.rect(20, yPosition, pageWidth - 40, 35);
+        
+        doc.setFillColor(30, 215, 96);
+        doc.rect(20, yPosition, pageWidth - 40, 12, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PAYSLIP SUMMARY', pageWidth / 2, yPosition + 8, { align: 'center' });
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Gross Salary:', 25, yPosition + 20);
+        doc.text(formatCurrency(emp.calculation.grossSalary), 70, yPosition + 20);
+        doc.text('Total Deductions:', 110, yPosition + 20);
+        doc.text(formatCurrency(emp.calculation.nssaEmployee + emp.calculation.totalTax), 160, yPosition + 20);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 215, 96);
+        doc.text('Net Salary:', 25, yPosition + 30);
+        doc.text(formatCurrency(emp.calculation.netSalary), 70, yPosition + 30);
+        doc.setTextColor(15, 47, 78);
+        doc.text('Employer Cost:', 110, yPosition + 30);
+        doc.text(formatCurrency(emp.calculation.totalCostToEmployer), 160, yPosition + 30);
+        
+        yPosition += 45;
+        
+        // Footer
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(128, 128, 128);
+        doc.text('This payslip is computer generated and does not require a signature.', pageWidth / 2, yPosition, { align: 'center' });
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, yPosition + 5, { align: 'center' });
+        
+        // Add PDF to ZIP
+        const pdfBlob = doc.output('blob');
+        const fileName = `payslip-${emp.employeeName.replace(/[^a-zA-Z0-9]/g, '_')}-${emp.employeeNumber || 'NoID'}.pdf`;
+        zip.file(fileName, pdfBlob);
+      }
+
+      // Generate and download ZIP file
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `batch-payslips-${payPeriod.replace(' ', '-')}-${batchResults.length}-employees.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error generating batch payslips:', error);
+      alert('Error generating batch payslips. Please try again.');
+    } finally {
+      setIsGeneratingPayslips(false);
+      setPayslipProgress(0);
+    }
+  };
+  const generatePayrollReports = () => {
+    if (batchResults.length === 0) {
+      alert('No payroll data available. Please calculate batch payroll first.');
+      return;
+    }
+
+    import('jspdf').then(({ jsPDF }) => {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      let yPosition = 20;
+      
+      const currentDate = new Date();
+      const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      // Calculate totals
+      const totals = batchResults.reduce((acc, emp) => {
+        const calc = emp.calculation;
+        return {
+          totalBasicSalary: acc.totalBasicSalary + calc.basicSalary,
+          totalAllowances: acc.totalAllowances + calc.totalAllowances,
+          totalGross: acc.totalGross + calc.grossSalary,
+          totalNSSAEmployee: acc.totalNSSAEmployee + calc.nssaEmployee,
+          totalNSSAEmployer: acc.totalNSSAEmployer + calc.nssaEmployer,
+          totalPAYE: acc.totalPAYE + calc.paye,
+          totalAidsLevy: acc.totalAidsLevy + calc.aidsLevy,
+          totalNet: acc.totalNet + calc.netSalary,
+          totalEmployerCost: acc.totalEmployerCost + calc.totalCostToEmployer
+        };
+      }, {
+        totalBasicSalary: 0, totalAllowances: 0, totalGross: 0,
+        totalNSSAEmployee: 0, totalNSSAEmployer: 0, totalPAYE: 0,
+        totalAidsLevy: 0, totalNet: 0, totalEmployerCost: 0
+      });
+
+      // Header
+      doc.setFillColor(15, 47, 78);
+      doc.rect(0, 0, pageWidth, 50, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PAYROLL SUMMARY REPORT', pageWidth / 2, 25, { align: 'center' });
+      
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 35, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, 45, { align: 'center' });
+      
+      yPosition = 60;
+      
+      // Summary Statistics
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PAYROLL SUMMARY', 20, yPosition);
+      yPosition += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      // Summary table
+      const summaryData = [
+        ['Total Employees:', batchResults.length.toString()],
+        ['Total Basic Salaries:', formatCurrency(totals.totalBasicSalary)],
+        ['Total Allowances:', formatCurrency(totals.totalAllowances)],
+        ['Total Gross Salaries:', formatCurrency(totals.totalGross)],
+        ['Total NSSA (Employee):', formatCurrency(totals.totalNSSAEmployee)],
+        ['Total NSSA (Employer):', formatCurrency(totals.totalNSSAEmployer)],
+        ['Total PAYE:', formatCurrency(totals.totalPAYE)],
+        ['Total AIDS Levy:', formatCurrency(totals.totalAidsLevy)],
+        ['Total Net Salaries:', formatCurrency(totals.totalNet)],
+        ['Total Employer Cost:', formatCurrency(totals.totalEmployerCost)]
+      ];
+
+      summaryData.forEach(([label, value]) => {
+        doc.text(label, 20, yPosition);
+        doc.text(value, 120, yPosition);
+        yPosition += 6;
+      });
+
+      yPosition += 10;
+
+      // Individual Employee Details
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('INDIVIDUAL EMPLOYEE BREAKDOWN', 20, yPosition);
+      yPosition += 15;
+
+      // Table headers
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      const headers = ['Name', 'Basic', 'Allow.', 'Gross', 'NSSA', 'PAYE', 'Net'];
+      const colWidths = [35, 25, 20, 25, 20, 20, 25];
+      let xPos = 20;
+
+      headers.forEach((header, i) => {
+        doc.text(header, xPos, yPosition);
+        xPos += colWidths[i];
+      });
+      yPosition += 8;
+
+      // Employee rows
+      doc.setFont('helvetica', 'normal');
+      batchResults.forEach((emp) => {
+        const calc = emp.calculation;
+        xPos = 20;
+        
+        const rowData = [
+          emp.employeeName.substring(0, 15),
+          formatCurrency(calc.basicSalary).substring(0, 10),
+          formatCurrency(calc.totalAllowances).substring(0, 8),
+          formatCurrency(calc.grossSalary).substring(0, 10),
+          formatCurrency(calc.nssaEmployee).substring(0, 8),
+          formatCurrency(calc.paye).substring(0, 8),
+          formatCurrency(calc.netSalary).substring(0, 10)
+        ];
+
+        rowData.forEach((data, i) => {
+          doc.text(data, xPos, yPosition);
+          xPos += colWidths[i];
+        });
+        yPosition += 6;
+
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+      });
+
+      // Save the report
+      doc.save(`payroll-report-${payPeriod.replace(' ', '-')}.pdf`);
+    }).catch(error => {
+      console.error('Error generating report:', error);
+      alert('Error generating report. Please try again.');
+    });
   };
 
   const formatCurrency = (amount) => {
@@ -386,8 +905,65 @@ const SimplePAYECalculator = () => {
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Basic Salary:</span>
-                  <span>{formatCurrency(results.grossSalary)}</span>
+                  <span>{formatCurrency(results.basicSalary)}</span>
                 </div>
+                
+                {results.allowances.living > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Living Allow.:</span>
+                    <span>{formatCurrency(results.allowances.living)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.medical > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Medical Allow.:</span>
+                    <span>{formatCurrency(results.allowances.medical)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.transport > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Transport Allow.:</span>
+                    <span>{formatCurrency(results.allowances.transport)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.housing > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Housing Allow.:</span>
+                    <span>{formatCurrency(results.allowances.housing)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.commission > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Commission:</span>
+                    <span>{formatCurrency(results.allowances.commission)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.bonus > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Bonus:</span>
+                    <span>{formatCurrency(results.allowances.bonus)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.overtime > 0 && (
+                  <div className="flex justify-between text-xs text-gray-600">
+                    <span>Overtime:</span>
+                    <span>{formatCurrency(results.allowances.overtime)}</span>
+                  </div>
+                )}
+                
+                {results.totalAllowances > 0 && (
+                  <div className="flex justify-between text-xs border-t pt-1">
+                    <span>Total Allowances:</span>
+                    <span>{formatCurrency(results.totalAllowances)}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between font-medium border-t pt-1">
                   <span>Gross Salary:</span>
                   <span>{formatCurrency(results.grossSalary)}</span>
@@ -477,103 +1053,154 @@ const SimplePAYECalculator = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Standard Header */}
+      {/* Enhanced Header */}
       <div className="text-center mb-8">
         <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg">
           <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
-            Simple PAYE Calculator
+            Enhanced PAYE Calculator
           </h1>
           <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto mb-2">
-            Streamlined PAYE calculation for small businesses and individuals in Zimbabwe
+            Comprehensive payroll system with allowances, batch processing, and detailed reports
           </p>
           <p className="text-lg text-[#0F2F4E]/60 max-w-2xl mx-auto">
-            Non-FDS Method | Monthly Basis | PAYE + NSSA + Payslip Generation
+            ✅ Realistic PAYE Computations | ✅ Allowances & Benefits | ✅ Batch Payroll (20 employees) | ✅ NSSA, PAYE & Summary Reports
           </p>
         </div>
       </div>
 
-      {/* Method Selection */}
+      {/* Mode Selection */}
       <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
-        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Calculation Method</h3>
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Payroll Mode</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <button
-            onClick={() => setCalculationMethod('gross')}
+            onClick={() => setPayrollMode('single')}
             className={`p-4 rounded-lg border-2 transition-all ${
-              calculationMethod === 'gross'
+              payrollMode === 'single'
                 ? 'border-[#1ED760] bg-[#1ED760]/10'
                 : 'border-gray-200 hover:border-[#1ED760]/50'
             }`}
           >
             <div className="text-left">
-              <h4 className="font-semibold text-[#0F2F4E]">Gross Method</h4>
+              <h4 className="font-semibold text-[#0F2F4E]">Single Employee</h4>
               <p className="text-sm text-gray-600">
-                Start with gross salary, calculate net pay
+                Calculate for one employee with detailed breakdown
               </p>
             </div>
           </button>
           
           <button
-            onClick={() => setCalculationMethod('net')}
+            onClick={() => setPayrollMode('batch')}
             className={`p-4 rounded-lg border-2 transition-all ${
-              calculationMethod === 'net'
+              payrollMode === 'batch'
                 ? 'border-[#1ED760] bg-[#1ED760]/10'
                 : 'border-gray-200 hover:border-[#1ED760]/50'
             }`}
           >
             <div className="text-left">
-              <h4 className="font-semibold text-[#0F2F4E]">Net Method (Grossing Up)</h4>
+              <h4 className="font-semibold text-[#0F2F4E]">Batch Payroll (Up to 20)</h4>
               <p className="text-sm text-gray-600">
-                Start with desired net, find required gross
+                Process multiple employees with summary reports
               </p>
             </div>
           </button>
         </div>
+
+        {payrollMode === 'batch' && (
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <strong>Batch Mode:</strong> Add employees one by one, then calculate the entire payroll. 
+              Generate comprehensive NSSA, PAYE, and payroll summary reports.
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Input Form */}
+      {/* Method Selection - Only show for single mode */}
+      {payrollMode === 'single' && (
+        <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
+          <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Calculation Method</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={() => setCalculationMethod('gross')}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                calculationMethod === 'gross'
+                  ? 'border-[#1ED760] bg-[#1ED760]/10'
+                  : 'border-gray-200 hover:border-[#1ED760]/50'
+              }`}
+            >
+              <div className="text-left">
+                <h4 className="font-semibold text-[#0F2F4E]">Gross Method</h4>
+                <p className="text-sm text-gray-600">
+                  Start with gross salary, calculate net pay
+                </p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setCalculationMethod('net')}
+              className={`p-4 rounded-lg border-2 transition-all ${
+                calculationMethod === 'net'
+                  ? 'border-[#1ED760] bg-[#1ED760]/10'
+                  : 'border-gray-200 hover:border-[#1ED760]/50'
+              }`}
+            >
+              <div className="text-left">
+                <h4 className="font-semibold text-[#0F2F4E]">Net Method (Grossing Up)</h4>
+                <p className="text-sm text-gray-600">
+                  Start with desired net, find required gross
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Input Form */}
       <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
         <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
-          {calculationMethod === 'gross' ? 'Gross Salary Input' : 'Net Salary Input'}
+          {payrollMode === 'batch' ? 'Add Employee to Batch' : 
+           (calculationMethod === 'gross' ? 'Gross Salary Input' : 'Net Salary Input')}
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Salary Input */}
-          <div>
-            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
-              {calculationMethod === 'gross' ? 'Monthly Gross Salary (USD)' : 'Desired Monthly Net Salary (USD)'}
-            </label>
-            <input
-              type="number"
-              value={calculationMethod === 'gross' ? formData.grossSalary : formData.netSalary}
-              onChange={(e) => handleInputChange(
-                calculationMethod === 'gross' ? 'grossSalary' : 'netSalary', 
-                e.target.value
-              )}
-              placeholder="0.00"
-              className="w-full p-2 rounded-lg border border-gray-300 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760]/20 outline-none"
-            />
-          </div>
-          
-          {/* Employee Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Basic Salary and Employee Details */}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
-                Employee Name (Optional)
+                {payrollMode === 'batch' || calculationMethod === 'gross' ? 
+                 'Monthly Basic Salary (USD)' : 'Desired Monthly Net Salary (USD)'}
+              </label>
+              <input
+                type="number"
+                value={payrollMode === 'batch' || calculationMethod === 'gross' ? formData.grossSalary : formData.netSalary}
+                onChange={(e) => handleInputChange(
+                  payrollMode === 'batch' || calculationMethod === 'gross' ? 'grossSalary' : 'netSalary', 
+                  e.target.value
+                )}
+                placeholder="0.00"
+                className="w-full p-3 rounded-lg border border-gray-300 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760]/20 outline-none"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+                Employee Name {payrollMode === 'batch' ? '(Required)' : '(Optional)'}
               </label>
               <input
                 type="text"
                 value={formData.employeeName}
                 onChange={(e) => handleInputChange('employeeName', e.target.value)}
                 placeholder="John Doe"
-                className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
+                className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
               />
             </div>
             
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-[#0F2F4E] mb-1">
-                  Employee #
+                  Employee Number
                 </label>
                 <input
                   type="text"
@@ -611,18 +1238,309 @@ const SimplePAYECalculator = () => {
               />
             </div>
           </div>
+          
+          {/* Allowances Section */}
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium text-[#0F2F4E] mb-3">Allowances & Benefits (USD)</h4>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Living Allowance
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.livingAllowance}
+                    onChange={(e) => handleInputChange('livingAllowance', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Medical Allowance
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.medicalAllowance}
+                    onChange={(e) => handleInputChange('medicalAllowance', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Transport Allowance
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.transportAllowance}
+                    onChange={(e) => handleInputChange('transportAllowance', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Housing Allowance
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.housingAllowance}
+                    onChange={(e) => handleInputChange('housingAllowance', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Commission
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.commission}
+                    onChange={(e) => handleInputChange('commission', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Bonus
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.bonus}
+                    onChange={(e) => handleInputChange('bonus', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+                
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Overtime Pay
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.overtime}
+                    onChange={(e) => handleInputChange('overtime', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800">
+                <strong>Note:</strong> All allowances are added to basic salary for PAYE and NSSA calculations
+              </div>
+            </div>
+          </div>
         </div>
         
-        <button
-          onClick={handleCalculate}
-          className="mt-6 w-full py-3 bg-gradient-to-r from-[#1ED760] to-[#1ED760]/90 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
-        >
-          Calculate {calculationMethod === 'gross' ? 'Net Pay' : 'Required Gross'}
-        </button>
+        {/* Action Buttons */}
+        <div className="mt-6 flex gap-3">
+          {payrollMode === 'batch' ? (
+            <>
+              <button
+                onClick={addEmployeeToBatch}
+                className="flex-1 py-3 bg-gradient-to-r from-[#1ED760] to-[#1ED760]/90 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
+              >
+                Add Employee to Batch ({employees.length}/20)
+              </button>
+              
+              {employees.length > 0 && (
+                <button
+                  onClick={calculateBatchPayroll}
+                  className="px-6 py-3 bg-gradient-to-r from-[#0F2F4E] to-[#0F2F4E]/90 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
+                >
+                  Calculate Payroll
+                </button>
+              )}
+            </>
+          ) : (
+            <button
+              onClick={handleCalculate}
+              className="w-full py-3 bg-gradient-to-r from-[#1ED760] to-[#1ED760]/90 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200"
+            >
+              Calculate {calculationMethod === 'gross' ? 'Net Pay' : 'Required Gross'}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Results */}
-      {results && (
+      {/* Batch Employee List */}
+      {payrollMode === 'batch' && employees.length > 0 && (
+        <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-[#0F2F4E]">
+              Employees in Batch ({employees.length}/20)
+            </h3>
+            <button
+              onClick={() => setEmployees([])}
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+            >
+              Clear All
+            </button>
+          </div>
+          
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {employees.map((emp, index) => (
+              <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-4">
+                    <span className="font-medium text-[#0F2F4E]">{emp.employeeName}</span>
+                    <span className="text-sm text-gray-600">{emp.employeeNumber}</span>
+                    <span className="text-sm text-gray-600">{emp.department}</span>
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Basic: {formatCurrency(emp.basicSalary)} | 
+                    Total Gross: {formatCurrency(calculateTotalGross(emp.basicSalary, emp.allowances))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeEmployee(emp.id)}
+                  className="px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition text-sm"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Batch Results */}
+      {payrollMode === 'batch' && batchResults.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          {/* Batch Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Total Employees</h4>
+              <p className="text-2xl font-bold">{batchResults.length}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-lg text-[#0F2F4E]">
+              <h4 className="text-sm opacity-90">Total Gross</h4>
+              <p className="text-2xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.grossSalary, 0))}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Total Net</h4>
+              <p className="text-2xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.netSalary, 0))}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-gray-600 to-gray-700 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Employer Cost</h4>
+              <p className="text-2xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.totalCostToEmployer, 0))}
+              </p>
+            </div>
+          </div>
+
+          {/* Batch Detailed Table */}
+          <div className="bg-white rounded-xl p-6 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-[#0F2F4E]">Payroll Breakdown</h3>
+              <div className="flex gap-3">
+                <button
+                  onClick={generatePayrollReports}
+                  className="px-4 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90 transition flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h10a4 4 0 014 4v14a4 4 0 01-4 4z" />
+                  </svg>
+                  Download Report
+                </button>
+                
+                <button
+                  onClick={generateBatchPayslips}
+                  disabled={isGeneratingPayslips}
+                  className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+                    isGeneratingPayslips 
+                      ? 'bg-gray-400 cursor-not-allowed' 
+                      : 'bg-[#0F2F4E] hover:bg-[#0F2F4E]/90'
+                  } text-white`}
+                >
+                  {isGeneratingPayslips ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      Generating... {payslipProgress}%
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Download All Payslips ({batchResults.length})
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#0F2F4E]/5">
+                  <tr>
+                    <th className="p-3 text-left">Employee</th>
+                    <th className="p-3 text-left">Basic</th>
+                    <th className="p-3 text-left">Allowances</th>
+                    <th className="p-3 text-left">Gross</th>
+                    <th className="p-3 text-left">NSSA</th>
+                    <th className="p-3 text-left">PAYE</th>
+                    <th className="p-3 text-left">Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batchResults.map((emp, index) => (
+                    <tr key={emp.id} className="border-t border-gray-200">
+                      <td className="p-3">
+                        <div>
+                          <div className="font-medium">{emp.employeeName}</div>
+                          <div className="text-xs text-gray-500">{emp.employeeNumber}</div>
+                        </div>
+                      </td>
+                      <td className="p-3">{formatCurrency(emp.calculation.basicSalary)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.totalAllowances)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.grossSalary)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.nssaEmployee)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.paye)}</td>
+                      <td className="p-3 font-medium text-[#1ED760]">{formatCurrency(emp.calculation.netSalary)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Batch Payslips:</strong> Click "Download All Payslips" to generate individual PDF payslips for all employees 
+                and download them as a single ZIP file. Each payslip includes detailed earnings, allowances, and deductions breakdown.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Single Employee Results */}
+      {payrollMode === 'single' && results && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -631,70 +1549,139 @@ const SimplePAYECalculator = () => {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Basic Salary</h4>
+              <p className="text-2xl font-bold">{formatCurrency(results.basicSalary)}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-lg text-[#0F2F4E]">
+              <h4 className="text-sm opacity-90">Total Allowances</h4>
+              <p className="text-2xl font-bold">{formatCurrency(results.totalAllowances)}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-lg text-white">
               <h4 className="text-sm opacity-90">Gross Salary</h4>
               <p className="text-2xl font-bold">{formatCurrency(results.grossSalary)}</p>
             </div>
             
-            <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-lg text-[#0F2F4E]">
-              <h4 className="text-sm opacity-90">Total Deductions</h4>
-              <p className="text-2xl font-bold">
-                {formatCurrency(results.nssaEmployee + results.totalTax)}
-              </p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-lg text-white">
+            <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-lg text-white">
               <h4 className="text-sm opacity-90">Net Salary</h4>
               <p className="text-2xl font-bold">{formatCurrency(results.netSalary)}</p>
             </div>
-            
-            <div className="bg-gradient-to-br from-gray-600 to-gray-700 p-4 rounded-lg text-white">
-              <h4 className="text-sm opacity-90">Employer Cost</h4>
-              <p className="text-2xl font-bold">{formatCurrency(results.totalCostToEmployer)}</p>
+          </div>
+
+          {/* Enhanced Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Earnings Breakdown */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Earnings Breakdown</h3>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Basic Salary:</span>
+                  <span className="font-medium">{formatCurrency(results.basicSalary)}</span>
+                </div>
+                
+                {results.allowances.living > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Living Allowance:</span>
+                    <span>{formatCurrency(results.allowances.living)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.medical > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Medical Allowance:</span>
+                    <span>{formatCurrency(results.allowances.medical)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.transport > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Transport Allowance:</span>
+                    <span>{formatCurrency(results.allowances.transport)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.housing > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Housing Allowance:</span>
+                    <span>{formatCurrency(results.allowances.housing)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.commission > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Commission:</span>
+                    <span>{formatCurrency(results.allowances.commission)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.bonus > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Bonus:</span>
+                    <span>{formatCurrency(results.allowances.bonus)}</span>
+                  </div>
+                )}
+                
+                {results.allowances.overtime > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Overtime:</span>
+                    <span>{formatCurrency(results.allowances.overtime)}</span>
+                  </div>
+                )}
+                
+                <div className="border-t pt-3 flex justify-between font-semibold">
+                  <span>Total Gross Salary:</span>
+                  <span>{formatCurrency(results.grossSalary)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Deductions Breakdown */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Deductions Breakdown</h3>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span>NSSA Employee (4.5%):</span>
+                  <span className="font-medium">{formatCurrency(results.nssaEmployee)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>PAYE (Non-FDS):</span>
+                  <span className="font-medium">{formatCurrency(results.paye)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>AIDS Levy (3%):</span>
+                  <span className="font-medium">{formatCurrency(results.aidsLevy)}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between font-semibold">
+                  <span>Total Deductions:</span>
+                  <span>{formatCurrency(results.nssaEmployee + results.totalTax)}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between font-bold text-[#1ED760]">
+                  <span>Net Salary:</span>
+                  <span>{formatCurrency(results.netSalary)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Detailed Breakdown */}
+          {/* Employer Costs */}
           <div className="bg-white rounded-xl p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Detailed Breakdown</h3>
-            
+            <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Employer Costs</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Employee Deductions</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>NSSA Employee (4.5%):</span>
-                    <span className="font-medium">{formatCurrency(results.nssaEmployee)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>PAYE (Non-FDS):</span>
-                    <span className="font-medium">{formatCurrency(results.paye)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>AIDS Levy (3%):</span>
-                    <span className="font-medium">{formatCurrency(results.aidsLevy)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 font-semibold">
-                    <span>Total Deductions:</span>
-                    <span>{formatCurrency(results.nssaEmployee + results.totalTax)}</span>
-                  </div>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Employee Gross Salary:</span>
+                  <span className="font-medium">{formatCurrency(results.grossSalary)}</span>
                 </div>
-              </div>
-              
-              <div>
-                <h4 className="font-medium text-gray-700 mb-3">Employer Costs</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Employee Gross Salary:</span>
-                    <span className="font-medium">{formatCurrency(results.grossSalary)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>NSSA Employer (4.5%):</span>
-                    <span className="font-medium">{formatCurrency(results.nssaEmployer)}</span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2 font-semibold">
-                    <span>Total Employer Cost:</span>
-                    <span>{formatCurrency(results.totalCostToEmployer)}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span>NSSA Employer (4.5%):</span>
+                  <span className="font-medium">{formatCurrency(results.nssaEmployer)}</span>
+                </div>
+                <div className="border-t pt-2 flex justify-between font-bold text-[#0F2F4E]">
+                  <span>Total Employer Cost:</span>
+                  <span>{formatCurrency(results.totalCostToEmployer)}</span>
                 </div>
               </div>
             </div>
@@ -811,24 +1798,62 @@ const SimplePAYECalculator = () => {
         </div>
       </div>
 
-      {/* Advanced PAYE Calculator Link */}
+      {/* Enhanced Features Section */}
       <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 rounded-xl p-6 shadow-lg mt-6 border border-[#0F2F4E]/20">
-        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
-          Need More Advanced Features?
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
+          🚀 Enhanced Features
         </h3>
-        <p className="text-sm text-[#0F2F4E]/80 mb-4">
-          For comprehensive PAYE calculations with benefits, multi-period projections, and business planning features, try our full PAYE calculator.
-        </p>
-        <Link 
-          href="/paye-calculator"
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#0F2F4E] text-white rounded-lg 
-                     hover:bg-[#0F2F4E]/90 transition-all duration-300 text-sm font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          Advanced PAYE Calculator
-        </Link>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">✅ Realistic PAYE Computations</h4>
+            <p className="text-sm text-gray-600">
+              Accurate Non-FDS method with proper NSSA capping at $31.50
+            </p>
+          </div>
+          
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">💰 Comprehensive Allowances</h4>
+            <p className="text-sm text-gray-600">
+              Living, Medical, Transport, Housing, Commission, Bonus & Overtime
+            </p>
+          </div>
+          
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">👥 Batch Payroll Processing</h4>
+            <p className="text-sm text-gray-600">
+              Process up to 20 employees with comprehensive summary reports
+            </p>
+          </div>
+          
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">📊 NSSA & PAYE Reports</h4>
+            <p className="text-sm text-gray-600">
+              Detailed PDF reports with employee breakdown and totals
+            </p>
+          </div>
+          
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">📄 Enhanced Payslips</h4>
+            <p className="text-sm text-gray-600">
+              Professional payslips with allowances breakdown + Batch ZIP download
+            </p>
+          </div>
+          
+          <div className="bg-white p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-2">⚡ Real-time Calculations</h4>
+            <p className="text-sm text-gray-600">
+              Instant calculations with detailed breakdowns and employer costs
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-[#1ED760]/10 rounded border border-[#1ED760]/30">
+          <p className="text-sm text-[#1ED760] font-medium">
+            <strong>Perfect for SMEs:</strong> This enhanced calculator provides all the functionality needed for realistic payroll processing in Zimbabwe, 
+            including proper tax calculations, allowances management, comprehensive reporting, and batch payslip downloads (ZIP format).
+          </p>
+        </div>
       </div>
     </div>
   );
