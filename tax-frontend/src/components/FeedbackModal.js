@@ -82,7 +82,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
           </div>
 
           {/* Privacy Notice */}
-          <div className="mb-4 p-3 bg-[#0F2F4E]/5 border border-[#0F2F4E]/20 rounded-lg text-[#0F2F4E] text-sm">
+          <div className="mb-3 p-3 bg-[#0F2F4E]/5 border border-[#0F2F4E]/20 rounded-lg text-[#0F2F4E] text-xs">
             <svg className="w-4 h-4 inline mr-2 text-[#1ED760]" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
@@ -117,7 +117,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Rating */}
             <div>
-              <label htmlFor="rating" className="block text-sm font-medium text-[#0F2F4E] mb-2">
+              <label htmlFor="rating" className="block text-xs font-medium text-[#0F2F4E] mb-2">
                 How would you rate your experience?
               </label>
               <select
@@ -127,7 +127,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-white border border-[#EEEEEE] rounded-lg text-[#0F2F4E] 
                            placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
+                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm text-xs"
               >
                 <option value="5">⭐⭐⭐⭐⭐ - Excellent</option>
                 <option value="4">⭐⭐⭐⭐ - Good</option>
@@ -139,7 +139,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 
             {/* Subject */}
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-[#0F2F4E] mb-2">
+              <label htmlFor="subject" className="block text-xs font-medium text-[#0F2F4E] mb-2">
                 Category *
               </label>
               <select
@@ -150,7 +150,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                 required
                 className="w-full px-3 py-2 bg-white border border-[#EEEEEE] rounded-lg text-[#0F2F4E] 
                            placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm"
+                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm text-xs"
               >
                 <option value="">What type of feedback?</option>
                 <option value="bug">Bug Report</option>
@@ -166,7 +166,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
 
             {/* Message */}
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-[#0F2F4E] mb-2">
+              <label htmlFor="message" className="block text-xs font-medium text-[#0F2F4E] mb-2">
                 Your Feedback *
               </label>
               <textarea
@@ -178,7 +178,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
                 rows="4"
                 className="w-full px-3 py-2 bg-white border border-[#EEEEEE] rounded-lg text-[#0F2F4E] 
                            placeholder-[#0F2F4E]/40 focus:border-[#1ED760] focus:ring-2 focus:ring-[#1ED760] 
-                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm resize-none"
+                           focus:ring-opacity-50 transition-all duration-200 outline-none shadow-sm resize-none text-xs"
                 placeholder="Please share your feedback, suggestions, or issues..."
                 minLength="10"
               />
@@ -186,11 +186,11 @@ const FeedbackModal = ({ isOpen, onClose }) => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-1">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-3 border border-[#EEEEEE] text-[#0F2F4E] rounded-lg font-medium 
+                className="flex-1 px-3 py-2 border border-[#EEEEEE] text-[#0F2F4E] rounded-lg font-medium 
                            hover:bg-[#0F2F4E]/5 transition-colors disabled:opacity-50"
                 disabled={isSubmitting}
               >
@@ -199,7 +199,7 @@ const FeedbackModal = ({ isOpen, onClose }) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-3 bg-[#1ED760] text-white rounded-lg font-semibold 
+                className="flex-1 px-3 py-2 bg-[#1ED760] text-white rounded-lg font-semibold 
                            hover:bg-[#1ED760]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
                            shadow-lg shadow-[#1ED760]/25"
               >
