@@ -1107,11 +1107,30 @@ const SimplePAYECalculator = () => {
         </div>
 
         {payrollMode === 'batch' && (
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
-              <strong>Batch Mode:</strong> Add employees one by one, then calculate the entire payroll. 
-              Generate comprehensive NSSA, PAYE, and payroll summary reports.
-            </p>
+          <div className="relative overflow-hidden rounded-xl">
+            {/* Animated background */}
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-10"></div>
+            
+            {/* Content */}
+            <div className="relative bg-white/90 backdrop-blur-sm border-2 border-indigo-200 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-indigo-800 mb-1">Batch Payroll Mode Active</h4>
+                  <p className="text-sm text-indigo-700">
+                    Add employees one by one, then calculate the entire payroll. Generate comprehensive NSSA, PAYE, and payroll summary reports.
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <div className="text-xs text-indigo-600 font-medium">Up to 20 employees</div>
+                  <div className="text-xs text-indigo-500">Professional reports included</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1337,8 +1356,20 @@ const SimplePAYECalculator = () => {
                 </div>
               </div>
               
-              <div className="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800">
-                <strong>Note:</strong> All allowances are added to basic salary for PAYE and NSSA calculations
+              <div className="mt-3 relative overflow-hidden rounded-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-50 to-orange-50"></div>
+                <div className="relative p-3 border border-amber-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-amber-800 font-medium">
+                      All allowances are added to basic salary for PAYE and NSSA calculations
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1529,11 +1560,55 @@ const SimplePAYECalculator = () => {
               </table>
             </div>
             
-            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Batch Payslips:</strong> Click "Download All Payslips" to generate individual PDF payslips for all employees 
-                and download them as a single ZIP file. Each payslip includes detailed earnings, allowances, and deductions breakdown.
-              </p>
+            <div className="mt-4 relative overflow-hidden rounded-lg">
+              {/* Background pattern */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+              <div className="absolute inset-0 opacity-5">
+                <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                  </pattern>
+                  <rect width="100" height="100" fill="url(#grid)" />
+                </svg>
+              </div>
+              
+              {/* Content */}
+              <div className="relative p-4 border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h5 className="font-semibold text-blue-800 mb-1">Batch Payslips Download</h5>
+                    <p className="text-sm text-blue-700 leading-relaxed">
+                      Click "Download All Payslips" to generate individual PDF payslips for all employees 
+                      and download them as a single ZIP file. Each payslip includes detailed earnings, allowances, and deductions breakdown.
+                    </p>
+                    <div className="mt-2 flex items-center gap-4 text-xs text-blue-600">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Individual PDFs
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        ZIP Format
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Progress Tracking
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -1848,11 +1923,68 @@ const SimplePAYECalculator = () => {
           </div>
         </div>
         
-        <div className="mt-4 p-3 bg-[#1ED760]/10 rounded border border-[#1ED760]/30">
-          <p className="text-sm text-[#1ED760] font-medium">
-            <strong>Perfect for SMEs:</strong> This enhanced calculator provides all the functionality needed for realistic payroll processing in Zimbabwe, 
-            including proper tax calculations, allowances management, comprehensive reporting, and batch payslip downloads (ZIP format).
-          </p>
+        <div className="mt-6 rounded-xl relative overflow-hidden">
+          {/* Background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-10 rounded-xl"></div>
+          
+          {/* Main content */}
+          <div className="relative bg-white/80 backdrop-blur-sm border-2 border-emerald-200 rounded-xl p-6 shadow-lg">
+            {/* Header with icon */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-700 bg-clip-text text-transparent">
+                  Perfect for SMEs
+                </h4>
+                <p className="text-sm text-gray-600">Complete payroll solution for Zimbabwe businesses</p>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100">
+              <p className="text-gray-700 leading-relaxed">
+                <span className="font-semibold text-emerald-700">This enhanced calculator provides all the functionality needed</span> for realistic payroll processing in Zimbabwe, 
+                including proper tax calculations, allowances management, comprehensive reporting, and batch payslip downloads (ZIP format).
+              </p>
+              
+              {/* Key benefits */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                  <span className="text-gray-700">Realistic PAYE & NSSA calculations</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-teal-500 rounded-full"></div>
+                  <span className="text-gray-700">Batch processing (20 employees)</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                  <span className="text-gray-700">Professional reports & payslips</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Call to action */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Ready to use • No setup required</span>
+              </div>
+              
+              <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                <span>Zimbabwe Tax Compliant</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
