@@ -29,7 +29,15 @@ const NSSA_CONFIG = {
   annualCapUSD: 8400 // $700 × 12 months
 };
 
-const AIDS_LEVY_RATE = 0.03; // 3%
+// Additional Zimbabwe Tax Configurations
+const TAX_CONFIG = {
+  aidsLevyRate: 0.03, // 3% AIDS Levy on PAYE
+  zimdefRate: 0.01, // 1% ZIMDEF (employer contribution)
+  bonusThreshold: 700, // $700 annual tax-free bonus threshold
+  maxAPWCRate: 0.0216 // 2.16% maximum APWC rate
+};
+
+const AIDS_LEVY_RATE = 0.03; // 3% - kept for backward compatibility
 
 const SimplePAYECalculator = () => {
   const [calculationMethod, setCalculationMethod] = useState('gross'); // 'gross' or 'net'
@@ -48,7 +56,9 @@ const SimplePAYECalculator = () => {
     housingAllowance: '',
     commission: '',
     bonus: '',
-    overtime: ''
+    overtime: '',
+    // Employer rates
+    apwcRate: '1.0' // Default APWC rate (1.0%)
   });
   
   const [employees, setEmployees] = useState([]);
@@ -93,6 +103,28 @@ const SimplePAYECalculator = () => {
     };
   };
 
+  // Calculate taxable bonus (annual threshold of $700)
+  const calculateTaxableBonus = (monthlyBonus, employeeTopTaxRate = 0.40) => {
+    const annualBonus = monthlyBonus * 12;
+    if (annualBonus <= TAX_CONFIG.bonusThreshold) {
+      return {
+        taxFreeBonus: monthlyBonus,
+        taxableBonus: 0,
+        bonusTax: 0
+      };
+    }
+    
+    const annualTaxableBonus = annualBonus - TAX_CONFIG.bonusThreshold;
+    const monthlyTaxableBonus = annualTaxableBonus / 12;
+    const monthlyBonusTax = monthlyTaxableBonus * employeeTopTaxRate;
+    
+    return {
+      taxFreeBonus: TAX_CONFIG.bonusThreshold / 12, // Monthly tax-free portion
+      taxableBonus: monthlyTaxableBonus,
+      bonusTax: monthlyBonusTax
+    };
+  };
+
   // Calculate total gross including allowances
   const calculateTotalGross = (basicSalary, allowances = {}) => {
     const {
@@ -116,14 +148,36 @@ const SimplePAYECalculator = () => {
   };
 
   // Enhanced gross method calculation with allowances breakdown
-  const calculateFromGross = (basicSalary, allowances = {}) => {
+  const calculateFromGross = (basicSalary, allowances = {}, apwcRate = 1.0) => {
     const totalGross = calculateTotalGross(basicSalary, allowances);
+    
+    // Calculate bonus tax separately
+    const bonusAmount = parseFloat(allowances.bonus || 0);
+    const bonusCalc = calculateTaxableBonus(bonusAmount);
+    
+    // NSSA calculations
     const nssa = calculateNSSA(totalGross);
-    const taxableGross = totalGross - nssa.employee;
-    const paye = calculatePAYE(taxableGross);
-    const aidsLevy = paye * AIDS_LEVY_RATE;
-    const totalTax = paye + aidsLevy;
+    
+    // PAYE calculation on taxable income (excluding tax-free bonus portion)
+    const taxableGrossForPAYE = totalGross - nssa.employee - bonusCalc.taxFreeBonus;
+    const paye = calculatePAYE(taxableGrossForPAYE);
+    
+    // AIDS Levy (3% of PAYE)
+    const aidsLevy = paye * TAX_CONFIG.aidsLevyRate;
+    
+    // Total employee tax (PAYE + AIDS Levy + Bonus Tax)
+    const totalTax = paye + aidsLevy + bonusCalc.bonusTax;
+    
+    // Net salary calculation
     const netSalary = totalGross - nssa.employee - totalTax;
+    
+    // Employer contributions
+    const zimdef = totalGross * TAX_CONFIG.zimdefRate; // 1% ZIMDEF
+    const apwc = totalGross * (parseFloat(apwcRate) / 100); // APWC based on rate
+    
+    // Total employer cost
+    const totalEmployerContributions = nssa.employer + zimdef + apwc;
+    const totalCostToEmployer = totalGross + totalEmployerContributions;
     
     return {
       basicSalary: parseFloat(basicSalary),
@@ -138,26 +192,40 @@ const SimplePAYECalculator = () => {
       },
       totalAllowances: totalGross - parseFloat(basicSalary),
       grossSalary: totalGross,
+      
+      // Employee deductions
       nssaEmployee: nssa.employee,
-      nssaEmployer: nssa.employer,
-      taxableGross,
       paye,
       aidsLevy,
+      bonusCalc,
       totalTax,
       netSalary,
-      totalCostToEmployer: totalGross + nssa.employer
+      
+      // Employer contributions
+      nssaEmployer: nssa.employer,
+      zimdef,
+      apwc,
+      apwcRate: parseFloat(apwcRate),
+      totalEmployerContributions,
+      totalCostToEmployer,
+      
+      // Tax calculation details
+      taxableGrossForPAYE,
+      taxFreeBonus: bonusCalc.taxFreeBonus,
+      taxableBonus: bonusCalc.taxableBonus,
+      bonusTax: bonusCalc.bonusTax
     };
   };
 
   // Net Method: Start with desired net, gross up to find required gross
-  const calculateFromNet = (targetNet) => {
+  const calculateFromNet = (targetNet, apwcRate = 1.0) => {
     let grossSalary = targetNet;
     let iterations = 0;
     const maxIterations = 50;
     
     // Iterative approach to find gross salary that gives target net
     while (iterations < maxIterations) {
-      const result = calculateFromGross(grossSalary, {});
+      const result = calculateFromGross(grossSalary, {}, apwcRate);
       const netDifference = result.netSalary - targetNet;
       
       if (Math.abs(netDifference) < 0.01) {
@@ -174,7 +242,7 @@ const SimplePAYECalculator = () => {
       iterations++;
     }
     
-    return calculateFromGross(grossSalary, {});
+    return calculateFromGross(grossSalary, {}, apwcRate);
   };
 
   // Add employee to batch processing
@@ -210,13 +278,14 @@ const SimplePAYECalculator = () => {
       ...formData,
       basicSalary,
       allowances,
-      calculation: calculateFromGross(basicSalary, allowances)
+      apwcRate: parseFloat(formData.apwcRate),
+      calculation: calculateFromGross(basicSalary, allowances, parseFloat(formData.apwcRate))
     };
 
     setEmployees(prev => [...prev, employeeData]);
     
-    // Reset form for next employee
-    setFormData({
+    // Reset form for next employee (keep APWC rate)
+    setFormData(prev => ({
       grossSalary: '',
       netSalary: '',
       employeeName: '',
@@ -229,8 +298,9 @@ const SimplePAYECalculator = () => {
       housingAllowance: '',
       commission: '',
       bonus: '',
-      overtime: ''
-    });
+      overtime: '',
+      apwcRate: prev.apwcRate // Keep the same APWC rate for consistency
+    }));
   };
 
   // Remove employee from batch
@@ -247,7 +317,7 @@ const SimplePAYECalculator = () => {
 
     const batchCalcs = employees.map(emp => ({
       ...emp,
-      calculation: calculateFromGross(emp.basicSalary, emp.allowances)
+      calculation: calculateFromGross(emp.basicSalary, emp.allowances, emp.apwcRate || 1.0)
     }));
 
     setBatchResults(batchCalcs);
@@ -279,8 +349,8 @@ const SimplePAYECalculator = () => {
     };
 
     const result = calculationMethod === 'gross' 
-      ? calculateFromGross(inputValue, allowances)
-      : calculateFromNet(inputValue);
+      ? calculateFromGross(inputValue, allowances, parseFloat(formData.apwcRate))
+      : calculateFromNet(inputValue, parseFloat(formData.apwcRate));
     
     setResults(result);
   };
@@ -669,7 +739,9 @@ const SimplePAYECalculator = () => {
   };
 
   const formatCurrency = (amount) => {
-    return `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // Handle undefined, null, or non-numeric values
+    const numAmount = parseFloat(amount) || 0;
+    return `$${numAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
   const generatePayslipPDF = () => {
@@ -787,7 +859,7 @@ const SimplePAYECalculator = () => {
       yPosition += 5;
       
       doc.setFont('helvetica', 'bold');
-      doc.text(`Taxable Income: ${formatCurrency(results.taxableGross)}`, 20, yPosition);
+      doc.text(`Taxable Income: ${formatCurrency(results.taxableGrossForPAYE || results.taxableGross || 0)}`, 20, yPosition);
       doc.text(`Total Tax: ${formatCurrency(results.totalTax)}`, pageWidth / 2, yPosition);
       yPosition += 15;
       
@@ -835,7 +907,7 @@ const SimplePAYECalculator = () => {
       doc.text(formatCurrency(results.grossSalary), 70, yPosition + 20);
       
       doc.text('Total Deductions:', 110, yPosition + 20);
-      doc.text(formatCurrency(results.nssaEmployee + results.totalTax), 160, yPosition + 20);
+      doc.text(formatCurrency((results.nssaEmployee || 0) + (results.totalTax || 0)), 160, yPosition + 20);
       
       // Row 2 - Net Pay (highlighted)
       doc.setFont('helvetica', 'bold');
@@ -908,56 +980,56 @@ const SimplePAYECalculator = () => {
                   <span>{formatCurrency(results.basicSalary)}</span>
                 </div>
                 
-                {results.allowances.living > 0 && (
+                {results.allowances && results.allowances.living > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Living Allow.:</span>
                     <span>{formatCurrency(results.allowances.living)}</span>
                   </div>
                 )}
                 
-                {results.allowances.medical > 0 && (
+                {results.allowances && results.allowances.medical > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Medical Allow.:</span>
                     <span>{formatCurrency(results.allowances.medical)}</span>
                   </div>
                 )}
                 
-                {results.allowances.transport > 0 && (
+                {results.allowances && results.allowances.transport > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Transport Allow.:</span>
                     <span>{formatCurrency(results.allowances.transport)}</span>
                   </div>
                 )}
                 
-                {results.allowances.housing > 0 && (
+                {results.allowances && results.allowances.housing > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Housing Allow.:</span>
                     <span>{formatCurrency(results.allowances.housing)}</span>
                   </div>
                 )}
                 
-                {results.allowances.commission > 0 && (
+                {results.allowances && results.allowances.commission > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Commission:</span>
                     <span>{formatCurrency(results.allowances.commission)}</span>
                   </div>
                 )}
                 
-                {results.allowances.bonus > 0 && (
+                {results.allowances && results.allowances.bonus > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Bonus:</span>
                     <span>{formatCurrency(results.allowances.bonus)}</span>
                   </div>
                 )}
                 
-                {results.allowances.overtime > 0 && (
+                {results.allowances && results.allowances.overtime > 0 && (
                   <div className="flex justify-between text-xs text-gray-600">
                     <span>Overtime:</span>
                     <span>{formatCurrency(results.allowances.overtime)}</span>
                   </div>
                 )}
                 
-                {results.totalAllowances > 0 && (
+                {results.totalAllowances && results.totalAllowances > 0 && (
                   <div className="flex justify-between text-xs border-t pt-1">
                     <span>Total Allowances:</span>
                     <span>{formatCurrency(results.totalAllowances)}</span>
@@ -989,7 +1061,7 @@ const SimplePAYECalculator = () => {
                 </div>
                 <div className="flex justify-between font-medium border-t pt-1">
                   <span>Total Deductions:</span>
-                  <span>({formatCurrency(results.nssaEmployee + results.totalTax)})</span>
+                  <span>({formatCurrency((results.nssaEmployee || 0) + (results.totalTax || 0))})</span>
                 </div>
               </div>
             </div>
@@ -1016,7 +1088,7 @@ const SimplePAYECalculator = () => {
             <div>
               <p>Gross Salary: {formatCurrency(results.grossSalary)}</p>
               <p>Less: NSSA: ({formatCurrency(results.nssaEmployee)})</p>
-              <p className="font-medium">Taxable Income: {formatCurrency(results.taxableGross)}</p>
+              <p className="font-medium">Taxable Income: {formatCurrency(results.taxableGrossForPAYE || results.taxableGross || 0)}</p>
             </div>
             <div>
               <p>PAYE: {formatCurrency(results.paye)}</p>
@@ -1366,7 +1438,65 @@ const SimplePAYECalculator = () => {
                       </svg>
                     </div>
                     <p className="text-xs text-amber-800 font-medium">
-                      All allowances are added to basic salary for PAYE and NSSA calculations
+                      Bonus threshold: $700 annual tax-free. Amount above $700 taxed at employee's top rate.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Employer Contributions Section */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-[#0F2F4E] mb-3">Employer Contributions</h4>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    APWC Rate (%) - Sector Specific
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.apwcRate}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (value <= TAX_CONFIG.maxAPWCRate * 100) {
+                        handleInputChange('apwcRate', e.target.value);
+                      }
+                    }}
+                    placeholder="1.0"
+                    min="0"
+                    max="2.16"
+                    step="0.01"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                  <p className="text-xs text-gray-600 mt-1">
+                    Accidents Prevention & Workers Compensation (Max: 2.16%)
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                  <div className="flex justify-between">
+                    <span>NSSA Employer:</span>
+                    <span>4.5% (capped)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>ZIMDEF:</span>
+                    <span>1.0% (fixed)</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-3 relative overflow-hidden rounded-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50"></div>
+                <div className="relative p-3 border border-blue-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <p className="text-xs text-blue-800 font-medium">
+                      ZIMDEF (1%) and APWC are employer contributions calculated on gross wage bill.
                     </p>
                   </div>
                 </div>
@@ -1455,7 +1585,7 @@ const SimplePAYECalculator = () => {
           className="space-y-6"
         >
           {/* Batch Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
             <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-lg text-white">
               <h4 className="text-sm opacity-90">Total Employees</h4>
               <p className="text-2xl font-bold">{batchResults.length}</p>
@@ -1463,22 +1593,36 @@ const SimplePAYECalculator = () => {
             
             <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-lg text-[#0F2F4E]">
               <h4 className="text-sm opacity-90">Total Gross</h4>
-              <p className="text-2xl font-bold">
-                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.grossSalary, 0))}
+              <p className="text-xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + (emp.calculation.grossSalary || 0), 0))}
               </p>
             </div>
             
             <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-lg text-white">
               <h4 className="text-sm opacity-90">Total Net</h4>
-              <p className="text-2xl font-bold">
-                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.netSalary, 0))}
+              <p className="text-xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + (emp.calculation.netSalary || 0), 0))}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Total PAYE</h4>
+              <p className="text-xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + (emp.calculation.paye || 0), 0))}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Total ZIMDEF</h4>
+              <p className="text-xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + (emp.calculation.zimdef || 0), 0))}
               </p>
             </div>
             
             <div className="bg-gradient-to-br from-gray-600 to-gray-700 p-4 rounded-lg text-white">
               <h4 className="text-sm opacity-90">Employer Cost</h4>
-              <p className="text-2xl font-bold">
-                {formatCurrency(batchResults.reduce((sum, emp) => sum + emp.calculation.totalCostToEmployer, 0))}
+              <p className="text-xl font-bold">
+                {formatCurrency(batchResults.reduce((sum, emp) => sum + (emp.calculation.totalCostToEmployer || 0), 0))}
               </p>
             </div>
           </div>
@@ -1536,6 +1680,8 @@ const SimplePAYECalculator = () => {
                     <th className="p-3 text-left">Gross</th>
                     <th className="p-3 text-left">NSSA</th>
                     <th className="p-3 text-left">PAYE</th>
+                    <th className="p-3 text-left">ZIMDEF</th>
+                    <th className="p-3 text-left">APWC</th>
                     <th className="p-3 text-left">Net</th>
                   </tr>
                 </thead>
@@ -1548,12 +1694,14 @@ const SimplePAYECalculator = () => {
                           <div className="text-xs text-gray-500">{emp.employeeNumber}</div>
                         </div>
                       </td>
-                      <td className="p-3">{formatCurrency(emp.calculation.basicSalary)}</td>
-                      <td className="p-3">{formatCurrency(emp.calculation.totalAllowances)}</td>
-                      <td className="p-3">{formatCurrency(emp.calculation.grossSalary)}</td>
-                      <td className="p-3">{formatCurrency(emp.calculation.nssaEmployee)}</td>
-                      <td className="p-3">{formatCurrency(emp.calculation.paye)}</td>
-                      <td className="p-3 font-medium text-[#1ED760]">{formatCurrency(emp.calculation.netSalary)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.basicSalary || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.totalAllowances || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.grossSalary || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.nssaEmployee || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.paye || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.zimdef || 0)}</td>
+                      <td className="p-3">{formatCurrency(emp.calculation.apwc || 0)}</td>
+                      <td className="p-3 font-medium text-[#1ED760]">{formatCurrency(emp.calculation.netSalary || 0)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1714,7 +1862,7 @@ const SimplePAYECalculator = () => {
 
             {/* Deductions Breakdown */}
             <div className="bg-white rounded-xl p-6 shadow-lg">
-              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Deductions Breakdown</h3>
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Employee Deductions</h3>
               
               <div className="space-y-3">
                 <div className="flex justify-between">
@@ -1729,34 +1877,69 @@ const SimplePAYECalculator = () => {
                   <span>AIDS Levy (3%):</span>
                   <span className="font-medium">{formatCurrency(results.aidsLevy)}</span>
                 </div>
+                {results.bonusTax && results.bonusTax > 0 && (
+                  <div className="flex justify-between">
+                    <span>Bonus Tax (Top Rate):</span>
+                    <span className="font-medium">{formatCurrency(results.bonusTax)}</span>
+                  </div>
+                )}
                 <div className="border-t pt-3 flex justify-between font-semibold">
                   <span>Total Deductions:</span>
-                  <span>{formatCurrency(results.nssaEmployee + results.totalTax)}</span>
+                  <span>{formatCurrency(results.totalTax || 0)}</span>
                 </div>
                 <div className="border-t pt-3 flex justify-between font-bold text-[#1ED760]">
                   <span>Net Salary:</span>
-                  <span>{formatCurrency(results.netSalary)}</span>
+                  <span>{formatCurrency(results.netSalary || 0)}</span>
                 </div>
+                
+                {results.bonusCalc && results.bonusCalc.taxFreeBonus && results.bonusCalc.taxFreeBonus > 0 && (
+                  <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
+                    <h5 className="text-sm font-medium text-green-800 mb-1">Bonus Breakdown</h5>
+                    <div className="text-xs text-green-700 space-y-1">
+                      <div className="flex justify-between">
+                        <span>Tax-free portion:</span>
+                        <span>{formatCurrency(results.bonusCalc.taxFreeBonus)}</span>
+                      </div>
+                      {results.bonusCalc.taxableBonus && results.bonusCalc.taxableBonus > 0 && (
+                        <div className="flex justify-between">
+                          <span>Taxable portion:</span>
+                          <span>{formatCurrency(results.bonusCalc.taxableBonus)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
 
-          {/* Employer Costs */}
-          <div className="bg-white rounded-xl p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Employer Costs</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+            {/* Employer Contributions */}
+            <div className="bg-white rounded-xl p-6 shadow-lg">
+              <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Employer Contributions</h3>
+              
+              <div className="space-y-3">
                 <div className="flex justify-between">
                   <span>Employee Gross Salary:</span>
-                  <span className="font-medium">{formatCurrency(results.grossSalary)}</span>
+                  <span className="font-medium">{formatCurrency(results.grossSalary || 0)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>NSSA Employer (4.5%):</span>
-                  <span className="font-medium">{formatCurrency(results.nssaEmployer)}</span>
+                  <span className="font-medium">{formatCurrency(results.nssaEmployer || 0)}</span>
                 </div>
-                <div className="border-t pt-2 flex justify-between font-bold text-[#0F2F4E]">
+                <div className="flex justify-between">
+                  <span>ZIMDEF (1%):</span>
+                  <span className="font-medium">{formatCurrency(results.zimdef || 0)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>APWC ({results.apwcRate || 0}%):</span>
+                  <span className="font-medium">{formatCurrency(results.apwc || 0)}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between font-semibold">
+                  <span>Total Employer Contributions:</span>
+                  <span>{formatCurrency(results.totalEmployerContributions || 0)}</span>
+                </div>
+                <div className="border-t pt-3 flex justify-between font-bold text-[#0F2F4E]">
                   <span>Total Employer Cost:</span>
-                  <span>{formatCurrency(results.totalCostToEmployer)}</span>
+                  <span>{formatCurrency(results.totalCostToEmployer || 0)}</span>
                 </div>
               </div>
             </div>
@@ -1798,7 +1981,7 @@ const SimplePAYECalculator = () => {
       {/* NSSA Information */}
       <div className="bg-white rounded-xl p-6 shadow-lg mt-6">
         <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
-          NSSA Contribution Rules (2025/2026)
+          Zimbabwe Tax Rules & Contributions (2025/2026)
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
