@@ -33,7 +33,7 @@ const NSSA_CONFIG = {
 const TAX_CONFIG = {
   aidsLevyRate: 0.03, // 3% AIDS Levy on PAYE
   zimdefRate: 0.01, // 1% ZIMDEF (employer contribution)
-  bonusThreshold: 700, // $700 annual tax-free bonus threshold
+  bonusThreshold: 700, // $700 total tax-free bonus threshold
   maxAPWCRate: 0.0216 // 2.16% maximum APWC rate
 };
 
@@ -103,25 +103,27 @@ const SimplePAYECalculator = () => {
     };
   };
 
-  // Calculate taxable bonus (annual threshold of $700)
-  const calculateTaxableBonus = (monthlyBonus, employeeTopTaxRate = 0.40) => {
-    const annualBonus = monthlyBonus * 12;
-    if (annualBonus <= TAX_CONFIG.bonusThreshold) {
+  // Calculate taxable bonus (first $700 total is tax-free)
+  const calculateTaxableBonus = (bonusAmount, employeeTopTaxRate = 0.40) => {
+    const totalBonus = parseFloat(bonusAmount) || 0;
+    
+    if (totalBonus <= TAX_CONFIG.bonusThreshold) {
+      // Entire bonus is tax-free (under $700 threshold)
       return {
-        taxFreeBonus: monthlyBonus,
+        taxFreeBonus: totalBonus,
         taxableBonus: 0,
         bonusTax: 0
       };
     }
     
-    const annualTaxableBonus = annualBonus - TAX_CONFIG.bonusThreshold;
-    const monthlyTaxableBonus = annualTaxableBonus / 12;
-    const monthlyBonusTax = monthlyTaxableBonus * employeeTopTaxRate;
+    // Amount above $700 is taxable at top rate
+    const taxableAmount = totalBonus - TAX_CONFIG.bonusThreshold;
+    const bonusTax = taxableAmount * employeeTopTaxRate;
     
     return {
-      taxFreeBonus: TAX_CONFIG.bonusThreshold / 12, // Monthly tax-free portion
-      taxableBonus: monthlyTaxableBonus,
-      bonusTax: monthlyBonusTax
+      taxFreeBonus: TAX_CONFIG.bonusThreshold, // First $700 is tax-free
+      taxableBonus: taxableAmount,
+      bonusTax: bonusTax
     };
   };
 
@@ -1438,7 +1440,7 @@ const SimplePAYECalculator = () => {
                       </svg>
                     </div>
                     <p className="text-xs text-amber-800 font-medium">
-                      Bonus threshold: $700 annual tax-free. Amount above $700 taxed at employee's top rate.
+                      Bonus threshold: First $700 total is tax-free. Amount above $700 taxed at employee's top rate.
                     </p>
                   </div>
                 </div>
