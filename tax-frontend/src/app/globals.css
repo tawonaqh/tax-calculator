@@ -79,32 +79,4 @@ body {
   }
 }
 
-.tutorial-highlight {
-  box-shadow: 
-    0 0 0 9999px rgba(0, 0, 0, 0.5),
-    0 0 0 4px #1ED760,
-    0 0 20px 4px rgba(30, 215, 96, 0.5);
-  border-radius: 8px;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 
-      0 0 0 9999px rgba(0, 0, 0, 0.5),
-      0 0 0 4px #1ED760,
-      0 0 20px 4px rgba(30, 215, 96, 0.5);
-  }
-  50% {
-    box-shadow: 
-      0 0 0 9999px rgba(0, 0, 0, 0.5),
-      0 0 0 4px #1ED760,
-      0 0 30px 8px rgba(30, 215, 96, 0.8);
-  }
-  100% {
-    box-shadow: 
-      0 0 0 9999px rgba(0, 0, 0, 0.5),
-      0 0 0 4px #1ED760,
-      0 0 20px 4px rgba(30, 215, 96, 0.5);
-  }
-}
+/* Tutorial functionality removed to prevent grey overlay issues */

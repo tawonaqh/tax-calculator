@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 // Import modular components
-import TutorialModal from './TutorialModal';
 import PayrollHistory from './PayrollHistory';
 import CompanyDataForm from './CompanyDataForm';
 import PayrollPeriodManager from './PayrollPeriodManager';
@@ -15,8 +14,8 @@ import BatchProcessor from './BatchProcessor';
 import SingleEmployeeResults from './SingleEmployeeResults';
 import { PDFGenerator } from './PDFGenerator';
 
-// Import constants and data
-import { tutorialSteps, loadSampleDataForDemo } from '../constants/tutorialData';
+// Import sample data function (tutorial removed)
+import { loadSampleDataForDemo } from '../constants/tutorialData';
 
 /**
  * Simple PAYE Calculator - Modularized Version
@@ -96,34 +95,9 @@ const SimplePAYECalculator = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [payrollHistory, setPayrollHistory] = useState([]);
   const [showHistoryView, setShowHistoryView] = useState(false);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [tutorialStep, setTutorialStep] = useState(0);
+  // Tutorial functionality removed to prevent grey overlay issues
 
-  // Tutorial functions
-  const startTutorial = () => {
-    setShowTutorial(true);
-    setTutorialStep(0);
-  };
-
-  const nextTutorialStep = () => {
-    if (tutorialStep < tutorialSteps.length - 1) {
-      setTutorialStep(tutorialStep + 1);
-    } else {
-      setShowTutorial(false);
-      setTutorialStep(0);
-    }
-  };
-
-  const prevTutorialStep = () => {
-    if (tutorialStep > 0) {
-      setTutorialStep(tutorialStep - 1);
-    }
-  };
-
-  const closeTutorial = () => {
-    setShowTutorial(false);
-    setTutorialStep(0);
-  };
+  // Tutorial functionality removed to prevent grey overlay issues
 
   // Load sample data function
   const loadSampleData = () => {
@@ -598,15 +572,7 @@ const SimplePAYECalculator = () => {
       {/* Enhanced Header */}
       <div className="text-center mb-8">
         <div className="bg-white rounded-2xl p-8 border border-[#FFD700] shadow-lg relative">
-          {/* Tutorial Button */}
-          <button
-            onClick={startTutorial}
-            className="absolute top-10 right-2 px-4 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90 transition flex items-center gap-2 text-sm font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
+          {/* Tutorial functionality removed */}
           
           <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
             Enhanced PAYE Calculator
@@ -962,15 +928,7 @@ const SimplePAYECalculator = () => {
         </div>
       </div>
 
-      {/* Tutorial Modal */}
-      <TutorialModal 
-        showTutorial={showTutorial}
-        tutorialStep={tutorialStep}
-        tutorialSteps={tutorialSteps}
-        nextTutorialStep={nextTutorialStep}
-        prevTutorialStep={prevTutorialStep}
-        closeTutorial={closeTutorial}
-      />
+      {/* Tutorial functionality removed to prevent grey overlay issues */}
     </div>
   );
 };

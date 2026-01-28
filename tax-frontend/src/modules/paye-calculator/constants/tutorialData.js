@@ -1,45 +1,4 @@
-export const tutorialSteps = [
-  {
-    title: "Welcome to Enhanced PAYE Calculator",
-    content: "This comprehensive payroll system helps you calculate PAYE, NSSA, and generate professional payslips for Zimbabwe businesses. Let's walk through the key features!",
-    highlight: "header"
-  },
-  {
-    title: "Choose Your Payroll Mode",
-    content: "Select 'Single Employee' for individual calculations or 'Batch Payroll' to process up to 20 employees at once with comprehensive reports.",
-    highlight: "mode-selection"
-  },
-  {
-    title: "Company Information (Optional)",
-    content: "Add your company details and logo to appear on all payslips and reports. This gives your documents a professional branded appearance.",
-    highlight: "company-data"
-  },
-  {
-    title: "Payroll Period Management",
-    content: "Track your current processing month and use 'Roll Forward' to move to the next month while preserving YTD bonus tracking.",
-    highlight: "payroll-period"
-  },
-  {
-    title: "Employee Input & Allowances",
-    content: "Enter employee details and comprehensive allowances including living, medical, transport, housing, commission, bonus, and overtime.",
-    highlight: "employee-input"
-  },
-  {
-    title: "Advanced Tax Features",
-    content: "The system handles Zimbabwe's complex tax rules including NSSA capping at $31.50, bonus tax thresholds ($700 YTD), ZIMDEF, and APWC calculations.",
-    highlight: "tax-features"
-  },
-  {
-    title: "Professional Payslips & Reports",
-    content: "Generate beautiful HTML payslips, classic PDFs, batch ZIP downloads, and comprehensive payroll summary reports with just one click.",
-    highlight: "reports"
-  },
-  {
-    title: "Month-to-Month Tracking",
-    content: "View payroll history, trend analysis, and growth indicators to track your business's payroll evolution over time.",
-    highlight: "history"
-  }
-];
+// Tutorial steps removed to prevent grey overlay issues
 
 export const samplePayrollData = [
   {
