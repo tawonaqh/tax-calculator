@@ -879,48 +879,54 @@ const SimplePAYECalculator = () => {
     import('jspdf').then(({ jsPDF }) => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
-      let yPosition = 20;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPosition = 25;
       
       const currentDate = new Date();
       const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
-      // Calculate totals
+      // Calculate comprehensive totals
       const totals = batchResults.reduce((acc, emp) => {
         const calc = emp.calculation;
         return {
           totalBasicSalary: acc.totalBasicSalary + calc.basicSalary,
-          totalAllowances: acc.totalAllowances + calc.totalAllowances,
+          totalAllowances: acc.totalAllowances + (calc.totalAllowances || 0),
           totalGross: acc.totalGross + calc.grossSalary,
           totalNSSAEmployee: acc.totalNSSAEmployee + calc.nssaEmployee,
           totalNSSAEmployer: acc.totalNSSAEmployer + calc.nssaEmployer,
           totalPAYE: acc.totalPAYE + calc.paye,
           totalAidsLevy: acc.totalAidsLevy + calc.aidsLevy,
+          totalBonusTax: acc.totalBonusTax + (calc.bonusTax || 0),
           totalNet: acc.totalNet + calc.netSalary,
-          totalEmployerCost: acc.totalEmployerCost + calc.totalCostToEmployer
+          totalEmployerCost: acc.totalEmployerCost + calc.totalCostToEmployer,
+          totalZimdef: acc.totalZimdef + (calc.zimdef || 0),
+          totalApwc: acc.totalApwc + (calc.apwc || 0)
         };
       }, {
         totalBasicSalary: 0, totalAllowances: 0, totalGross: 0,
         totalNSSAEmployee: 0, totalNSSAEmployer: 0, totalPAYE: 0,
-        totalAidsLevy: 0, totalNet: 0, totalEmployerCost: 0
+        totalAidsLevy: 0, totalBonusTax: 0, totalNet: 0, totalEmployerCost: 0,
+        totalZimdef: 0, totalApwc: 0
       });
 
-      // Header with Company Branding
-      doc.setFillColor(15, 47, 78);
-      doc.rect(0, 0, pageWidth, 60, 'F');
+      // Modern Header Design
+      doc.setFillColor(15, 47, 78); // Primary Navy
+      doc.rect(0, 0, pageWidth, 65, 'F');
       
-      // Company Logo (if available) - with better aspect ratio handling
+      // Add accent line
+      doc.setFillColor(30, 215, 96); // Success Green
+      doc.rect(0, 60, pageWidth, 5, 'F');
+      
+      // Company Logo with proper aspect ratio
       if (companyData.companyLogo) {
         try {
-          // Create a temporary image to get dimensions synchronously
           const tempImg = document.createElement('img');
           tempImg.src = companyData.companyLogo;
           
-          // Wait for image to load to get actual dimensions
           if (tempImg.complete || tempImg.naturalWidth > 0) {
-            const maxWidth = 40;
-            const maxHeight = 20;
+            const maxWidth = 35;
+            const maxHeight = 18;
             
-            // Use actual image dimensions if available
             const imgWidth = tempImg.naturalWidth || tempImg.width || 200;
             const imgHeight = tempImg.naturalHeight || tempImg.height || 100;
             const aspectRatio = imgWidth / imgHeight;
@@ -928,144 +934,262 @@ const SimplePAYECalculator = () => {
             let logoWidth, logoHeight;
             
             if (aspectRatio > maxWidth / maxHeight) {
-              // Logo is wider, scale by width
               logoWidth = maxWidth;
               logoHeight = maxWidth / aspectRatio;
             } else {
-              // Logo is taller, scale by height
               logoHeight = maxHeight;
               logoWidth = maxHeight * aspectRatio;
             }
             
-            doc.addImage(companyData.companyLogo, 'JPEG', 15, 10, logoWidth, logoHeight);
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 12, logoWidth, logoHeight);
           } else {
-            // Fallback with reasonable proportions
-            doc.addImage(companyData.companyLogo, 'JPEG', 15, 10, 40, 20);
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 12, 35, 18);
           }
         } catch (error) {
           console.log('Logo could not be added to PDF');
         }
       }
       
-      // Company Information
+      // Company Information - Modern Layout
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
+      
+      const companyStartX = companyData.companyLogo ? 55 : 20;
       
       if (companyData.companyName) {
-        doc.text(companyData.companyName, companyData.companyLogo ? 65 : 20, 20);
+        doc.text(companyData.companyName, companyStartX, 20);
       }
       
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      
-      let companyInfoY = companyData.companyName ? 28 : 20;
-      if (companyData.companyAddress) {
-        doc.text(companyData.companyAddress, companyData.companyLogo ? 65 : 20, companyInfoY);
-        companyInfoY += 5;
-      }
-      if (companyData.companyPhone) {
-        doc.text(`Tel: ${companyData.companyPhone}`, companyData.companyLogo ? 65 : 20, companyInfoY);
-        companyInfoY += 5;
-      }
-      if (companyData.companyEmail) {
-        doc.text(`Email: ${companyData.companyEmail}`, companyData.companyLogo ? 65 : 20, companyInfoY);
-      }
-      
-      // Report Title
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PAYROLL SUMMARY REPORT', pageWidth / 2, 25, { align: 'center' });
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 40, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, 50, { align: 'center' });
-      
-      yPosition = 70;
-      
-      // Summary Statistics
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('PAYROLL SUMMARY', 20, yPosition);
-      yPosition += 10;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      
-      // Summary table
-      const summaryData = [
-        ['Total Employees:', batchResults.length.toString()],
-        ['Total Basic Salaries:', formatCurrency(totals.totalBasicSalary)],
-        ['Total Allowances:', formatCurrency(totals.totalAllowances)],
-        ['Total Gross Salaries:', formatCurrency(totals.totalGross)],
-        ['Total NSSA (Employee):', formatCurrency(totals.totalNSSAEmployee)],
-        ['Total NSSA (Employer):', formatCurrency(totals.totalNSSAEmployer)],
-        ['Total PAYE:', formatCurrency(totals.totalPAYE)],
-        ['Total AIDS Levy:', formatCurrency(totals.totalAidsLevy)],
-        ['Total Net Salaries:', formatCurrency(totals.totalNet)],
-        ['Total Employer Cost:', formatCurrency(totals.totalEmployerCost)]
-      ];
-
-      summaryData.forEach(([label, value]) => {
-        doc.text(label, 20, yPosition);
-        doc.text(value, 120, yPosition);
-        yPosition += 6;
-      });
-
-      yPosition += 10;
-
-      // Individual Employee Details
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('INDIVIDUAL EMPLOYEE BREAKDOWN', 20, yPosition);
-      yPosition += 15;
-
-      // Table headers
       doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      
+      let companyInfoY = companyData.companyName ? 27 : 20;
+      if (companyData.companyAddress) {
+        doc.text(companyData.companyAddress, companyStartX, companyInfoY);
+        companyInfoY += 4;
+      }
+      if (companyData.companyPhone || companyData.companyEmail) {
+        const contactInfo = [
+          companyData.companyPhone ? `Tel: ${companyData.companyPhone}` : '',
+          companyData.companyEmail ? `Email: ${companyData.companyEmail}` : ''
+        ].filter(Boolean).join(' | ');
+        doc.text(contactInfo, companyStartX, companyInfoY);
+      }
+      
+      // Report Title - Modern Design
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      const headers = ['Name', 'Basic', 'Allow.', 'Gross', 'NSSA', 'PAYE', 'Net'];
-      const colWidths = [35, 25, 20, 25, 20, 20, 25];
-      let xPos = 20;
-
-      headers.forEach((header, i) => {
-        doc.text(header, xPos, yPosition);
+      doc.text('PAYROLL SUMMARY REPORT', pageWidth - 20, 25, { align: 'right' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Pay Period: ${payPeriod}`, pageWidth - 20, 35, { align: 'right' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, 43, { align: 'right' });
+      doc.text(`${batchResults.length} Employees`, pageWidth - 20, 51, { align: 'right' });
+      
+      yPosition = 80;
+      
+      // Executive Summary Cards
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('EXECUTIVE SUMMARY', 20, yPosition);
+      yPosition += 12;
+      
+      // Summary Cards Layout (2x2 grid)
+      const cardWidth = (pageWidth - 50) / 2;
+      const cardHeight = 25;
+      const cardSpacing = 5;
+      
+      // Card 1: Total Gross
+      doc.setFillColor(240, 253, 244); // Light green
+      doc.rect(20, yPosition, cardWidth, cardHeight, 'F');
+      doc.setDrawColor(30, 215, 96);
+      doc.setLineWidth(1);
+      doc.rect(20, yPosition, cardWidth, cardHeight);
+      
+      doc.setTextColor(30, 215, 96);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOTAL GROSS PAYROLL', 25, yPosition + 8);
+      doc.setFontSize(14);
+      doc.text(formatCurrency(totals.totalGross), 25, yPosition + 18);
+      
+      // Card 2: Total Net
+      doc.setFillColor(239, 246, 255); // Light blue
+      doc.rect(25 + cardWidth, yPosition, cardWidth, cardHeight, 'F');
+      doc.setDrawColor(15, 47, 78);
+      doc.rect(25 + cardWidth, yPosition, cardWidth, cardHeight);
+      
+      doc.setTextColor(15, 47, 78);
+      doc.text('TOTAL NET PAYROLL', 30 + cardWidth, yPosition + 8);
+      doc.text(formatCurrency(totals.totalNet), 30 + cardWidth, yPosition + 18);
+      
+      yPosition += cardHeight + cardSpacing;
+      
+      // Card 3: Total Tax
+      doc.setFillColor(254, 242, 242); // Light red
+      doc.rect(20, yPosition, cardWidth, cardHeight, 'F');
+      doc.setDrawColor(239, 68, 68);
+      doc.rect(20, yPosition, cardWidth, cardHeight);
+      
+      doc.setTextColor(239, 68, 68);
+      doc.text('TOTAL TAX COLLECTED', 25, yPosition + 8);
+      doc.text(formatCurrency(totals.totalPAYE + totals.totalAidsLevy + totals.totalBonusTax), 25, yPosition + 18);
+      
+      // Card 4: Employer Cost
+      doc.setFillColor(255, 251, 235); // Light yellow
+      doc.rect(25 + cardWidth, yPosition, cardWidth, cardHeight, 'F');
+      doc.setDrawColor(245, 158, 11);
+      doc.rect(25 + cardWidth, yPosition, cardWidth, cardHeight);
+      
+      doc.setTextColor(245, 158, 11);
+      doc.text('TOTAL EMPLOYER COST', 30 + cardWidth, yPosition + 8);
+      doc.text(formatCurrency(totals.totalEmployerCost), 30 + cardWidth, yPosition + 18);
+      
+      yPosition += cardHeight + 15;
+      
+      // Detailed Breakdown Table
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('DETAILED BREAKDOWN', 20, yPosition);
+      yPosition += 10;
+      
+      // Create a professional table
+      const tableData = [
+        ['Description', 'Amount', 'Percentage'],
+        ['Basic Salaries', formatCurrency(totals.totalBasicSalary), `${((totals.totalBasicSalary / totals.totalGross) * 100).toFixed(1)}%`],
+        ['Total Allowances', formatCurrency(totals.totalAllowances), `${((totals.totalAllowances / totals.totalGross) * 100).toFixed(1)}%`],
+        ['NSSA (Employee)', formatCurrency(totals.totalNSSAEmployee), `${((totals.totalNSSAEmployee / totals.totalGross) * 100).toFixed(1)}%`],
+        ['PAYE Tax', formatCurrency(totals.totalPAYE), `${((totals.totalPAYE / totals.totalGross) * 100).toFixed(1)}%`],
+        ['AIDS Levy', formatCurrency(totals.totalAidsLevy), `${((totals.totalAidsLevy / totals.totalGross) * 100).toFixed(1)}%`],
+        ['Bonus Tax', formatCurrency(totals.totalBonusTax), `${((totals.totalBonusTax / totals.totalGross) * 100).toFixed(1)}%`]
+      ];
+      
+      const colWidths = [80, 50, 30];
+      let tableY = yPosition;
+      
+      // Table header
+      doc.setFillColor(15, 47, 78);
+      doc.rect(20, tableY, colWidths[0] + colWidths[1] + colWidths[2], 10, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      
+      let xPos = 25;
+      tableData[0].forEach((header, i) => {
+        doc.text(header, xPos, tableY + 7);
         xPos += colWidths[i];
       });
-      yPosition += 8;
-
-      // Employee rows
+      
+      tableY += 10;
+      
+      // Table rows
+      doc.setTextColor(0, 0, 0);
       doc.setFont('helvetica', 'normal');
-      batchResults.forEach((emp) => {
-        const calc = emp.calculation;
-        xPos = 20;
-        
-        const rowData = [
-          emp.employeeName.substring(0, 15),
-          formatCurrency(calc.basicSalary).substring(0, 10),
-          formatCurrency(calc.totalAllowances).substring(0, 8),
-          formatCurrency(calc.grossSalary).substring(0, 10),
-          formatCurrency(calc.nssaEmployee).substring(0, 8),
-          formatCurrency(calc.paye).substring(0, 8),
-          formatCurrency(calc.netSalary).substring(0, 10)
-        ];
-
-        rowData.forEach((data, i) => {
-          doc.text(data, xPos, yPosition);
-          xPos += colWidths[i];
-        });
-        yPosition += 6;
-
-        // Check if we need a new page
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 20;
+      
+      for (let i = 1; i < tableData.length; i++) {
+        // Alternate row colors
+        if (i % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(20, tableY, colWidths[0] + colWidths[1] + colWidths[2], 8, 'F');
         }
+        
+        xPos = 25;
+        tableData[i].forEach((cell, j) => {
+          doc.text(cell, xPos, tableY + 6);
+          xPos += colWidths[j];
+        });
+        
+        tableY += 8;
+      }
+      
+      yPosition = tableY + 15;
+      
+      // Employee List Section
+      if (yPosition > pageHeight - 80) {
+        doc.addPage();
+        yPosition = 25;
+      }
+      
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('EMPLOYEE SUMMARY', 20, yPosition);
+      yPosition += 12;
+      
+      // Employee table headers
+      const empHeaders = ['Employee', 'Basic', 'Gross', 'NSSA', 'PAYE', 'Net'];
+      const empColWidths = [45, 25, 25, 20, 20, 25];
+      
+      doc.setFillColor(15, 47, 78);
+      doc.rect(20, yPosition, empColWidths.reduce((a, b) => a + b, 0), 8, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      
+      xPos = 22;
+      empHeaders.forEach((header, i) => {
+        doc.text(header, xPos, yPosition + 6);
+        xPos += empColWidths[i];
       });
-
+      
+      yPosition += 8;
+      
+      // Employee rows
+      doc.setTextColor(0, 0, 0);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      
+      batchResults.forEach((emp, index) => {
+        if (yPosition > pageHeight - 20) {
+          doc.addPage();
+          yPosition = 25;
+        }
+        
+        const calc = emp.calculation;
+        
+        // Alternate row colors
+        if (index % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(20, yPosition, empColWidths.reduce((a, b) => a + b, 0), 6, 'F');
+        }
+        
+        xPos = 22;
+        const empData = [
+          emp.employeeName.substring(0, 20),
+          formatCurrency(calc.basicSalary).substring(0, 12),
+          formatCurrency(calc.grossSalary).substring(0, 12),
+          formatCurrency(calc.nssaEmployee).substring(0, 10),
+          formatCurrency(calc.paye).substring(0, 10),
+          formatCurrency(calc.netSalary).substring(0, 12)
+        ];
+        
+        empData.forEach((data, i) => {
+          doc.text(data, xPos, yPosition + 4);
+          xPos += empColWidths[i];
+        });
+        
+        yPosition += 6;
+      });
+      
+      // Footer
+      yPosition = pageHeight - 20;
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, yPosition, pageWidth - 20, yPosition);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(107, 114, 128);
+      doc.text('This report is computer generated and contains confidential payroll information.', pageWidth / 2, yPosition + 8, { align: 'center' });
+      doc.text(`Report generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, yPosition + 13, { align: 'center' });
+      
       // Save the report
-      doc.save(`payroll-report-${payPeriod.replace(' ', '-')}.pdf`);
+      doc.save(`payroll-report-${payPeriod.replace(' ', '-')}-${batchResults.length}-employees.pdf`);
     }).catch(error => {
       console.error('Error generating report:', error);
       alert('Error generating report. Please try again.');
@@ -1162,28 +1286,30 @@ const SimplePAYECalculator = () => {
     import('jspdf').then(({ jsPDF }) => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
-      let yPosition = 20;
+      const pageHeight = doc.internal.pageSize.getHeight();
+      let yPosition = 25;
       
       const currentDate = new Date();
       const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
-      // Header with Company Branding
+      // Modern Header Design with Gradient Effect
       doc.setFillColor(15, 47, 78); // Primary Navy
-      doc.rect(0, 0, pageWidth, 90, 'F'); // Increased height to 90
+      doc.rect(0, 0, pageWidth, 70, 'F');
       
-      // Company Logo (if available) - with better aspect ratio handling
+      // Add subtle accent line
+      doc.setFillColor(30, 215, 96); // Success Green
+      doc.rect(0, 65, pageWidth, 5, 'F');
+      
+      // Company Logo (if available) - with better positioning
       if (companyData.companyLogo) {
         try {
-          // Create a temporary image to get dimensions synchronously
           const tempImg = document.createElement('img');
           tempImg.src = companyData.companyLogo;
           
-          // Wait for image to load to get actual dimensions
           if (tempImg.complete || tempImg.naturalWidth > 0) {
-            const maxWidth = 40;
-            const maxHeight = 25;
+            const maxWidth = 35;
+            const maxHeight = 20;
             
-            // Use actual image dimensions if available
             const imgWidth = tempImg.naturalWidth || tempImg.width || 200;
             const imgHeight = tempImg.naturalHeight || tempImg.height || 100;
             const aspectRatio = imgWidth / imgHeight;
@@ -1191,219 +1317,255 @@ const SimplePAYECalculator = () => {
             let logoWidth, logoHeight;
             
             if (aspectRatio > maxWidth / maxHeight) {
-              // Logo is wider, scale by width
               logoWidth = maxWidth;
               logoHeight = maxWidth / aspectRatio;
             } else {
-              // Logo is taller, scale by height
               logoHeight = maxHeight;
               logoWidth = maxHeight * aspectRatio;
             }
             
-            doc.addImage(companyData.companyLogo, 'JPEG', 15, 20, logoWidth, logoHeight);
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 15, logoWidth, logoHeight);
           } else {
-            // Fallback with reasonable proportions
-            doc.addImage(companyData.companyLogo, 'JPEG', 15, 20, 40, 20);
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 15, 35, 18);
           }
         } catch (error) {
           console.log('Logo could not be added to PDF');
         }
       }
       
-      // Company Information (positioned to avoid overlap)
+      // Company Information - Modern Layout
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(12); // Reduced font size
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       
+      const companyStartX = companyData.companyLogo ? 55 : 20;
+      
       if (companyData.companyName) {
-        doc.text(companyData.companyName, companyData.companyLogo ? 60 : 20, 30); // Adjusted position
+        doc.text(companyData.companyName, companyStartX, 25);
       }
       
-      doc.setFontSize(8); // Reduced font size
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       
-      let companyInfoY = companyData.companyName ? 36 : 30; // Adjusted starting position
+      let companyInfoY = companyData.companyName ? 32 : 25;
       if (companyData.companyAddress) {
-        doc.text(companyData.companyAddress, companyData.companyLogo ? 60 : 20, companyInfoY);
-        companyInfoY += 4; // Reduced spacing
-      }
-      if (companyData.companyPhone) {
-        doc.text(`Tel: ${companyData.companyPhone}`, companyData.companyLogo ? 60 : 20, companyInfoY);
+        doc.text(companyData.companyAddress, companyStartX, companyInfoY);
         companyInfoY += 4;
       }
-      if (companyData.companyEmail) {
-        doc.text(`Email: ${companyData.companyEmail}`, companyData.companyLogo ? 60 : 20, companyInfoY);
+      if (companyData.companyPhone || companyData.companyEmail) {
+        const contactInfo = [
+          companyData.companyPhone ? `Tel: ${companyData.companyPhone}` : '',
+          companyData.companyEmail ? `Email: ${companyData.companyEmail}` : ''
+        ].filter(Boolean).join(' | ');
+        doc.text(contactInfo, companyStartX, companyInfoY);
       }
       
-      // PAYSLIP Title (positioned on the right side to avoid overlap)
-      doc.setFontSize(18); // Reduced font size
+      // PAYSLIP Title - Modern Design
+      doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
       doc.text('PAYSLIP', pageWidth - 20, 30, { align: 'right' });
       
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text(`Pay Period: ${payPeriod}`, pageWidth - 20, 40, { align: 'right' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, 48, { align: 'right' });
       
-      yPosition = 100; // Increased starting position
+      yPosition = 85;
       
-      // Employee Details
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('EMPLOYEE DETAILS', 20, yPosition);
-      yPosition += 10;
+      // Employee Details Section - Card Style
+      doc.setFillColor(248, 250, 252); // Light blue-gray background
+      doc.rect(15, yPosition, pageWidth - 30, 25, 'F');
       
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Employee Name: ${formData.employeeName || 'N/A'}`, 20, yPosition);
-      doc.text(`Department: ${formData.department || 'N/A'}`, pageWidth / 2 + 10, yPosition);
-      yPosition += 6;
+      doc.setDrawColor(226, 232, 240); // Light border
+      doc.setLineWidth(0.5);
+      doc.rect(15, yPosition, pageWidth - 30, 25);
       
-      doc.text(`Employee Number: ${formData.employeeNumber || 'N/A'}`, 20, yPosition);
-      doc.text(`Position: ${formData.position || 'N/A'}`, pageWidth / 2 + 10, yPosition);
-      yPosition += 15;
-      
-      // Earnings & Deductions Table
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('EARNINGS & DEDUCTIONS', 20, yPosition);
-      yPosition += 10;
-      
-      // Table headers
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('EARNINGS', 20, yPosition);
-      doc.text('DEDUCTIONS', pageWidth / 2 - 20, yPosition);
-      doc.text('NET PAY', pageWidth - 60, yPosition);
-      yPosition += 8;
-      
-      // Store starting position for Net Pay box alignment
-      const contentStartY = yPosition;
-      
-      // Table content
-      doc.setFont('helvetica', 'normal');
-      
-      // Earnings column
-      doc.text(`Basic Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
-      
-      // Deductions column
-      doc.text(`NSSA (4.5%): ${formatCurrency(results.nssaEmployee)}`, pageWidth / 2 - 20, yPosition);
-      yPosition += 6;
-      
-      doc.text(`Gross Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
-      doc.text(`PAYE: ${formatCurrency(results.paye)}`, pageWidth / 2 - 20, yPosition);
-      yPosition += 6;
-      
-      doc.text(`AIDS Levy: ${formatCurrency(results.aidsLevy)}`, pageWidth / 2 - 20, yPosition);
-      yPosition += 6;
-      
-      // Net Pay (highlighted) - aligned with content start
-      doc.setFillColor(255, 255, 255); // White background
-      doc.rect(pageWidth - 80, contentStartY - 2, 70, 20, 'F');
-      
-      // Green border for emphasis
-      doc.setDrawColor(30, 215, 96);
-      doc.setLineWidth(1);
-      doc.rect(pageWidth - 80, contentStartY - 2, 70, 20);
-      
-      doc.setTextColor(0, 0, 0); // Black text for better readability
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.text('NET SALARY', pageWidth - 60, contentStartY + 6, { align: 'center' });
-      doc.setFontSize(14);
-      doc.text(formatCurrency(results.netSalary), pageWidth - 60, contentStartY + 12, { align: 'center' });
-      
-      yPosition += 5;
-      
-      // Tax Calculation Details
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(15, 47, 78);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('TAX CALCULATION (Non-FDS Method)', 20, yPosition);
-      yPosition += 8;
+      doc.text('EMPLOYEE INFORMATION', 20, yPosition + 8);
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
       
-      // Left column
-      doc.text(`Gross Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
-      doc.text(`PAYE: ${formatCurrency(results.paye)}`, pageWidth / 2, yPosition);
-      yPosition += 5;
+      // Employee details in two columns
+      doc.text(`Name: ${formData.employeeName || 'N/A'}`, 20, yPosition + 16);
+      doc.text(`Employee ID: ${formData.employeeNumber || 'N/A'}`, 20, yPosition + 21);
       
-      doc.text(`Less: NSSA: ${formatCurrency(results.nssaEmployee)}`, 20, yPosition);
-      doc.text(`AIDS Levy (3%): ${formatCurrency(results.aidsLevy)}`, pageWidth / 2, yPosition);
-      yPosition += 5;
+      doc.text(`Department: ${formData.department || 'N/A'}`, pageWidth / 2 + 5, yPosition + 16);
+      doc.text(`Position: ${formData.position || 'N/A'}`, pageWidth / 2 + 5, yPosition + 21);
       
+      yPosition += 35;
+      
+      // Main Content Area - Fixed Column Layout with Clear Boundaries
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Taxable Income: ${formatCurrency(results.taxableGrossForPAYE || results.taxableGross || 0)}`, 20, yPosition);
-      doc.text(`Total Tax: ${formatCurrency(results.totalTax)}`, pageWidth / 2, yPosition);
-      yPosition += 15;
+      doc.text('EARNINGS & DEDUCTIONS BREAKDOWN', 20, yPosition);
+      yPosition += 12;
       
-      // Employer Costs
-      doc.setFontSize(12);
-      doc.text('EMPLOYER COSTS', 20, yPosition);
-      yPosition += 8;
+      // Use fixed column positions to prevent overlap
+      const col1X = 20;      // Earnings column start
+      const col1Width = 55;  // Earnings column width
+      const col2X = 80;      // Deductions column start  
+      const col2Width = 55;  // Deductions column width
+      const col3X = 140;     // Net Pay column start
+      const col3Width = 50;  // Net Pay column width
+      const headerHeight = 12;
       
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Employee Salary: ${formatCurrency(results.grossSalary)}`, 20, yPosition);
-      yPosition += 5;
-      doc.text(`Employer NSSA (4.5%): ${formatCurrency(results.nssaEmployer)}`, 20, yPosition);
-      yPosition += 5;
-      
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Total Cost to Employer: ${formatCurrency(results.totalCostToEmployer)}`, 20, yPosition);
-      yPosition += 15;
-      
-      // Enhanced Summary Section
-      doc.setFillColor(245, 245, 245); // Light gray background
-      doc.rect(20, yPosition, pageWidth - 40, 35, 'F');
-      
-      // Border with rounded corners effect
-      doc.setDrawColor(30, 215, 96);
-      doc.setLineWidth(2);
-      doc.rect(20, yPosition, pageWidth - 40, 35);
-      
-      // Header with green background
-      doc.setFillColor(30, 215, 96);
-      doc.rect(20, yPosition, pageWidth - 40, 12, 'F');
-      
+      // Column Headers with Background
+      // Earnings Header
+      doc.setFillColor(30, 215, 96); // Success Green
+      doc.rect(col1X, yPosition, col1Width, headerHeight, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('PAYSLIP SUMMARY', pageWidth / 2, yPosition + 8, { align: 'center' });
+      doc.text('EARNINGS', col1X + col1Width / 2, yPosition + 8, { align: 'center' });
       
-      // Summary content with better formatting
+      // Deductions Header
+      doc.setFillColor(239, 68, 68); // Red
+      doc.rect(col2X, yPosition, col2Width, headerHeight, 'F');
+      doc.text('DEDUCTIONS', col2X + col2Width / 2, yPosition + 8, { align: 'center' });
+      
+      // Net Pay Header
+      doc.setFillColor(15, 47, 78); // Navy
+      doc.rect(col3X, yPosition, col3Width, headerHeight, 'F');
+      doc.text('NET PAY', col3X + col3Width / 2, yPosition + 8, { align: 'center' });
+      
+      yPosition += headerHeight + 5;
+      
+      // Content Areas with strict boundaries
       doc.setTextColor(0, 0, 0);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       
-      // Row 1
-      doc.text('Gross Salary:', 25, yPosition + 20);
-      doc.text(formatCurrency(results.grossSalary), 70, yPosition + 20);
+      // Earnings Column Content
+      let earningsY = yPosition;
+      doc.text('Basic Salary:', col1X + 2, earningsY);
+      doc.text(formatCurrency(results.basicSalary || results.grossSalary), col1X + col1Width - 2, earningsY, { align: 'right' });
+      earningsY += 5;
       
-      doc.text('Total Deductions:', 110, yPosition + 20);
-      doc.text(formatCurrency((results.nssaEmployee || 0) + (results.totalTax || 0)), 160, yPosition + 20);
+      // Add allowances if they exist
+      if (results.allowances) {
+        if (results.allowances.living > 0) {
+          doc.text('Living Allow.:', col1X + 2, earningsY);
+          doc.text(formatCurrency(results.allowances.living), col1X + col1Width - 2, earningsY, { align: 'right' });
+          earningsY += 4;
+        }
+        if (results.allowances.medical > 0) {
+          doc.text('Medical Allow.:', col1X + 2, earningsY);
+          doc.text(formatCurrency(results.allowances.medical), col1X + col1Width - 2, earningsY, { align: 'right' });
+          earningsY += 4;
+        }
+        if (results.allowances.transport > 0) {
+          doc.text('Transport Allow.:', col1X + 2, earningsY);
+          doc.text(formatCurrency(results.allowances.transport), col1X + col1Width - 2, earningsY, { align: 'right' });
+          earningsY += 4;
+        }
+        if (results.allowances.bonus > 0) {
+          doc.text('Bonus:', col1X + 2, earningsY);
+          doc.text(formatCurrency(results.allowances.bonus), col1X + col1Width - 2, earningsY, { align: 'right' });
+          earningsY += 4;
+        }
+      }
       
-      // Row 2 - Net Pay (highlighted)
+      // Gross Total with line
       doc.setFont('helvetica', 'bold');
+      doc.setDrawColor(30, 215, 96);
+      doc.line(col1X + 2, earningsY + 2, col1X + col1Width - 2, earningsY + 2);
+      earningsY += 6;
+      doc.text('GROSS TOTAL:', col1X + 2, earningsY);
+      doc.text(formatCurrency(results.grossSalary), col1X + col1Width - 2, earningsY, { align: 'right' });
+      
+      // Deductions Column Content
+      let deductionsY = yPosition;
+      doc.setFont('helvetica', 'normal');
+      
+      doc.text('NSSA (4.5%):', col2X + 2, deductionsY);
+      doc.text(formatCurrency(results.nssaEmployee), col2X + col2Width - 2, deductionsY, { align: 'right' });
+      deductionsY += 5;
+      
+      doc.text('PAYE Tax:', col2X + 2, deductionsY);
+      doc.text(formatCurrency(results.paye), col2X + col2Width - 2, deductionsY, { align: 'right' });
+      deductionsY += 5;
+      
+      doc.text('AIDS Levy (3%):', col2X + 2, deductionsY);
+      doc.text(formatCurrency(results.aidsLevy), col2X + col2Width - 2, deductionsY, { align: 'right' });
+      deductionsY += 5;
+      
+      if (results.bonusTax && results.bonusTax > 0) {
+        doc.text('Bonus Tax:', col2X + 2, deductionsY);
+        doc.text(formatCurrency(results.bonusTax), col2X + col2Width - 2, deductionsY, { align: 'right' });
+        deductionsY += 5;
+      }
+      
+      // Total Deductions with line
+      doc.setFont('helvetica', 'bold');
+      doc.setDrawColor(239, 68, 68);
+      doc.line(col2X + 2, deductionsY + 2, col2X + col2Width - 2, deductionsY + 2);
+      deductionsY += 6;
+      doc.text('TOTAL DEDUCTIONS:', col2X + 2, deductionsY);
+      doc.text(formatCurrency((results.nssaEmployee || 0) + (results.totalTax || 0)), col2X + col2Width - 2, deductionsY, { align: 'right' });
+      
+      // Net Pay Column - Highlighted Box
+      const netPayBoxY = yPosition;
+      const netPayBoxHeight = 35;
+      
+      doc.setFillColor(240, 253, 244); // Light green background
+      doc.rect(col3X, netPayBoxY, col3Width, netPayBoxHeight, 'F');
+      
+      doc.setDrawColor(30, 215, 96);
+      doc.setLineWidth(2);
+      doc.rect(col3X, netPayBoxY, col3Width, netPayBoxHeight);
+      
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('NET SALARY', col3X + col3Width / 2, netPayBoxY + 12, { align: 'center' });
+      
+      doc.setFontSize(14);
       doc.setTextColor(30, 215, 96);
-      doc.text('Net Salary:', 25, yPosition + 30);
-      doc.text(formatCurrency(results.netSalary), 70, yPosition + 30);
+      doc.text(formatCurrency(results.netSalary), col3X + col3Width / 2, netPayBoxY + 25, { align: 'center' });
       
-      // Employer cost
-      doc.setTextColor(15, 47, 78); // Navy color
-      doc.text('Employer Cost:', 110, yPosition + 30);
-      doc.text(formatCurrency(results.totalCostToEmployer), 160, yPosition + 30);
+      yPosition = Math.max(earningsY, deductionsY, netPayBoxY + netPayBoxHeight) + 15;
       
-      yPosition += 45;
+      // Tax Calculation Summary - Modern Card Design
+      doc.setFillColor(248, 250, 252);
+      doc.rect(20, yPosition, pageWidth - 40, 30, 'F');
       
-      // Footer
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.5);
+      doc.rect(20, yPosition, pageWidth - 40, 30);
+      
+      doc.setTextColor(15, 47, 78);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TAX CALCULATION SUMMARY (Non-FDS Method)', 25, yPosition + 8);
+      
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0, 0, 0);
+      
+      // Tax calculation details in two columns
+      doc.text(`Taxable Income: ${formatCurrency(results.taxableGrossForPAYE || results.taxableGross || 0)}`, 25, yPosition + 16);
+      doc.text(`Total Tax Paid: ${formatCurrency(results.totalTax)}`, 25, yPosition + 22);
+      
+      doc.text(`Employer NSSA: ${formatCurrency(results.nssaEmployer)}`, pageWidth / 2 + 5, yPosition + 16);
+      doc.text(`Total Employer Cost: ${formatCurrency(results.totalCostToEmployer)}`, pageWidth / 2 + 5, yPosition + 22);
+      
+      yPosition += 40;
+      
+      // Footer with Professional Styling
+      doc.setDrawColor(226, 232, 240);
+      doc.line(20, yPosition, pageWidth - 20, yPosition);
+      yPosition += 8;
+      
       doc.setFontSize(8);
       doc.setFont('helvetica', 'italic');
-      doc.setTextColor(128, 128, 128);
+      doc.setTextColor(107, 114, 128);
       doc.text('This payslip is computer generated and does not require a signature.', pageWidth / 2, yPosition, { align: 'center' });
-      doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, yPosition + 5, { align: 'center' });
+      doc.text(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, yPosition + 5, { align: 'center' });
       
       // Save PDF
       const fileName = `payslip-${formData.employeeName || 'employee'}-${payPeriod.replace(' ', '-')}.pdf`;
