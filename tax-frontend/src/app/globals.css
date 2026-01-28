@@ -1,15 +1,10 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +18,65 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Print Styles for Payslips */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Hide everything except the payslip */
+  body * {
+    visibility: hidden;
+  }
+  
+  #payslip-preview, #payslip-preview * {
+    visibility: visible;
+  }
+  
+  #payslip-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+  
+  /* Ensure proper page breaks */
+  .print\:page-break-before {
+    page-break-before: always;
+  }
+  
+  .print\:page-break-after {
+    page-break-after: always;
+  }
+  
+  /* Hide print buttons */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Enhance text for print */
+  .print\:text-black {
+    color: black !important;
+  }
+  
+  /* Ensure borders show in print */
+  .print\:border {
+    border: 1px solid #000 !important;
+  }
+  
+  .print\:border-b {
+    border-bottom: 1px solid #000 !important;
+  }
 }
 
 .tutorial-highlight {

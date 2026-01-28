@@ -582,7 +582,7 @@ const SimplePAYECalculator = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Generate batch payslips as ZIP file
+  // Generate batch payslips as ZIP file using beautiful HTML design
   const generateBatchPayslips = async () => {
     if (batchResults.length === 0) {
       alert('No payroll data available. Please calculate batch payroll first.');
@@ -594,7 +594,8 @@ const SimplePAYECalculator = () => {
 
     try {
       // Import required libraries
-      const [{ jsPDF }, JSZip] = await Promise.all([
+      const [html2canvas, { jsPDF }, JSZip] = await Promise.all([
+        import('html2canvas'),
         import('jspdf'),
         import('jszip')
       ]);
@@ -603,205 +604,68 @@ const SimplePAYECalculator = () => {
       const currentDate = new Date();
       const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-      // Generate individual payslips for each employee
+      // Generate individual payslips for each employee using HTML design
       for (let i = 0; i < batchResults.length; i++) {
         const emp = batchResults[i];
         setPayslipProgress(Math.round((i / batchResults.length) * 100));
-        const doc = new jsPDF();
-        const pageWidth = doc.internal.pageSize.getWidth();
-        let yPosition = 20;
+        
+        // Create HTML payslip for this employee
+        const payslipElement = generateEmployeePayslipHTML(emp, payPeriod);
+        
+        // Convert HTML to canvas then to PDF with improved centering
+        const canvas = await html2canvas.default(payslipElement, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: Math.max(payslipElement.scrollWidth, 800), // Ensure minimum width
+          height: payslipElement.scrollHeight + 60, // Add extra height for margins
+          x: 0,
+          y: 0,
+          windowWidth: Math.max(payslipElement.scrollWidth, 800),
+          windowHeight: payslipElement.scrollHeight + 60
+        });
 
-        // Header
-        doc.setFillColor(15, 47, 78);
-        doc.rect(0, 0, pageWidth, 50, 'F');
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
         
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PAYSLIP', pageWidth / 2, 25, { align: 'center' });
+        // Calculate dimensions to fit A4 with proper centering
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 40, { align: 'center' });
+        // Use more conservative margins for better centering
+        const marginX = 20; // 20mm margin on each side
+        const marginY = 20; // 20mm margin top and bottom
         
-        yPosition = 60;
+        const availableWidth = pdfWidth - (marginX * 2);
+        const availableHeight = pdfHeight - (marginY * 2);
         
-        // Employee Details
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EMPLOYEE DETAILS', 20, yPosition);
-        yPosition += 10;
+        // Calculate scaled dimensions maintaining aspect ratio
+        let imgWidth = availableWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
         
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Employee Name: ${emp.employeeName || 'N/A'}`, 20, yPosition);
-        doc.text(`Department: ${emp.department || 'N/A'}`, pageWidth / 2 + 10, yPosition);
-        yPosition += 6;
-        
-        doc.text(`Employee Number: ${emp.employeeNumber || 'N/A'}`, 20, yPosition);
-        doc.text(`Position: ${emp.position || 'N/A'}`, pageWidth / 2 + 10, yPosition);
-        yPosition += 15;
-        
-        // Earnings & Deductions
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EARNINGS & DEDUCTIONS', 20, yPosition);
-        yPosition += 10;
-        
-        // Earnings column
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EARNINGS', 20, yPosition);
-        doc.text('DEDUCTIONS', pageWidth / 2 - 20, yPosition);
-        doc.text('NET PAY', pageWidth - 60, yPosition);
-        yPosition += 8;
-        
-        const contentStartY = yPosition;
-        
-        // Earnings breakdown
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Basic Salary: ${formatCurrency(emp.calculation.basicSalary)}`, 20, yPosition);
-        
-        // Show allowances if they exist
-        if (emp.calculation.allowances.living > 0) {
-          yPosition += 5;
-          doc.text(`Living Allow.: ${formatCurrency(emp.calculation.allowances.living)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.medical > 0) {
-          yPosition += 5;
-          doc.text(`Medical Allow.: ${formatCurrency(emp.calculation.allowances.medical)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.transport > 0) {
-          yPosition += 5;
-          doc.text(`Transport Allow.: ${formatCurrency(emp.calculation.allowances.transport)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.housing > 0) {
-          yPosition += 5;
-          doc.text(`Housing Allow.: ${formatCurrency(emp.calculation.allowances.housing)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.commission > 0) {
-          yPosition += 5;
-          doc.text(`Commission: ${formatCurrency(emp.calculation.allowances.commission)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.bonus > 0) {
-          yPosition += 5;
-          doc.text(`Bonus: ${formatCurrency(emp.calculation.allowances.bonus)}`, 20, yPosition);
-        }
-        if (emp.calculation.allowances.overtime > 0) {
-          yPosition += 5;
-          doc.text(`Overtime: ${formatCurrency(emp.calculation.allowances.overtime)}`, 20, yPosition);
+        // If height exceeds available space, scale by height instead
+        if (imgHeight > availableHeight) {
+          imgHeight = availableHeight;
+          imgWidth = (canvas.width * imgHeight) / canvas.height;
         }
         
-        yPosition += 8;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Gross Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
+        // Center the image perfectly on the page
+        const xOffset = (pdfWidth - imgWidth) / 2;
+        const yOffset = (pdfHeight - imgHeight) / 2;
         
-        // Reset position for deductions
-        yPosition = contentStartY;
+        // Add image to PDF with perfect centering
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
         
-        // Deductions column
-        doc.setFont('helvetica', 'normal');
-        doc.text(`NSSA (4.5%): ${formatCurrency(emp.calculation.nssaEmployee)}`, pageWidth / 2 - 20, yPosition);
-        yPosition += 6;
-        doc.text(`PAYE: ${formatCurrency(emp.calculation.paye)}`, pageWidth / 2 - 20, yPosition);
-        yPosition += 6;
-        doc.text(`AIDS Levy: ${formatCurrency(emp.calculation.aidsLevy)}`, pageWidth / 2 - 20, yPosition);
-        yPosition += 6;
-        
-        // Net Pay box
-        doc.setFillColor(255, 255, 255);
-        doc.rect(pageWidth - 80, contentStartY - 2, 70, 20, 'F');
-        doc.setDrawColor(30, 215, 96);
-        doc.setLineWidth(1);
-        doc.rect(pageWidth - 80, contentStartY - 2, 70, 20);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text('NET SALARY', pageWidth - 60, contentStartY + 6, { align: 'center' });
-        doc.setFontSize(14);
-        doc.text(formatCurrency(emp.calculation.netSalary), pageWidth - 60, contentStartY + 12, { align: 'center' });
-        
-        yPosition += 10;
-        
-        // Tax Calculation Details
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('TAX CALCULATION (Non-FDS Method)', 20, yPosition);
-        yPosition += 8;
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Gross Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
-        doc.text(`PAYE: ${formatCurrency(emp.calculation.paye)}`, pageWidth / 2, yPosition);
-        yPosition += 5;
-        doc.text(`Less: NSSA: ${formatCurrency(emp.calculation.nssaEmployee)}`, 20, yPosition);
-        doc.text(`AIDS Levy (3%): ${formatCurrency(emp.calculation.aidsLevy)}`, pageWidth / 2, yPosition);
-        yPosition += 5;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Taxable Income: ${formatCurrency(emp.calculation.taxableGross)}`, 20, yPosition);
-        doc.text(`Total Tax: ${formatCurrency(emp.calculation.totalTax)}`, pageWidth / 2, yPosition);
-        yPosition += 15;
-        
-        // Employer Costs
-        doc.setFontSize(12);
-        doc.text('EMPLOYER COSTS', 20, yPosition);
-        yPosition += 8;
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Employee Salary: ${formatCurrency(emp.calculation.grossSalary)}`, 20, yPosition);
-        yPosition += 5;
-        doc.text(`Employer NSSA (4.5%): ${formatCurrency(emp.calculation.nssaEmployer)}`, 20, yPosition);
-        yPosition += 5;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Total Cost to Employer: ${formatCurrency(emp.calculation.totalCostToEmployer)}`, 20, yPosition);
-        yPosition += 15;
-        
-        // Summary Section
-        doc.setFillColor(245, 245, 245);
-        doc.rect(20, yPosition, pageWidth - 40, 35, 'F');
-        doc.setDrawColor(30, 215, 96);
-        doc.setLineWidth(2);
-        doc.rect(20, yPosition, pageWidth - 40, 35);
-        
-        doc.setFillColor(30, 215, 96);
-        doc.rect(20, yPosition, pageWidth - 40, 12, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PAYSLIP SUMMARY', pageWidth / 2, yPosition + 8, { align: 'center' });
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Gross Salary:', 25, yPosition + 20);
-        doc.text(formatCurrency(emp.calculation.grossSalary), 70, yPosition + 20);
-        doc.text('Total Deductions:', 110, yPosition + 20);
-        doc.text(formatCurrency(emp.calculation.nssaEmployee + emp.calculation.totalTax), 160, yPosition + 20);
-        
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(30, 215, 96);
-        doc.text('Net Salary:', 25, yPosition + 30);
-        doc.text(formatCurrency(emp.calculation.netSalary), 70, yPosition + 30);
-        doc.setTextColor(15, 47, 78);
-        doc.text('Employer Cost:', 110, yPosition + 30);
-        doc.text(formatCurrency(emp.calculation.totalCostToEmployer), 160, yPosition + 30);
-        
-        yPosition += 45;
-        
-        // Footer
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(128, 128, 128);
-        doc.text('This payslip is computer generated and does not require a signature.', pageWidth / 2, yPosition, { align: 'center' });
-        doc.text(`Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, pageWidth / 2, yPosition + 5, { align: 'center' });
+        // Generate PDF blob
+        const pdfBlob = pdf.output('blob');
         
         // Add PDF to ZIP
-        const pdfBlob = doc.output('blob');
         const fileName = `payslip-${emp.employeeName.replace(/[^a-zA-Z0-9]/g, '_')}-${emp.employeeNumber || 'NoID'}.pdf`;
         zip.file(fileName, pdfBlob);
+        
+        // Clean up temporary element
+        document.body.removeChild(payslipElement);
       }
 
       // Generate and download ZIP file
@@ -822,6 +686,189 @@ const SimplePAYECalculator = () => {
       setIsGeneratingPayslips(false);
       setPayslipProgress(0);
     }
+  };
+
+  // Generate HTML payslip for individual employee (for batch processing)
+  const generateEmployeePayslipHTML = (emp, payPeriod) => {
+    const payslipContent = `
+      <div style="background: white; padding: 40px; width: 800px; margin: 0 auto; font-family: Arial, sans-serif; box-sizing: border-box; min-height: 600px; display: flex; flex-direction: column;">
+        <!-- Header with Company Branding -->
+        <div style="margin-bottom: 24px; border-bottom: 2px solid #0F2F4E; padding-bottom: 16px;">
+          ${(companyData.companyName || companyData.companyLogo) ? `
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+              ${companyData.companyLogo ? `
+                <div style="width: 80px; height: 80px; flex-shrink: 0;">
+                  <img src="${companyData.companyLogo}" alt="Company Logo" style="width: 100%; height: 100%; object-fit: contain;" />
+                </div>
+              ` : ''}
+              <div style="flex: 1;">
+                ${companyData.companyName ? `
+                  <h3 style="font-size: 20px; font-weight: bold; color: #0F2F4E; margin: 0 0 8px 0;">${companyData.companyName}</h3>
+                ` : ''}
+                <div style="font-size: 14px; color: #666;">
+                  ${companyData.companyAddress ? `<p style="margin: 0 0 4px 0;">${companyData.companyAddress}</p>` : ''}
+                  <div style="display: flex; gap: 16px;">
+                    ${companyData.companyPhone ? `<span>Tel: ${companyData.companyPhone}</span>` : ''}
+                    ${companyData.companyEmail ? `<span>Email: ${companyData.companyEmail}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ` : ''}
+          
+          <!-- Payslip Title -->
+          <div style="text-align: center;">
+            <h2 style="font-size: 32px; font-weight: bold; color: #0F2F4E; margin: 0;">PAYSLIP</h2>
+            <p style="font-size: 16px; color: #666; margin: 4px 0 0 0;">Pay Period: ${payPeriod}</p>
+          </div>
+        </div>
+
+        <!-- Employee Details -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+          <div>
+            <p style="margin: 0 0 8px 0;"><strong>Employee Name:</strong> ${emp.employeeName || 'N/A'}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Employee Number:</strong> ${emp.employeeNumber || 'N/A'}</p>
+          </div>
+          <div>
+            <p style="margin: 0 0 8px 0;"><strong>Department:</strong> ${emp.department || 'N/A'}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Position:</strong> ${emp.position || 'N/A'}</p>
+          </div>
+        </div>
+
+        <!-- Salary Breakdown -->
+        <div style="margin-bottom: 32px;">
+          <h3 style="font-size: 20px; font-weight: 600; color: #0F2F4E; margin: 0 0 12px 0; border-bottom: 1px solid #ddd; padding-bottom: 4px;">
+            EARNINGS & DEDUCTIONS
+          </h3>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;">
+            <!-- Earnings -->
+            <div>
+              <h4 style="font-weight: 600; color: #666; margin: 0 0 8px 0;">EARNINGS</h4>
+              <div style="font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>Basic Salary:</span>
+                  <span style="font-weight: 500;">${formatCurrency(emp.calculation.basicSalary)}</span>
+                </div>
+                
+                ${emp.calculation.allowances.living > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Living Allow.:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.living)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.medical > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Medical Allow.:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.medical)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.transport > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Transport Allow.:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.transport)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.housing > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Housing Allow.:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.housing)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.commission > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Commission:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.commission)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.bonus > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Bonus:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.bonus)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.allowances.overtime > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; color: #666;">
+                    <span>Overtime:</span>
+                    <span>${formatCurrency(emp.calculation.allowances.overtime)}</span>
+                  </div>
+                ` : ''}
+                
+                ${emp.calculation.totalAllowances > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; border-top: 1px solid #eee; padding-top: 4px;">
+                    <span>Total Allowances:</span>
+                    <span>${formatCurrency(emp.calculation.totalAllowances)}</span>
+                  </div>
+                ` : ''}
+                
+                <div style="display: flex; justify-content: space-between; font-weight: 600; border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px;">
+                  <span>Gross Salary:</span>
+                  <span>${formatCurrency(emp.calculation.grossSalary)}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Deductions -->
+            <div>
+              <h4 style="font-weight: 600; color: #666; margin: 0 0 8px 0;">DEDUCTIONS</h4>
+              <div style="font-size: 14px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>NSSA (4.5%):</span>
+                  <span>(${formatCurrency(emp.calculation.nssaEmployee)})</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>PAYE:</span>
+                  <span>(${formatCurrency(emp.calculation.paye)})</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>AIDS Levy (3%):</span>
+                  <span>(${formatCurrency(emp.calculation.aidsLevy)})</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-weight: 600; border-top: 1px solid #ddd; padding-top: 4px; margin-top: 8px;">
+                  <span>Total Deductions:</span>
+                  <span>(${formatCurrency((emp.calculation.nssaEmployee || 0) + (emp.calculation.totalTax || 0))})</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Net Pay -->
+            <div>
+              <h4 style="font-weight: 600; color: #666; margin: 0 0 8px 0;">NET PAY</h4>
+              <div style="background: rgba(30, 215, 96, 0.1); padding: 12px; border-radius: 8px; border: 1px solid #1ED760;">
+                <div style="text-align: center;">
+                  <p style="font-size: 14px; color: #666; margin: 0 0 4px 0;">Net Salary</p>
+                  <p style="font-size: 20px; font-weight: bold; color: #1ED760; margin: 0;">
+                    ${formatCurrency(emp.calculation.netSalary)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #666;">
+          <p style="margin: 0 0 4px 0;">This payslip is computer generated and does not require a signature.</p>
+          <p style="margin: 0;">Generated on: ${new Date().toLocaleDateString()}</p>
+        </div>
+      </div>
+    `;
+
+    // Create a temporary div to hold the HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = payslipContent;
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '-9999px';
+    document.body.appendChild(tempDiv);
+    
+    return tempDiv.firstElementChild;
   };
   const generatePayrollReports = () => {
     if (batchResults.length === 0) {
@@ -857,21 +904,85 @@ const SimplePAYECalculator = () => {
         totalAidsLevy: 0, totalNet: 0, totalEmployerCost: 0
       });
 
-      // Header
+      // Header with Company Branding
       doc.setFillColor(15, 47, 78);
-      doc.rect(0, 0, pageWidth, 50, 'F');
+      doc.rect(0, 0, pageWidth, 60, 'F');
       
+      // Company Logo (if available) - with better aspect ratio handling
+      if (companyData.companyLogo) {
+        try {
+          // Create a temporary image to get dimensions synchronously
+          const tempImg = document.createElement('img');
+          tempImg.src = companyData.companyLogo;
+          
+          // Wait for image to load to get actual dimensions
+          if (tempImg.complete || tempImg.naturalWidth > 0) {
+            const maxWidth = 40;
+            const maxHeight = 20;
+            
+            // Use actual image dimensions if available
+            const imgWidth = tempImg.naturalWidth || tempImg.width || 200;
+            const imgHeight = tempImg.naturalHeight || tempImg.height || 100;
+            const aspectRatio = imgWidth / imgHeight;
+            
+            let logoWidth, logoHeight;
+            
+            if (aspectRatio > maxWidth / maxHeight) {
+              // Logo is wider, scale by width
+              logoWidth = maxWidth;
+              logoHeight = maxWidth / aspectRatio;
+            } else {
+              // Logo is taller, scale by height
+              logoHeight = maxHeight;
+              logoWidth = maxHeight * aspectRatio;
+            }
+            
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 10, logoWidth, logoHeight);
+          } else {
+            // Fallback with reasonable proportions
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 10, 40, 20);
+          }
+        } catch (error) {
+          console.log('Logo could not be added to PDF');
+        }
+      }
+      
+      // Company Information
       doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      
+      if (companyData.companyName) {
+        doc.text(companyData.companyName, companyData.companyLogo ? 65 : 20, 20);
+      }
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      let companyInfoY = companyData.companyName ? 28 : 20;
+      if (companyData.companyAddress) {
+        doc.text(companyData.companyAddress, companyData.companyLogo ? 65 : 20, companyInfoY);
+        companyInfoY += 5;
+      }
+      if (companyData.companyPhone) {
+        doc.text(`Tel: ${companyData.companyPhone}`, companyData.companyLogo ? 65 : 20, companyInfoY);
+        companyInfoY += 5;
+      }
+      if (companyData.companyEmail) {
+        doc.text(`Email: ${companyData.companyEmail}`, companyData.companyLogo ? 65 : 20, companyInfoY);
+      }
+      
+      // Report Title
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
       doc.text('PAYROLL SUMMARY REPORT', pageWidth / 2, 25, { align: 'center' });
       
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 35, { align: 'center' });
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, 45, { align: 'center' });
+      doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 40, { align: 'center' });
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, 50, { align: 'center' });
       
-      yPosition = 60;
+      yPosition = 70;
       
       // Summary Statistics
       doc.setTextColor(0, 0, 0);
@@ -970,6 +1081,84 @@ const SimplePAYECalculator = () => {
   const generatePayslipPDF = () => {
     if (!results) return;
     
+    // Use html2canvas + jsPDF for more reliable HTML-to-PDF conversion
+    const element = document.getElementById('payslip-preview');
+    if (!element) {
+      alert('Payslip preview not found. Please show the payslip first.');
+      return;
+    }
+
+    Promise.all([
+      import('html2canvas'),
+      import('jspdf')
+    ]).then(([html2canvas, { jsPDF }]) => {
+      // Configure html2canvas options with better centering
+      const options = {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: Math.max(element.scrollWidth, 800), // Ensure minimum width
+        height: element.scrollHeight + 60, // Add extra height for margins
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        windowWidth: Math.max(element.scrollWidth, 800),
+        windowHeight: element.scrollHeight + 60
+      };
+
+      html2canvas.default(element, options).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        // Calculate dimensions to fit A4 with proper centering
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        // Use more conservative margins for better centering
+        const marginX = 20; // 20mm margin on each side
+        const marginY = 20; // 20mm margin top and bottom
+        
+        const availableWidth = pdfWidth - (marginX * 2);
+        const availableHeight = pdfHeight - (marginY * 2);
+        
+        // Calculate scaled dimensions maintaining aspect ratio
+        let imgWidth = availableWidth;
+        let imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // If height exceeds available space, scale by height instead
+        if (imgHeight > availableHeight) {
+          imgHeight = availableHeight;
+          imgWidth = (canvas.width * imgHeight) / canvas.height;
+        }
+        
+        // Center the image perfectly on the page
+        const xOffset = (pdfWidth - imgWidth) / 2;
+        const yOffset = (pdfHeight - imgHeight) / 2;
+        
+        // Add image to PDF with perfect centering
+        pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+        
+        // Save the PDF
+        const fileName = `payslip-${formData.employeeName || 'employee'}-${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).replace(' ', '-')}.pdf`;
+        pdf.save(fileName);
+      }).catch(error => {
+        console.error('Error generating canvas:', error);
+        // Fallback to original PDF generation
+        generateOriginalPayslipPDF();
+      });
+    }).catch(error => {
+      console.error('Error loading libraries:', error);
+      // Fallback to original PDF generation
+      generateOriginalPayslipPDF();
+    });
+  };
+
+  // Keep the original PDF generation as fallback
+  const generateOriginalPayslipPDF = () => {
+    if (!results) return;
+    
     import('jspdf').then(({ jsPDF }) => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -978,20 +1167,84 @@ const SimplePAYECalculator = () => {
       const currentDate = new Date();
       const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
       
-      // Header
+      // Header with Company Branding
       doc.setFillColor(15, 47, 78); // Primary Navy
-      doc.rect(0, 0, pageWidth, 50, 'F');
+      doc.rect(0, 0, pageWidth, 90, 'F'); // Increased height to 90
       
+      // Company Logo (if available) - with better aspect ratio handling
+      if (companyData.companyLogo) {
+        try {
+          // Create a temporary image to get dimensions synchronously
+          const tempImg = document.createElement('img');
+          tempImg.src = companyData.companyLogo;
+          
+          // Wait for image to load to get actual dimensions
+          if (tempImg.complete || tempImg.naturalWidth > 0) {
+            const maxWidth = 40;
+            const maxHeight = 25;
+            
+            // Use actual image dimensions if available
+            const imgWidth = tempImg.naturalWidth || tempImg.width || 200;
+            const imgHeight = tempImg.naturalHeight || tempImg.height || 100;
+            const aspectRatio = imgWidth / imgHeight;
+            
+            let logoWidth, logoHeight;
+            
+            if (aspectRatio > maxWidth / maxHeight) {
+              // Logo is wider, scale by width
+              logoWidth = maxWidth;
+              logoHeight = maxWidth / aspectRatio;
+            } else {
+              // Logo is taller, scale by height
+              logoHeight = maxHeight;
+              logoWidth = maxHeight * aspectRatio;
+            }
+            
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 20, logoWidth, logoHeight);
+          } else {
+            // Fallback with reasonable proportions
+            doc.addImage(companyData.companyLogo, 'JPEG', 15, 20, 40, 20);
+          }
+        } catch (error) {
+          console.log('Logo could not be added to PDF');
+        }
+      }
+      
+      // Company Information (positioned to avoid overlap)
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(24);
+      doc.setFontSize(12); // Reduced font size
       doc.setFont('helvetica', 'bold');
-      doc.text('PAYSLIP', pageWidth / 2, 25, { align: 'center' });
       
-      doc.setFontSize(12);
+      if (companyData.companyName) {
+        doc.text(companyData.companyName, companyData.companyLogo ? 60 : 20, 30); // Adjusted position
+      }
+      
+      doc.setFontSize(8); // Reduced font size
       doc.setFont('helvetica', 'normal');
-      doc.text(`Pay Period: ${payPeriod}`, pageWidth / 2, 40, { align: 'center' });
       
-      yPosition = 60;
+      let companyInfoY = companyData.companyName ? 36 : 30; // Adjusted starting position
+      if (companyData.companyAddress) {
+        doc.text(companyData.companyAddress, companyData.companyLogo ? 60 : 20, companyInfoY);
+        companyInfoY += 4; // Reduced spacing
+      }
+      if (companyData.companyPhone) {
+        doc.text(`Tel: ${companyData.companyPhone}`, companyData.companyLogo ? 60 : 20, companyInfoY);
+        companyInfoY += 4;
+      }
+      if (companyData.companyEmail) {
+        doc.text(`Email: ${companyData.companyEmail}`, companyData.companyLogo ? 60 : 20, companyInfoY);
+      }
+      
+      // PAYSLIP Title (positioned on the right side to avoid overlap)
+      doc.setFontSize(18); // Reduced font size
+      doc.setFont('helvetica', 'bold');
+      doc.text('PAYSLIP', pageWidth - 20, 30, { align: 'right' });
+      
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Pay Period: ${payPeriod}`, pageWidth - 20, 40, { align: 'right' });
+      
+      yPosition = 100; // Increased starting position
       
       // Employee Details
       doc.setTextColor(0, 0, 0);
@@ -1168,32 +1421,62 @@ const SimplePAYECalculator = () => {
     const payPeriod = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     
     return (
-      <div className="bg-white p-8 rounded-lg border border-gray-300 max-w-2xl mx-auto" id="payslip-preview">
-        {/* Header */}
-        <div className="text-center mb-6 border-b-2 border-[#0F2F4E] pb-4">
-          <h2 className="text-2xl font-bold text-[#0F2F4E]">PAYSLIP</h2>
-          <p className="text-sm text-gray-600">Pay Period: {payPeriod}</p>
+      <div className="bg-white p-8 rounded-lg border border-gray-300 w-full max-w-4xl mx-auto print:max-w-full print:border-0 print:rounded-none print:shadow-none print:p-6" id="payslip-preview" style={{minWidth: '800px', margin: '0 auto'}}>
+        {/* Header with Company Branding */}
+        <div className="mb-6 border-b-2 border-[#0F2F4E] pb-4 print:border-b print:pb-4">
+          {/* Company Information */}
+          {(companyData.companyName || companyData.companyLogo) && (
+            <div className="flex items-center gap-4 mb-4 print:mb-4">
+              {companyData.companyLogo && (
+                <div className="w-16 h-16 flex-shrink-0 print:w-20 print:h-20">
+                  <img 
+                    src={companyData.companyLogo} 
+                    alt="Company Logo" 
+                    className="w-full h-full object-contain print:object-contain"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                {companyData.companyName && (
+                  <h3 className="text-lg font-bold text-[#0F2F4E] print:text-xl print:font-bold">{companyData.companyName}</h3>
+                )}
+                <div className="text-sm text-gray-600 print:text-sm print:text-gray-800">
+                  {companyData.companyAddress && <p className="print:mb-1">{companyData.companyAddress}</p>}
+                  <div className="flex gap-4 print:flex print:gap-4">
+                    {companyData.companyPhone && <span>Tel: {companyData.companyPhone}</span>}
+                    {companyData.companyEmail && <span>Email: {companyData.companyEmail}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Payslip Title */}
+          <div className="text-center print:text-center">
+            <h2 className="text-2xl font-bold text-[#0F2F4E] print:text-3xl print:font-bold">PAYSLIP</h2>
+            <p className="text-sm text-gray-600 print:text-base print:text-gray-800">Pay Period: {payPeriod}</p>
+          </div>
         </div>
         
         {/* Employee Details */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <p><strong>Employee Name:</strong> {formData.employeeName || 'N/A'}</p>
-            <p><strong>Employee Number:</strong> {formData.employeeNumber || 'N/A'}</p>
+        <div className="grid grid-cols-2 gap-4 mb-6 print:grid-cols-2 print:gap-6 print:mb-6">
+          <div className="print:text-sm">
+            <p className="print:mb-2"><strong>Employee Name:</strong> {formData.employeeName || 'N/A'}</p>
+            <p className="print:mb-2"><strong>Employee Number:</strong> {formData.employeeNumber || 'N/A'}</p>
           </div>
-          <div>
-            <p><strong>Department:</strong> {formData.department || 'N/A'}</p>
-            <p><strong>Position:</strong> {formData.position || 'N/A'}</p>
+          <div className="print:text-sm">
+            <p className="print:mb-2"><strong>Department:</strong> {formData.department || 'N/A'}</p>
+            <p className="print:mb-2"><strong>Position:</strong> {formData.position || 'N/A'}</p>
           </div>
         </div>
         
         {/* Salary Breakdown */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3 border-b border-gray-200 pb-1">
+        <div className="mb-8 print:mb-8">
+          <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3 border-b border-gray-200 pb-1 print:text-xl print:font-semibold print:mb-4 print:border-b print:border-gray-400 print:pb-2">
             EARNINGS & DEDUCTIONS
           </h3>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-4 print:grid-cols-3 print:gap-6">
             {/* Earnings */}
             <div>
               <h4 className="font-medium text-gray-700 mb-2">EARNINGS</h4>
@@ -1485,6 +1768,57 @@ const SimplePAYECalculator = () => {
               placeholder="+263 xxx xxx xxx"
               className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
             />
+          </div>
+          
+          {/* Company Logo Upload */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+              Company Logo
+            </label>
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setCompanyData(prev => ({ 
+                          ...prev, 
+                          companyLogo: event.target.result,
+                          logoFileName: file.name
+                        }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#1ED760] file:text-white hover:file:bg-[#1ED760]/90"
+                />
+              </div>
+              
+              {companyData.companyLogo && (
+                <div className="flex items-center gap-2">
+                  <div className="w-16 h-16 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <img 
+                      src={companyData.companyLogo} 
+                      alt="Company Logo Preview" 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setCompanyData(prev => ({ ...prev, companyLogo: null, logoFileName: null }))}
+                    className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Upload your company logo (PNG, JPG, GIF). Recommended size: 200x100px or similar aspect ratio.
+            </p>
           </div>
         </div>
         
@@ -2547,17 +2881,39 @@ const SimplePAYECalculator = () => {
             
             {showPayslip && (
               <div className="mt-6">
-                {generatePayslip()}
+                <div className="flex justify-center">
+                  {generatePayslip()}
+                </div>
                 
-                <div className="text-center mt-4 space-x-3">
+                <div className="flex justify-center items-center gap-3 mt-6 print:hidden">
                   <button
                     onClick={generatePayslipPDF}
-                    className="px-6 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90 transition flex items-center gap-2 mx-auto"
+                    className="px-6 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90 transition flex items-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Download PDF Payslip
+                    Download Beautiful PDF
+                  </button>
+                  
+                  <button
+                    onClick={() => window.print()}
+                    className="px-6 py-2 bg-[#0F2F4E] text-white rounded-lg hover:bg-[#0F2F4E]/90 transition flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    Print Payslip
+                  </button>
+                  
+                  <button
+                    onClick={generateOriginalPayslipPDF}
+                    className="px-4 py-2.5 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition text-sm flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Classic PDF (Fallback)
                   </button>
                 </div>
               </div>
