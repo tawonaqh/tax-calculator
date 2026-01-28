@@ -58,7 +58,9 @@ const SimplePAYECalculator = () => {
     bonus: '',
     overtime: '',
     // Employer rates
-    apwcRate: '1.0' // Default APWC rate (1.0%)
+    apwcRate: '1.0', // Default APWC rate (1.0%)
+    // Bonus tracking
+    cumulativeBonusYTD: '' // Year-to-date bonus for proper $700 threshold calculation
   });
   
   const [employees, setEmployees] = useState([]);
@@ -69,6 +71,205 @@ const SimplePAYECalculator = () => {
   const [showReports, setShowReports] = useState(false);
   const [isGeneratingPayslips, setIsGeneratingPayslips] = useState(false);
   const [payslipProgress, setPayslipProgress] = useState(0);
+  const [companyData, setCompanyData] = useState({
+    companyName: '',
+    companyAddress: '',
+    companyPhone: '',
+    companyEmail: '',
+    companyLogo: null
+  });
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [payrollHistory, setPayrollHistory] = useState([
+    // Sample data for demonstration
+    {
+      month: 10,
+      year: 2024,
+      payrollMode: 'batch',
+      timestamp: '2024-10-31T10:00:00.000Z',
+      data: {
+        employees: 5,
+        totalGross: 12500,
+        totalNet: 9875,
+        totalPAYE: 1850,
+        totalNSSA: 775,
+        totalEmployerCost: 13650,
+        employeeDetails: [
+          { name: 'John Doe', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Jane Smith', grossSalary: 2000, netSalary: 1580, paye: 270, nssa: 150 },
+          { name: 'Mike Johnson', grossSalary: 3000, netSalary: 2370, paye: 470, nssa: 160 },
+          { name: 'Sarah Wilson', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'David Brown', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 }
+        ]
+      }
+    },
+    {
+      month: 11,
+      year: 2024,
+      payrollMode: 'batch',
+      timestamp: '2024-11-30T10:00:00.000Z',
+      data: {
+        employees: 6,
+        totalGross: 15000,
+        totalNet: 11850,
+        totalPAYE: 2220,
+        totalNSSA: 930,
+        totalEmployerCost: 16380,
+        employeeDetails: [
+          { name: 'John Doe', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Jane Smith', grossSalary: 2000, netSalary: 1580, paye: 270, nssa: 150 },
+          { name: 'Mike Johnson', grossSalary: 3000, netSalary: 2370, paye: 470, nssa: 160 },
+          { name: 'Sarah Wilson', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'David Brown', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Lisa Garcia', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 }
+        ]
+      }
+    },
+    {
+      month: 12,
+      year: 2024,
+      payrollMode: 'batch',
+      timestamp: '2024-12-31T10:00:00.000Z',
+      data: {
+        employees: 7,
+        totalGross: 17500,
+        totalNet: 13825,
+        totalPAYE: 2590,
+        totalNSSA: 1085,
+        totalEmployerCost: 19110,
+        employeeDetails: [
+          { name: 'John Doe', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Jane Smith', grossSalary: 2000, netSalary: 1580, paye: 270, nssa: 150 },
+          { name: 'Mike Johnson', grossSalary: 3000, netSalary: 2370, paye: 470, nssa: 160 },
+          { name: 'Sarah Wilson', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'David Brown', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Lisa Garcia', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 },
+          { name: 'Tom Anderson', grossSalary: 2500, netSalary: 1975, paye: 370, nssa: 155 }
+        ]
+      }
+    }
+  ]);
+  const [showHistoryView, setShowHistoryView] = useState(false);
+
+  // Roll forward to next month functionality
+  const rollForwardToNextMonth = () => {
+    if (payrollMode === 'batch' && batchResults.length === 0) {
+      alert('No payroll data to roll forward. Please calculate payroll first.');
+      return;
+    }
+
+    // Save current month's payroll data to history before rolling forward
+    const currentPayrollData = {
+      month: currentMonth,
+      year: currentYear,
+      payrollMode,
+      timestamp: new Date().toISOString(),
+      data: payrollMode === 'batch' ? {
+        employees: batchResults.length,
+        totalGross: batchResults.reduce((sum, emp) => sum + (emp.calculation.grossSalary || 0), 0),
+        totalNet: batchResults.reduce((sum, emp) => sum + (emp.calculation.netSalary || 0), 0),
+        totalPAYE: batchResults.reduce((sum, emp) => sum + (emp.calculation.paye || 0), 0),
+        totalNSSA: batchResults.reduce((sum, emp) => sum + (emp.calculation.nssaEmployee || 0), 0),
+        totalEmployerCost: batchResults.reduce((sum, emp) => sum + (emp.calculation.totalCostToEmployer || 0), 0),
+        employeeDetails: batchResults.map(emp => ({
+          name: emp.employeeName,
+          grossSalary: emp.calculation.grossSalary,
+          netSalary: emp.calculation.netSalary,
+          paye: emp.calculation.paye,
+          nssa: emp.calculation.nssaEmployee
+        }))
+      } : results ? {
+        employees: 1,
+        totalGross: results.grossSalary || 0,
+        totalNet: results.netSalary || 0,
+        totalPAYE: results.paye || 0,
+        totalNSSA: results.nssaEmployee || 0,
+        totalEmployerCost: results.totalCostToEmployer || 0,
+        employeeDetails: [{
+          name: formData.employeeName || 'Single Employee',
+          grossSalary: results.grossSalary,
+          netSalary: results.netSalary,
+          paye: results.paye,
+          nssa: results.nssaEmployee
+        }]
+      } : null
+    };
+
+    // Only add to history if there's actual payroll data
+    if (currentPayrollData.data) {
+      setPayrollHistory(prev => [...prev, currentPayrollData]);
+    }
+
+    // Update month/year
+    let newMonth = currentMonth + 1;
+    let newYear = currentYear;
+    
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear = currentYear + 1;
+      
+      // Reset YTD bonuses for new year
+      if (payrollMode === 'batch') {
+        const updatedEmployees = employees.map(emp => ({
+          ...emp,
+          cumulativeBonusYTD: 0 // Reset for new year
+        }));
+        setEmployees(updatedEmployees);
+      }
+      setFormData(prev => ({ ...prev, cumulativeBonusYTD: '' }));
+    } else {
+      // Update YTD bonuses for continuing year
+      if (payrollMode === 'batch' && batchResults.length > 0) {
+        const updatedEmployees = employees.map(emp => {
+          const empResult = batchResults.find(result => result.id === emp.id);
+          return {
+            ...emp,
+            cumulativeBonusYTD: empResult ? empResult.calculation.newCumulativeBonusYTD : emp.cumulativeBonusYTD
+          };
+        });
+        setEmployees(updatedEmployees);
+      }
+      
+      // Update single employee YTD if results exist
+      if (payrollMode === 'single' && results && results.newCumulativeBonusYTD) {
+        setFormData(prev => ({ 
+          ...prev, 
+          cumulativeBonusYTD: results.newCumulativeBonusYTD.toString()
+        }));
+      }
+    }
+    
+    setCurrentMonth(newMonth);
+    setCurrentYear(newYear);
+    
+    // Clear current month's salary data but keep employee details and YTD
+    if (payrollMode === 'single') {
+      setFormData(prev => ({
+        ...prev,
+        grossSalary: '',
+        netSalary: '',
+        livingAllowance: '',
+        medicalAllowance: '',
+        transportAllowance: '',
+        housingAllowance: '',
+        commission: '',
+        bonus: '',
+        overtime: ''
+      }));
+      setResults(null);
+    } else {
+      // Clear batch results but keep employee list with updated YTD
+      setBatchResults([]);
+    }
+    
+    alert(`Rolled forward to ${getMonthName(newMonth)} ${newYear}. ${newYear > currentYear ? 'YTD bonuses reset for new year.' : 'YTD bonuses updated.'}`);
+  };
+
+  const getMonthName = (month) => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[month - 1];
+  };
 
   // Calculate PAYE using Non-FDS method (monthly basis)
   // Uses the deduction method: Tax = (Taxable Income × Rate) - Deduction
@@ -103,27 +304,44 @@ const SimplePAYECalculator = () => {
     };
   };
 
-  // Calculate taxable bonus (first $700 total is tax-free)
-  const calculateTaxableBonus = (bonusAmount, employeeTopTaxRate = 0.40) => {
-    const totalBonus = parseFloat(bonusAmount) || 0;
+  // Calculate taxable bonus (first $700 cumulative in year is tax-free)
+  const calculateTaxableBonus = (currentBonus, cumulativeBonusYTD = 0, employeeTopTaxRate = 0.40) => {
+    const currentBonusAmount = parseFloat(currentBonus) || 0;
+    const previousBonusYTD = parseFloat(cumulativeBonusYTD) || 0;
+    const totalBonusYTD = previousBonusYTD + currentBonusAmount;
     
-    if (totalBonus <= TAX_CONFIG.bonusThreshold) {
-      // Entire bonus is tax-free (under $700 threshold)
+    // If total YTD bonus is still under $700, entire current bonus is tax-free
+    if (totalBonusYTD <= TAX_CONFIG.bonusThreshold) {
       return {
-        taxFreeBonus: totalBonus,
+        taxFreeBonus: currentBonusAmount,
         taxableBonus: 0,
-        bonusTax: 0
+        bonusTax: 0,
+        newCumulativeYTD: totalBonusYTD
       };
     }
     
-    // Amount above $700 is taxable at top rate
-    const taxableAmount = totalBonus - TAX_CONFIG.bonusThreshold;
-    const bonusTax = taxableAmount * employeeTopTaxRate;
+    // If previous YTD already exceeded $700, entire current bonus is taxable
+    if (previousBonusYTD >= TAX_CONFIG.bonusThreshold) {
+      const bonusTax = currentBonusAmount * employeeTopTaxRate;
+      return {
+        taxFreeBonus: 0,
+        taxableBonus: currentBonusAmount,
+        bonusTax: bonusTax,
+        newCumulativeYTD: totalBonusYTD
+      };
+    }
+    
+    // Partial taxation: some portion is tax-free, remainder is taxable
+    const remainingTaxFreeAmount = TAX_CONFIG.bonusThreshold - previousBonusYTD;
+    const taxFreePortionThisMonth = Math.min(currentBonusAmount, remainingTaxFreeAmount);
+    const taxablePortionThisMonth = currentBonusAmount - taxFreePortionThisMonth;
+    const bonusTax = taxablePortionThisMonth * employeeTopTaxRate;
     
     return {
-      taxFreeBonus: TAX_CONFIG.bonusThreshold, // First $700 is tax-free
-      taxableBonus: taxableAmount,
-      bonusTax: bonusTax
+      taxFreeBonus: taxFreePortionThisMonth,
+      taxableBonus: taxablePortionThisMonth,
+      bonusTax: bonusTax,
+      newCumulativeYTD: totalBonusYTD
     };
   };
 
@@ -150,12 +368,12 @@ const SimplePAYECalculator = () => {
   };
 
   // Enhanced gross method calculation with allowances breakdown
-  const calculateFromGross = (basicSalary, allowances = {}, apwcRate = 1.0) => {
+  const calculateFromGross = (basicSalary, allowances = {}, apwcRate = 1.0, cumulativeBonusYTD = 0) => {
     const totalGross = calculateTotalGross(basicSalary, allowances);
     
-    // Calculate bonus tax separately
+    // Calculate bonus tax with cumulative YTD tracking
     const bonusAmount = parseFloat(allowances.bonus || 0);
-    const bonusCalc = calculateTaxableBonus(bonusAmount);
+    const bonusCalc = calculateTaxableBonus(bonusAmount, cumulativeBonusYTD);
     
     // NSSA calculations
     const nssa = calculateNSSA(totalGross);
@@ -215,7 +433,8 @@ const SimplePAYECalculator = () => {
       taxableGrossForPAYE,
       taxFreeBonus: bonusCalc.taxFreeBonus,
       taxableBonus: bonusCalc.taxableBonus,
-      bonusTax: bonusCalc.bonusTax
+      bonusTax: bonusCalc.bonusTax,
+      newCumulativeBonusYTD: bonusCalc.newCumulativeYTD
     };
   };
 
@@ -281,7 +500,8 @@ const SimplePAYECalculator = () => {
       basicSalary,
       allowances,
       apwcRate: parseFloat(formData.apwcRate),
-      calculation: calculateFromGross(basicSalary, allowances, parseFloat(formData.apwcRate))
+      cumulativeBonusYTD: parseFloat(formData.cumulativeBonusYTD || 0),
+      calculation: calculateFromGross(basicSalary, allowances, parseFloat(formData.apwcRate), parseFloat(formData.cumulativeBonusYTD || 0))
     };
 
     setEmployees(prev => [...prev, employeeData]);
@@ -301,7 +521,8 @@ const SimplePAYECalculator = () => {
       commission: '',
       bonus: '',
       overtime: '',
-      apwcRate: prev.apwcRate // Keep the same APWC rate for consistency
+      apwcRate: prev.apwcRate, // Keep the same APWC rate for consistency
+      cumulativeBonusYTD: '' // Reset for next employee
     }));
   };
 
@@ -319,7 +540,7 @@ const SimplePAYECalculator = () => {
 
     const batchCalcs = employees.map(emp => ({
       ...emp,
-      calculation: calculateFromGross(emp.basicSalary, emp.allowances, emp.apwcRate || 1.0)
+      calculation: calculateFromGross(emp.basicSalary, emp.allowances, emp.apwcRate || 1.0, emp.cumulativeBonusYTD || 0)
     }));
 
     setBatchResults(batchCalcs);
@@ -351,7 +572,7 @@ const SimplePAYECalculator = () => {
     };
 
     const result = calculationMethod === 'gross' 
-      ? calculateFromGross(inputValue, allowances, parseFloat(formData.apwcRate))
+      ? calculateFromGross(inputValue, allowances, parseFloat(formData.apwcRate), parseFloat(formData.cumulativeBonusYTD || 0))
       : calculateFromNet(inputValue, parseFloat(formData.apwcRate));
     
     setResults(result);
@@ -1136,7 +1357,7 @@ const SimplePAYECalculator = () => {
           <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto mb-2">
             Comprehensive payroll system with allowances, batch processing, and detailed reports
           </p>
-          <p className="text-lg text-[#0F2F4E]/60 max-w-2xl mx-auto">
+          <p className="text-[#0F2F4E]/60 max-w-2xl mx-auto">
             ✅ Realistic PAYE Computations | ✅ Allowances & Benefits | ✅ Batch Payroll (20 employees) | ✅ NSSA, PAYE & Summary Reports
           </p>
         </div>
@@ -1208,6 +1429,357 @@ const SimplePAYECalculator = () => {
           </div>
         )}
       </div>
+
+      {/* Company Data Section */}
+      <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
+        <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">Company Information (Optional)</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+              Company Name
+            </label>
+            <input
+              type="text"
+              value={companyData.companyName}
+              onChange={(e) => setCompanyData(prev => ({ ...prev, companyName: e.target.value }))}
+              placeholder="Your Company Name"
+              className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+              Company Email
+            </label>
+            <input
+              type="email"
+              value={companyData.companyEmail}
+              onChange={(e) => setCompanyData(prev => ({ ...prev, companyEmail: e.target.value }))}
+              placeholder="company@example.com"
+              className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+              Company Address
+            </label>
+            <input
+              type="text"
+              value={companyData.companyAddress}
+              onChange={(e) => setCompanyData(prev => ({ ...prev, companyAddress: e.target.value }))}
+              placeholder="Company Address"
+              className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-[#0F2F4E] mb-1">
+              Company Phone
+            </label>
+            <input
+              type="text"
+              value={companyData.companyPhone}
+              onChange={(e) => setCompanyData(prev => ({ ...prev, companyPhone: e.target.value }))}
+              placeholder="+263 xxx xxx xxx"
+              className="w-full p-3 rounded border border-gray-300 focus:border-[#1ED760] outline-none"
+            />
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Company Branding:</strong> This information will appear on all payslips and reports generated by the system.
+          </p>
+        </div>
+      </div>
+
+      {/* Payroll Period & Roll Forward Section */}
+      <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-[#0F2F4E]">Payroll Period</h3>
+            <p className="text-sm text-gray-600">Current processing month</p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-[#0F2F4E]">
+              {getMonthName(currentMonth)} {currentYear}
+            </div>
+            <div className="text-sm text-gray-500">
+              Pay Period: Month {currentMonth}
+            </div>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Current Status */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="font-medium text-[#0F2F4E] mb-3">Current Status</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Processing Month:</span>
+                <span className="font-medium">{getMonthName(currentMonth)} {currentYear}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Payroll Mode:</span>
+                <span className="font-medium capitalize">{payrollMode}</span>
+              </div>
+              {payrollMode === 'batch' && (
+                <div className="flex justify-between">
+                  <span>Employees Added:</span>
+                  <span className="font-medium">{employees.length}/20</span>
+                </div>
+              )}
+              {payrollMode === 'batch' && batchResults.length > 0 && (
+                <div className="flex justify-between">
+                  <span>Payroll Calculated:</span>
+                  <span className="font-medium text-green-600">✓ Yes</span>
+                </div>
+              )}
+              {payrollMode === 'single' && results && (
+                <div className="flex justify-between">
+                  <span>Calculation Done:</span>
+                  <span className="font-medium text-green-600">✓ Yes</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Roll Forward Action */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+            <h4 className="font-medium text-[#0F2F4E] mb-3">Roll Forward to Next Month</h4>
+            <p className="text-sm text-gray-600 mb-4">
+              Move to the next payroll period. This will:
+            </p>
+            <ul className="text-xs text-gray-600 space-y-1 mb-4">
+              <li>• Update YTD bonus amounts</li>
+              <li>• Clear current month salary data</li>
+              <li>• Preserve employee information</li>
+              <li>• Reset YTD if rolling to new year</li>
+              <li>• Save current payroll to history</li>
+            </ul>
+            
+            <button
+              onClick={rollForwardToNextMonth}
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Roll Forward to {getMonthName(currentMonth === 12 ? 1 : currentMonth + 1)} {currentMonth === 12 ? currentYear + 1 : currentYear}
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-4 p-3 bg-green-50 rounded border border-green-200">
+          <p className="text-sm text-green-800">
+            <strong>Payroll Continuity:</strong> Use "Roll Forward" after completing each month's payroll to maintain accurate YTD bonus tracking and seamless month-to-month processing.
+          </p>
+        </div>
+      </div>
+
+      {/* Month-to-Month Payroll History Visualization */}
+      {payrollHistory.length > 0 && (
+        <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-[#0F2F4E]">Payroll History & Trends</h3>
+              <p className="text-sm text-gray-600">Month-to-month payroll visualization</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowHistoryView(!showHistoryView)}
+                className="px-4 py-2 bg-[#0F2F4E] text-white rounded-lg hover:bg-[#0F2F4E]/90 transition flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                {showHistoryView ? 'Hide History' : 'View History'}
+              </button>
+              <button
+                onClick={() => setPayrollHistory([])}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm"
+              >
+                Clear History
+              </button>
+              <button
+                onClick={() => setPayrollHistory([
+                  {
+                    month: 10, year: 2024, payrollMode: 'batch', timestamp: '2024-10-31T10:00:00.000Z',
+                    data: { employees: 5, totalGross: 12500, totalNet: 9875, totalPAYE: 1850, totalNSSA: 775, totalEmployerCost: 13650 }
+                  },
+                  {
+                    month: 11, year: 2024, payrollMode: 'batch', timestamp: '2024-11-30T10:00:00.000Z',
+                    data: { employees: 6, totalGross: 15000, totalNet: 11850, totalPAYE: 2220, totalNSSA: 930, totalEmployerCost: 16380 }
+                  },
+                  {
+                    month: 12, year: 2024, payrollMode: 'batch', timestamp: '2024-12-31T10:00:00.000Z',
+                    data: { employees: 7, totalGross: 17500, totalNet: 13825, totalPAYE: 2590, totalNSSA: 1085, totalEmployerCost: 19110 }
+                  }
+                ])}
+                className="px-4 py-2 bg-[#FFD700] text-[#0F2F4E] rounded-lg hover:bg-[#FFD700]/90 transition text-sm font-medium"
+              >
+                Load Sample Data
+              </button>
+            </div>
+          </div>
+
+          {/* History Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-[#0F2F4E] to-[#0F2F4E]/80 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Total Months</h4>
+              <p className="text-2xl font-bold">{payrollHistory.length}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#1ED760] to-[#1ED760]/80 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Avg Monthly Gross</h4>
+              <p className="text-xl font-bold">
+                {formatCurrency(payrollHistory.reduce((sum, month) => sum + (month.data?.totalGross || 0), 0) / payrollHistory.length)}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#FFD700] to-[#FFD700]/80 p-4 rounded-lg text-[#0F2F4E]">
+              <h4 className="text-sm opacity-90">Avg Monthly Net</h4>
+              <p className="text-xl font-bold">
+                {formatCurrency(payrollHistory.reduce((sum, month) => sum + (month.data?.totalNet || 0), 0) / payrollHistory.length)}
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/80 to-[#0F2F4E]/60 p-4 rounded-lg text-white">
+              <h4 className="text-sm opacity-90">Avg Employees</h4>
+              <p className="text-2xl font-bold">
+                {Math.round(payrollHistory.reduce((sum, month) => sum + (month.data?.employees || 0), 0) / payrollHistory.length)}
+              </p>
+            </div>
+          </div>
+
+          {showHistoryView && (
+            <div className="space-y-6">
+              {/* Monthly Trend Chart (Simple Bar Chart) */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-[#0F2F4E]/10">
+                <h4 className="font-medium text-[#0F2F4E] mb-4">Monthly Payroll Trends</h4>
+                <div className="space-y-3">
+                  {payrollHistory.map((monthData, index) => {
+                    const maxValue = Math.max(...payrollHistory.map(m => m.data?.totalGross || 0));
+                    const barWidth = ((monthData.data?.totalGross || 0) / maxValue) * 100;
+                    
+                    return (
+                      <div key={index} className="flex items-center gap-4">
+                        <div className="w-20 text-sm font-medium text-[#0F2F4E]">
+                          {getMonthName(monthData.month)} {monthData.year}
+                        </div>
+                        <div className="flex-1 bg-gray-200 rounded-full h-6 relative">
+                          <div 
+                            className="bg-gradient-to-r from-[#1ED760] to-[#1ED760]/80 h-6 rounded-full flex items-center justify-end pr-2"
+                            style={{ width: `${Math.max(barWidth, 5)}%` }}
+                          >
+                            <span className="text-white text-xs font-medium">
+                              {formatCurrency(monthData.data?.totalGross || 0)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-16 text-sm text-[#0F2F4E]/70">
+                          {monthData.data?.employees || 0} emp
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Detailed History Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-[#0F2F4E]/5 border-b border-[#0F2F4E]/10">
+                    <tr>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Period</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Mode</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Employees</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Total Gross</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Total Net</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Total PAYE</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Employer Cost</th>
+                      <th className="p-3 text-left font-medium text-[#0F2F4E]">Date Processed</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payrollHistory.map((monthData, index) => (
+                      <tr key={index} className="border-t border-gray-200 hover:bg-[#0F2F4E]/5 transition-colors">
+                        <td className="p-3 font-medium text-[#0F2F4E]">
+                          {getMonthName(monthData.month)} {monthData.year}
+                        </td>
+                        <td className="p-3 capitalize text-[#0F2F4E]/80">{monthData.payrollMode}</td>
+                        <td className="p-3 text-[#0F2F4E]/80">{monthData.data?.employees || 0}</td>
+                        <td className="p-3 font-medium text-[#0F2F4E]">{formatCurrency(monthData.data?.totalGross || 0)}</td>
+                        <td className="p-3 font-medium text-[#1ED760]">{formatCurrency(monthData.data?.totalNet || 0)}</td>
+                        <td className="p-3 font-medium text-[#FFD700]">{formatCurrency(monthData.data?.totalPAYE || 0)}</td>
+                        <td className="p-3 font-medium text-[#0F2F4E]">{formatCurrency(monthData.data?.totalEmployerCost || 0)}</td>
+                        <td className="p-3 text-[#0F2F4E]/60 text-xs">
+                          {new Date(monthData.timestamp).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Trend Analysis */}
+              <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-4 rounded-lg border border-[#0F2F4E]/20">
+                <h4 className="font-medium text-[#0F2F4E] mb-3">Trend Analysis</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <h5 className="font-medium text-[#0F2F4E] mb-2">Growth Trends</h5>
+                    {payrollHistory.length >= 2 && (
+                      <div className="space-y-1">
+                        {(() => {
+                          const latest = payrollHistory[payrollHistory.length - 1];
+                          const previous = payrollHistory[payrollHistory.length - 2];
+                          const grossChange = ((latest.data?.totalGross || 0) - (previous.data?.totalGross || 0)) / (previous.data?.totalGross || 1) * 100;
+                          const empChange = (latest.data?.employees || 0) - (previous.data?.employees || 0);
+                          
+                          return (
+                            <>
+                              <p className={`flex items-center gap-1 ${grossChange >= 0 ? 'text-[#1ED760]' : 'text-red-600'}`}>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={grossChange >= 0 ? "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" : "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"} />
+                                </svg>
+                                Gross: {grossChange >= 0 ? '+' : ''}{grossChange.toFixed(1)}%
+                              </p>
+                              <p className={`flex items-center gap-1 ${empChange >= 0 ? 'text-[#1ED760]' : 'text-red-600'}`}>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Employees: {empChange >= 0 ? '+' : ''}{empChange}
+                              </p>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-[#0F2F4E] mb-2">Averages</h5>
+                    <div className="space-y-1 text-[#0F2F4E]/80">
+                      <p>Avg Gross: {formatCurrency(payrollHistory.reduce((sum, m) => sum + (m.data?.totalGross || 0), 0) / payrollHistory.length)}</p>
+                      <p>Avg PAYE: {formatCurrency(payrollHistory.reduce((sum, m) => sum + (m.data?.totalPAYE || 0), 0) / payrollHistory.length)}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-[#0F2F4E] mb-2">Totals YTD</h5>
+                    <div className="space-y-1 text-[#0F2F4E]/80">
+                      <p>Total Paid: <span className="font-medium text-[#1ED760]">{formatCurrency(payrollHistory.reduce((sum, m) => sum + (m.data?.totalNet || 0), 0))}</span></p>
+                      <p>Total Tax: <span className="font-medium text-[#FFD700]">{formatCurrency(payrollHistory.reduce((sum, m) => sum + (m.data?.totalPAYE || 0), 0))}</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Method Selection - Only show for single mode */}
       {payrollMode === 'single' && (
@@ -1405,7 +1977,7 @@ const SimplePAYECalculator = () => {
                 
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Bonus
+                    Bonus (This Month)
                   </label>
                   <input
                     type="number"
@@ -1414,6 +1986,20 @@ const SimplePAYECalculator = () => {
                     placeholder="0.00"
                     className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
                   />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Previous Bonus YTD
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.cumulativeBonusYTD}
+                    onChange={(e) => handleInputChange('cumulativeBonusYTD', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full p-2 rounded border border-gray-300 focus:border-[#1ED760] outline-none text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Bonus paid earlier this year</p>
                 </div>
                 
                 <div className="col-span-2">
@@ -1440,7 +2026,7 @@ const SimplePAYECalculator = () => {
                       </svg>
                     </div>
                     <p className="text-xs text-amber-800 font-medium">
-                      Bonus threshold: First $700 total is tax-free. Amount above $700 taxed at employee's top rate.
+                      Bonus threshold: First $700 cumulative per year is tax-free. Amount above $700 YTD taxed at employee's top rate.
                     </p>
                   </div>
                 </div>

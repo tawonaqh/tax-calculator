@@ -416,8 +416,8 @@ const Contact = () => {
                     exit={{ opacity: 0, y: -10 }}
                     className={`mt-6 p-4 rounded-lg border ${
                       status.type === 'success' 
-                        ? 'bg-green-50 border-green-200 text-green-700' 
-                        : 'bg-red-50 border-red-200 text-red-700'
+                        ? 'bg-[#1ED760]/10 border-[#1ED760]/30 text-[#1ED760]' 
+                        : 'bg-[#0F2F4E]/5 border-[#0F2F4E]/20 text-[#0F2F4E]'
                     }`}
                   >
                     <div className="flex items-center gap-3">

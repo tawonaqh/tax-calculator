@@ -747,7 +747,7 @@ const CurrencyMixer = ({ scenario, onUpdate, disabled = false }) => {
           </button>
           <button
             onClick={() => applyPreset('usd-heavy')}
-            className="px-3 py-2 text-xs bg-green-50 border border-green-200 text-green-800 rounded-lg hover:bg-green-100"
+            className="px-3 py-2 text-xs bg-[#1ED760]/10 border border-[#1ED760]/30 text-[#1ED760] rounded-lg hover:bg-[#1ED760]/20"
             disabled={disabled}
           >
             USD Heavy (90%)

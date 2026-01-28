@@ -564,9 +564,9 @@ const PAYETaxCalculator = () => {
                           placeholder="e.g., 20 for 20%"
                           type="text"
                         />
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                          <h4 className="font-medium text-blue-800 mb-2">Business Benefits Include:</h4>
-                          <ul className="text-sm text-blue-700 space-y-1">
+                        <div className="p-4 bg-[#0F2F4E]/5 rounded-lg border border-[#0F2F4E]/20">
+                          <h4 className="font-medium text-[#0F2F4E] mb-2">Business Benefits Include:</h4>
+                          <ul className="text-sm text-[#0F2F4E]/80 space-y-1">
                             <li>• Housing allowances</li>
                             <li>• Company vehicles</li>
                             <li>• Education allowances</li>
@@ -635,9 +635,9 @@ const PAYETaxCalculator = () => {
                           placeholder="e.g., 5 for 5%"
                           type="text"
                         />
-                        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                          <h4 className="font-medium text-green-800 mb-2">Employer Deductions Include:</h4>
-                          <ul className="text-sm text-green-700 space-y-1">
+                        <div className="p-4 bg-[#1ED760]/5 rounded-lg border border-[#1ED760]/20">
+                          <h4 className="font-medium text-[#1ED760] mb-2">Employer Deductions Include:</h4>
+                          <ul className="text-sm text-[#1ED760]/80 space-y-1">
                             <li>• NSSA employer contributions</li>
                             <li>• Pension fund employer contributions</li>
                             <li>• Medical aid employer contributions</li>
@@ -679,9 +679,9 @@ const PAYETaxCalculator = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+                  className="mt-6 p-4 bg-[#0F2F4E]/5 border border-[#0F2F4E]/20 rounded-lg"
                 >
-                  <p className="text-red-700 text-center">{error}</p>
+                  <p className="text-[#0F2F4E] text-center">{error}</p>
                 </motion.div>
               )}
 
@@ -902,8 +902,8 @@ const PAYETaxCalculator = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Current Scenario Summary */}
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <h4 className="text-lg font-semibold text-blue-900 mb-4">Current Scenario Summary</h4>
+                    <div className="bg-[#0F2F4E]/5 p-4 rounded-lg border border-[#0F2F4E]/20">
+                      <h4 className="text-lg font-semibold text-[#0F2F4E] mb-4">Current Scenario Summary</h4>
                       <div className="space-y-3">
                         <div className="flex justify-between">
                           <span className="text-blue-900">Total 2-Year PAYE:</span>
@@ -933,8 +933,8 @@ const PAYETaxCalculator = () => {
                     </div>
                     
                     {/* Year Comparison */}
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <h4 className="text-lg font-semibold text-green-800 mb-4">Year-over-Year Comparison</h4>
+                    <div className="bg-[#1ED760]/5 p-4 rounded-lg border border-[#1ED760]/20">
+                      <h4 className="text-lg font-semibold text-[#1ED760] mb-4">Year-over-Year Comparison</h4>
                       <div className="space-y-4">
                         <div>
                           <div className="flex justify-between mb-1">
@@ -943,9 +943,9 @@ const PAYETaxCalculator = () => {
                               ${multiPeriodResults?.slice(0, 12).reduce((sum, p) => sum + p.payeLiability, 0).toLocaleString() || '0'}
                             </span>
                           </div>
-                          <div className="w-full bg-green-100 rounded-full h-2">
+                          <div className="w-full bg-[#1ED760]/20 rounded-full h-2">
                             <div 
-                              className="bg-green-500 h-2 rounded-full" 
+                              className="bg-[#1ED760] h-2 rounded-full" 
                               style={{ width: '50%' }}
                             ></div>
                           </div>
@@ -957,9 +957,9 @@ const PAYETaxCalculator = () => {
                               ${multiPeriodResults?.slice(12).reduce((sum, p) => sum + p.payeLiability, 0).toLocaleString() || '0'}
                             </span>
                           </div>
-                          <div className="w-full bg-green-100 rounded-full h-2">
+                          <div className="w-full bg-[#1ED760]/20 rounded-full h-2">
                             <div 
-                              className="bg-green-600 h-2 rounded-full" 
+                              className="bg-[#1ED760] h-2 rounded-full" 
                               style={{ width: '60%' }}
                             ></div>
                           </div>
@@ -998,14 +998,14 @@ const PAYETaxCalculator = () => {
                                   position: 'relative'
                                 }}
                               >
-                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-blue-800 text-white px-2 py-1 rounded whitespace-nowrap">
+                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-[#0F2F4E] text-white px-2 py-1 rounded whitespace-nowrap">
                                   ${multiPeriodResults.slice(0, 12).reduce((sum, p) => sum + p.payeLiability, 0).toLocaleString()}
                                 </div>
                               </div>
                               {/* Mini monthly indicators */}
                               <div className="flex justify-between mt-1">
                                 {[1, 2, 3].map((i) => (
-                                  <div key={i} className="w-2 h-2 bg-blue-300 rounded"></div>
+                                  <div key={i} className="w-2 h-2 bg-[#0F2F4E]/60 rounded"></div>
                                 ))}
                               </div>
                             </div>
@@ -1033,14 +1033,14 @@ const PAYETaxCalculator = () => {
                                   position: 'relative'
                                 }}
                               >
-                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-green-800 text-white px-2 py-1 rounded whitespace-nowrap">
+                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs bg-[#1ED760] text-white px-2 py-1 rounded whitespace-nowrap">
                                   ${multiPeriodResults.slice(12, 24).reduce((sum, p) => sum + p.payeLiability, 0).toLocaleString()}
                                 </div>
                               </div>
                               {/* Mini monthly indicators */}
                               <div className="flex justify-between mt-1">
                                 {[1, 2, 3].map((i) => (
-                                  <div key={i} className="w-2 h-2 bg-green-300 rounded"></div>
+                                  <div key={i} className="w-2 h-2 bg-[#1ED760]/60 rounded"></div>
                                 ))}
                               </div>
                             </div>

@@ -317,7 +317,7 @@ const ProfessionalChatbot = () => {
             return (
               <div
                 key={index}
-                className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200 overflow-x-auto text-center"
+                className="my-3 p-3 bg-[#0F2F4E]/5 rounded-lg border border-[#0F2F4E]/20 overflow-x-auto text-center"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             );

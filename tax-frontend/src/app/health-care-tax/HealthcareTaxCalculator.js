@@ -218,7 +218,7 @@ const HealthcareTax = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl"
+                  className="mt-6 p-4 bg-[#0F2F4E]/5 border border-[#0F2F4E]/20 rounded-xl"
                 >
                   <div className="flex items-center gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500" />
