@@ -20,7 +20,7 @@ const Footer = () => {
   const quickLinks = [
     { name: 'Tax Planning', href: '/income-tax-calculator' },
     { name: 'PAYE Calculator', href: '/paye-calculator' },
-    { name: 'Simple PAYE Calculator', href: '/simple-paye-calculator' },
+    { name: 'Simple Payroll', href: '/simple-payroll' },
     { name: 'Corporate Tax', href: '/corporate-tax-calculator' },
     { name: 'VAT Calculator', href: '/vat-tax-calculator' },
   ]

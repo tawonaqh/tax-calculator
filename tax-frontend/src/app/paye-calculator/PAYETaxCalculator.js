@@ -1131,7 +1131,7 @@ const PAYETaxCalculator = () => {
               </div>
             </div>
 
-            {/* Simple PAYE Alternative */}
+            {/* Simple Payroll Alternative */}
             <div className="bg-gradient-to-br from-[#1ED760]/5 to-[#1ED760]/10 rounded-2xl p-6 border border-[#1ED760]/30 shadow-lg">
               <h3 className="text-lg font-semibold text-[#0F2F4E] mb-3">
                 Need Something Simpler?
@@ -1140,12 +1140,12 @@ const PAYETaxCalculator = () => {
                 For basic PAYE + NSSA calculations with payslip generation, try our simplified calculator designed for SMEs.
               </p>
               <Link 
-                href="/simple-paye-calculator"
+                href="/simple-payroll"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[#1ED760] text-white rounded-lg 
                            hover:bg-[#1ED760]/90 transition-all duration-300 text-sm font-medium"
               >
                 <Calculator className="w-4 h-4" />
-                Simple PAYE Calculator
+                Simple Payroll
               </Link>
             </div>
 

@@ -1,8 +1,10 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { payrollApi, employeeApi, companyApi } from '@/lib/payrollApi';
 
 // Import modular components
 import PayrollHistory from './PayrollHistory';
@@ -18,7 +20,7 @@ import { PDFGenerator } from './PDFGenerator';
 import { loadSampleDataForDemo } from '../constants/tutorialData';
 
 /**
- * Simple PAYE Calculator - Modularized Version
+ * Simple Payroll - Modularized Version
  * Focuses on essential PAYE and NSSA calculations for SMEs
  * Supports both Gross Method and Net Method (grossing up)
  */
@@ -52,7 +54,8 @@ const TAX_CONFIG = {
 
 const AIDS_LEVY_RATE = 0.03; // 3% - kept for backward compatibility
 
-const SimplePAYECalculator = () => {
+const SimplePayroll = () => {
+  const { user } = useAuth();
   const [calculationMethod, setCalculationMethod] = useState('gross'); // 'gross' or 'net'
   const [payrollMode, setPayrollMode] = useState('single'); // 'single' or 'batch'
   const [formData, setFormData] = useState({
@@ -96,6 +99,106 @@ const SimplePAYECalculator = () => {
   const [payrollHistory, setPayrollHistory] = useState([]);
   const [showHistoryView, setShowHistoryView] = useState(false);
   // Tutorial functionality removed to prevent grey overlay issues
+  
+  // Save calculation state
+  const [saveCalculation, setSaveCalculation] = useState(true); // Default to true
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
+  const [availableEmployees, setAvailableEmployees] = useState([]);
+  const [availableCompanies, setAvailableCompanies] = useState([]);
+  const [saveSuccess, setSaveSuccess] = useState('');
+  const [saveError, setSaveError] = useState('');
+
+  // Fetch employees and companies when user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchEmployees();
+      fetchCompanies();
+    }
+  }, [user]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await employeeApi.getAll();
+      setAvailableEmployees(response.data);
+    } catch (err) {
+      console.error('Failed to load employees:', err);
+    }
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await companyApi.getAll();
+      setAvailableCompanies(response.data);
+    } catch (err) {
+      console.error('Failed to load companies:', err);
+    }
+  };
+
+  // Auto-fill employee data when selected
+  useEffect(() => {
+    if (selectedEmployeeId && availableEmployees.length > 0) {
+      const employee = availableEmployees.find(emp => emp.id === parseInt(selectedEmployeeId));
+      if (employee) {
+        setFormData(prev => ({
+          ...prev,
+          employeeName: `${employee.first_name} ${employee.last_name}`,
+          employeeNumber: employee.employee_number || '',
+          department: employee.department || '',
+          position: employee.position || '',
+          grossSalary: employee.base_salary || '',
+        }));
+        if (employee.company_id) {
+          setSelectedCompanyId(employee.company_id.toString());
+        }
+      }
+    }
+  }, [selectedEmployeeId, availableEmployees]);
+
+  // Handler for selecting employee in batch mode
+  const handleSelectEmployeeForBatch = (employeeId) => {
+    const employee = availableEmployees.find(emp => emp.id === parseInt(employeeId));
+    if (employee) {
+      setFormData(prev => ({
+        ...prev,
+        employeeName: `${employee.first_name} ${employee.last_name}`,
+        employeeNumber: employee.employee_number || '',
+        department: employee.department || '',
+        position: employee.position || '',
+        grossSalary: employee.base_salary || '',
+        // Keep existing allowances and other fields
+        livingAllowance: prev.livingAllowance || '',
+        medicalAllowance: prev.medicalAllowance || '',
+        transportAllowance: prev.transportAllowance || '',
+        housingAllowance: prev.housingAllowance || '',
+        commission: prev.commission || '',
+        bonus: prev.bonus || '',
+        overtime: prev.overtime || '',
+      }));
+      // Store employee_id for saving to database
+      setFormData(prev => ({ ...prev, employee_id: employee.id }));
+    }
+  };
+
+  // Auto-fill company data when selected
+  useEffect(() => {
+    if (selectedCompanyId && availableCompanies.length > 0) {
+      const company = availableCompanies.find(comp => comp.id === parseInt(selectedCompanyId));
+      if (company) {
+        // Use API endpoint for storage files to ensure CORS works
+        // NEXT_PUBLIC_BACKEND_URL is http://localhost:8000/api
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL; // http://localhost:8000/api
+        setCompanyData({
+          companyName: company.name || '',
+          companyAddress: company.address || '',
+          companyPhone: company.phone || '',
+          companyEmail: company.email || '',
+          // This will create: http://localhost:8000/api/storage/company-logos/...
+          companyLogo: company.logo_path ? `${baseUrl}/storage/${company.logo_path}` : null
+        });
+      }
+    }
+  }, [selectedCompanyId, availableCompanies]);
 
   // Tutorial functionality removed to prevent grey overlay issues
 
@@ -498,6 +601,98 @@ const SimplePAYECalculator = () => {
     }));
 
     setBatchResults(batchCalcs);
+    
+    // Auto-save batch if user is logged in and save is enabled
+    if (user && saveCalculation) {
+      saveBatchCalculationsToDatabase(batchCalcs);
+    }
+  };
+
+  // Save batch calculations to database
+  const saveBatchCalculationsToDatabase = async (batchCalcs) => {
+    setSaveError('');
+    setSaveSuccess('');
+
+    try {
+      const savedCount = 0;
+      const errors = [];
+
+      // Save each calculation
+      for (const emp of batchCalcs) {
+        try {
+          const totalAllowances = 
+            parseFloat(emp.allowances.livingAllowance || 0) +
+            parseFloat(emp.allowances.medicalAllowance || 0) +
+            parseFloat(emp.allowances.transportAllowance || 0) +
+            parseFloat(emp.allowances.housingAllowance || 0) +
+            parseFloat(emp.allowances.commission || 0) +
+            parseFloat(emp.allowances.bonus || 0) +
+            parseFloat(emp.allowances.overtime || 0);
+
+          const totalDeductions = emp.calculation.nssaEmployee + emp.calculation.paye + emp.calculation.aidsLevy;
+
+          const calculationData = {
+            employee_id: emp.employee_id || null,
+            company_id: selectedCompanyId || null,
+            calculation_type: 'batch',
+            period_month: getMonthName(currentMonth),
+            period_year: currentYear.toString(),
+            gross_salary: emp.calculation.grossSalary,
+            nssa_employee: emp.calculation.nssaEmployee,
+            nssa_employer: emp.calculation.nssaEmployer,
+            taxable_income: emp.calculation.taxableGrossForPAYE,
+            paye: emp.calculation.paye,
+            aids_levy: emp.calculation.aidsLevy,
+            total_deductions: totalDeductions,
+            net_salary: emp.calculation.netSalary,
+            allowances: {
+              living: parseFloat(emp.allowances.livingAllowance || 0),
+              medical: parseFloat(emp.allowances.medicalAllowance || 0),
+              transport: parseFloat(emp.allowances.transportAllowance || 0),
+              housing: parseFloat(emp.allowances.housingAllowance || 0),
+              commission: parseFloat(emp.allowances.commission || 0),
+              bonus: parseFloat(emp.allowances.bonus || 0),
+              overtime: parseFloat(emp.allowances.overtime || 0),
+            },
+            calculation_details: {
+              employee_name: emp.employeeName,
+              employee_number: emp.employeeNumber,
+              department: emp.department,
+              position: emp.position,
+              basic_salary: emp.calculation.basicSalary,
+              total_allowances: totalAllowances,
+              zimdef: emp.calculation.zimdef,
+              apwc: emp.calculation.apwc,
+              apwc_rate: emp.calculation.apwcRate,
+              total_employer_contributions: emp.calculation.totalEmployerContributions,
+              total_cost_to_employer: emp.calculation.totalCostToEmployer,
+              bonus_calc: emp.calculation.bonusCalc,
+            },
+          };
+
+          await payrollApi.create(calculationData);
+        } catch (err) {
+          errors.push(`${emp.employeeName}: ${err.response?.data?.message || 'Failed'}`);
+        }
+      }
+
+      if (errors.length === 0) {
+        setSaveSuccess(`All ${batchCalcs.length} calculations saved successfully! View in Payroll History.`);
+      } else if (errors.length < batchCalcs.length) {
+        setSaveSuccess(`${batchCalcs.length - errors.length} calculations saved. ${errors.length} failed.`);
+        setSaveError(errors.join(', '));
+      } else {
+        setSaveError('Failed to save calculations. Please try again.');
+      }
+      
+      setTimeout(() => {
+        setSaveSuccess('');
+        setSaveError('');
+      }, 5000);
+    } catch (err) {
+      setSaveError('Failed to save batch calculations');
+      console.error('Batch save error:', err);
+    }
   };
 
   const handleCalculate = () => {
@@ -530,6 +725,72 @@ const SimplePAYECalculator = () => {
       : calculateFromNet(inputValue, parseFloat(formData.apwcRate));
     
     setResults(result);
+    
+    // Auto-save if checkbox is checked
+    if (saveCalculation && user) {
+      saveCalculationToDatabase(result);
+    }
+  };
+
+  const saveCalculationToDatabase = async (calculationResult) => {
+    setSaveError('');
+    setSaveSuccess('');
+
+    try {
+      const totalAllowances = 
+        parseFloat(formData.livingAllowance || 0) +
+        parseFloat(formData.medicalAllowance || 0) +
+        parseFloat(formData.transportAllowance || 0) +
+        parseFloat(formData.housingAllowance || 0) +
+        parseFloat(formData.commission || 0) +
+        parseFloat(formData.bonus || 0) +
+        parseFloat(formData.overtime || 0);
+
+      const totalDeductions = calculationResult.nssaEmployee + calculationResult.paye + calculationResult.aidsLevy;
+
+      const calculationData = {
+        employee_id: selectedEmployeeId || null,
+        company_id: selectedCompanyId || null,
+        calculation_type: 'single',
+        period_month: getMonthName(currentMonth),
+        period_year: currentYear.toString(),
+        gross_salary: calculationResult.grossSalary,
+        nssa_employee: calculationResult.nssaEmployee,
+        nssa_employer: calculationResult.nssaEmployer,
+        taxable_income: calculationResult.taxableGrossForPAYE,
+        paye: calculationResult.paye,
+        aids_levy: calculationResult.aidsLevy,
+        total_deductions: totalDeductions,
+        net_salary: calculationResult.netSalary,
+        allowances: {
+          living: parseFloat(formData.livingAllowance || 0),
+          medical: parseFloat(formData.medicalAllowance || 0),
+          transport: parseFloat(formData.transportAllowance || 0),
+          housing: parseFloat(formData.housingAllowance || 0),
+          commission: parseFloat(formData.commission || 0),
+          bonus: parseFloat(formData.bonus || 0),
+          overtime: parseFloat(formData.overtime || 0),
+        },
+        calculation_details: {
+          basic_salary: calculationResult.basicSalary,
+          total_allowances: totalAllowances,
+          zimdef: calculationResult.zimdef,
+          apwc: calculationResult.apwc,
+          apwc_rate: calculationResult.apwcRate,
+          total_employer_contributions: calculationResult.totalEmployerContributions,
+          total_cost_to_employer: calculationResult.totalCostToEmployer,
+          bonus_calc: calculationResult.bonusCalc,
+        },
+      };
+
+      await payrollApi.create(calculationData);
+      setSaveSuccess('Calculation saved successfully! View in Payroll History.');
+      
+      setTimeout(() => setSaveSuccess(''), 5000);
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Failed to save calculation');
+      console.error('Save error:', err);
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -575,7 +836,7 @@ const SimplePAYECalculator = () => {
           {/* Tutorial functionality removed */}
           
           <h1 className="text-4xl md:text-5xl font-bold text-[#0F2F4E] mt-4 mb-4">
-            Enhanced PAYE Calculator
+            Simple Payroll
           </h1>
           <p className="text-xl text-[#0F2F4E]/80 max-w-3xl mx-auto mb-2">
             Comprehensive payroll system with allowances, batch processing, and detailed reports
@@ -653,6 +914,130 @@ const SimplePAYECalculator = () => {
         )}
       </div>
 
+      {/* Employee/Company Selection Section (Always visible for logged-in users) */}
+      {user && (
+        <div className="bg-gradient-to-r from-[#1ED760]/10 to-[#17b34f]/10 rounded-xl p-6 shadow-lg mb-6 border-2 border-[#1ED760]/30">
+          <div className="flex items-center gap-3 mb-4">
+            <svg className="w-6 h-6 text-[#1ED760]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <h3 className="text-xl font-bold text-[#0F2F4E]">
+              Quick Select from Your Database
+            </h3>
+          </div>
+          <p className="text-sm text-gray-700 mb-4">
+            {payrollMode === 'batch' 
+              ? 'Select a company to link all batch calculations, or manually enter details below'
+              : 'Select an existing employee and company to auto-fill details, or manually enter information below'
+            }
+          </p>
+
+          {payrollMode === 'single' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Select Employee (Optional)
+                </label>
+                <select
+                  value={selectedEmployeeId}
+                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ED760] focus:border-[#1ED760] transition-all"
+                >
+                  <option value="">-- Select Employee --</option>
+                  {availableEmployees.map(emp => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.first_name} {emp.last_name} ({emp.employee_number})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Selecting an employee will auto-fill their details
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Select Company (Optional)
+                </label>
+                <select
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ED760] focus:border-[#1ED760] transition-all"
+                >
+                  <option value="">-- Select Company --</option>
+                  {availableCompanies.map(company => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {payrollMode === 'batch' && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Select Company (Optional)
+              </label>
+              <select
+                value={selectedCompanyId}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ED760] focus:border-[#1ED760] transition-all"
+              >
+                <option value="">-- Select Company --</option>
+                {availableCompanies.map(company => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                All batch calculations will be linked to this company
+              </p>
+            </div>
+          )}
+
+          {/* Save Checkbox */}
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-300">
+            <input
+              type="checkbox"
+              id="saveCalculation"
+              checked={saveCalculation}
+              onChange={(e) => setSaveCalculation(e.target.checked)}
+              className="w-5 h-5 text-[#1ED760] border-gray-300 rounded focus:ring-[#1ED760]"
+            />
+            <label htmlFor="saveCalculation" className="text-sm font-medium text-gray-700 cursor-pointer">
+              Save {payrollMode === 'batch' ? 'batch' : 'this'} calculation{payrollMode === 'batch' ? 's' : ''} to history
+            </label>
+          </div>
+
+          {/* Success/Error Messages */}
+          {saveSuccess && (
+            <div className="mt-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center justify-between">
+              <span>{saveSuccess}</span>
+              <Link
+                href="/payroll/history"
+                className="text-sm font-medium underline hover:no-underline"
+              >
+                View History →
+              </Link>
+            </div>
+          )}
+          {saveError && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+              {saveError}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Company Data Section */}
       <CompanyDataForm 
         companyData={companyData}
@@ -686,6 +1071,8 @@ const SimplePAYECalculator = () => {
         calculateTotalGross={calculateTotalGross}
         formatCurrency={formatCurrency}
         TAX_CONFIG={TAX_CONFIG}
+        availableEmployees={availableEmployees}
+        onSelectEmployeeForBatch={handleSelectEmployeeForBatch}
       />
 
       {/* Batch Results */}
@@ -933,4 +1320,4 @@ const SimplePAYECalculator = () => {
   );
 };
 
-export default SimplePAYECalculator;
+export default SimplePayroll;
