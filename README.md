@@ -1,12 +1,19 @@
-# Zimbabwe Tax Calculator - Complete Payroll Management System
+# TaxCul - Zimbabwe Payroll Management System
 
-A comprehensive web application for calculating various types of taxes in Zimbabwe, now featuring a **complete payroll management system** with employee tracking, company profiles, and historical data analysis.
+A comprehensive web application for calculating taxes and managing payroll in Zimbabwe, featuring **batch payroll processing** with professional report generation.
 
-## 🎉 NEW: Complete Payroll Management System
+## 🎉 Complete Payroll Management System
 
-This system has evolved from a simple calculator to a **complete payroll management solution**!
+TaxCul has evolved from a simple calculator to a **complete payroll management solution** with batch processing and professional reporting!
 
-### What's New
+### What's New in Latest Version
+- ✅ **Batch Payroll Processing** - Process up to 20 employees simultaneously
+- ✅ **Professional Reports** - Generate 3 types of compliance reports
+- ✅ **TaxCul Branding** - Navy blue theme with subtle logo watermarking
+- ✅ **PDF Generation** - Individual payslips and batch reports
+- ✅ **NSSA Form P4** - Official Monthly Payment Schedule
+- ✅ **PAYE Report** - Tax summary for all employees
+- ✅ **Payslip Summary** - Multi-page detailed breakdown
 - ✅ **User Authentication** - Register, login, password reset with email
 - ✅ **Company Management** - Store company info, upload logos
 - ✅ **Employee Management** - Full CRUD with search and filters
@@ -16,14 +23,27 @@ This system has evolved from a simple calculator to a **complete payroll managem
 - ✅ **Responsive Design** - Works on desktop, tablet, and mobile
 
 ### Quick Links
-- 📚 [Complete System Overview](./PAYROLL_SYSTEM_COMPLETE.md)
-- 🧪 [Testing Guide](./TESTING_GUIDE.md)
-- 🚀 [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)
-- 📊 [Implementation Status](./IMPLEMENTATION_STATUS.md)
+- 📚 [Complete System Overview](./info/PAYROLL_SYSTEM_COMPLETE.md)
+- 📊 [Batch Reports Implementation](./info/BATCH_REPORTS_IMPLEMENTATION.md)
+- 🧪 [Testing Guide](./info/TESTING_GUIDE.md)
+- 🚀 [Deployment Checklist](./info/DEPLOYMENT_CHECKLIST.md)
+- � [Implementation Status](./info/IMPLEMENTATION_STATUS.md)
+- 🔧 [Troubleshooting](./info/TROUBLESHOOTING_CHUNK_ERRORS.md)
 
 ## 🌟 Features
 
-### Payroll Management System (NEW!)
+### Batch Payroll System (NEW!)
+- **Batch Processing** - Calculate payroll for up to 20 employees at once
+- **Three Professional Reports**:
+  1. **Payslip Summary** (3 pages) - Detailed breakdown with earnings, deductions, and employer contributions
+  2. **NSSA Form P4** (2 pages) - Official Monthly Payment Schedule for social security
+  3. **PAYE Report** (1 page) - Tax summary for all employees
+- **Individual Payslips** - Generate separate PDF payslips for each employee
+- **ZIP Download** - All reports packaged together for easy distribution
+- **TaxCul Branding** - Professional navy blue theme with logo watermarking
+- **Company Branding** - Include company logo and details on all reports
+
+### Payroll Management System
 - **Dashboard** - Real-time statistics and recent calculations
 - **Company Profiles** - Manage company information and branding
 - **Employee Management** - Full CRUD operations with search/filter
@@ -48,11 +68,15 @@ This system has evolved from a simple calculator to a **complete payroll managem
 - 🔐 **Secure Authentication** - JWT tokens with Sanctum
 - 💾 **Data Persistence** - All calculations saved to database
 - 📊 **Analytics Dashboard** - Track payroll trends
-- 🎨 **Modern UI** - Beautiful, responsive design
+- 🎨 **Modern UI** - Beautiful navy blue theme with TaxCul branding
 - ⚡ **Real-time Calculations** - Instant results
 - 📱 **Mobile Friendly** - Works on all devices
 - 🔄 **Batch Processing** - Process up to 20 employees
-- 📄 **PDF Generation** - Professional payslips and reports
+- 📄 **PDF Generation** - Professional payslips and compliance reports
+- 🏢 **Company Branding** - Include your logo on all documents
+- 📋 **NSSA Compliance** - Official Form P4 generation
+- 💼 **PAYE Reporting** - Tax summary reports
+- 🎯 **One-Click Reports** - Generate all 3 reports in one ZIP file
 
 ## 🚀 Technology Stack
 
@@ -69,6 +93,8 @@ This system has evolved from a simple calculator to a **complete payroll managem
 - **HTTP Client**: Axios
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
+- **PDF Generation**: jsPDF, jspdf-autotable, html2canvas
+- **File Handling**: JSZip for batch downloads
 
 ## 🛠 Installation & Setup
 
@@ -199,12 +225,25 @@ Zimbabwe Tax Calculator
 
 ## 🎯 User Journey
 
+### Batch Payroll Processing (NEW!)
+1. **Navigate to Simple Payroll** → Access batch payroll feature
+2. **Switch to Batch Mode** → Toggle from single to batch processing
+3. **Add Employees** → Add up to 20 employees with salary details
+4. **Calculate Batch** → Process all employees at once
+5. **Generate Reports** → Click "Batch Reports (3)" button
+6. **Download ZIP** → Get all three reports in one file:
+   - Payslip Summary (3 pages)
+   - NSSA Form P4 (2 pages)
+   - PAYE Report (1 page)
+7. **Individual Payslips** → Optionally download separate payslips for each employee
+
 ### New Users
 1. **Register** → Create account with email
-2. **Add Company** → (Optional) Set up company profile
+2. **Add Company** → (Optional) Set up company profile with logo
 3. **Add Employees** → (Optional) Add employee records
-4. **Calculate Payroll** → Use Simple Payroll calculator
-5. **Save & Track** → Save calculations and view history
+4. **Calculate Payroll** → Use Simple Payroll calculator (single or batch)
+5. **Generate Reports** → Download professional PDF reports
+6. **Save & Track** → Save calculations and view history
 
 ### Returning Users
 1. **Login** → Access dashboard
@@ -248,10 +287,21 @@ Zimbabwe Tax Calculator
 ## 🎨 UI/UX Features
 
 ### Design System
-- **Color Scheme**: Navy Blue (#0F2F4E) + Green (#1ED760)
+- **Color Scheme**: Navy Blue (#0F2F4E) + Green (#1ED760) + Gold (#FFD700)
+- **TaxCul Branding**: Subtle logo watermarking on all reports
 - **Typography**: Clean, readable fonts
 - **Spacing**: Consistent padding and margins
 - **Icons**: Lucide React for consistency
+- **Borders**: Professional navy blue borders on reports
+
+### Report Features
+- **Multi-page PDFs**: Professional layout with headers and footers
+- **Company Branding**: Include company logo and details
+- **TaxCul Identity**: Subtle logo for system identification
+- **Navy Blue Theme**: Consistent color scheme across all reports
+- **Signature Lines**: Authorization fields on reports
+- **Page Numbering**: Clear page indicators
+- **Currency Display**: USD formatting throughout
 
 ### Interactive Elements
 - **Hover Effects**: Smooth transitions
@@ -313,18 +363,23 @@ npm start
 ## 📚 Documentation
 
 ### Payroll Management System
-- [Complete System Overview](./PAYROLL_SYSTEM_COMPLETE.md)
-- [Implementation Status](./IMPLEMENTATION_STATUS.md)
-- [Frontend Progress](./FRONTEND_PROGRESS.md)
-- [Backend API Documentation](./BACKEND_API_COMPLETE.md)
-- [Testing Guide](./TESTING_GUIDE.md)
-- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md)
-- [Quick Summary](./QUICK_IMPLEMENTATION_SUMMARY.md)
+- [Complete System Overview](./info/PAYROLL_SYSTEM_COMPLETE.md)
+- [Batch Reports Implementation](./info/BATCH_REPORTS_IMPLEMENTATION.md)
+- [Implementation Status](./info/IMPLEMENTATION_STATUS.md)
+- [Frontend Progress](./info/FRONTEND_PROGRESS.md)
+- [Backend API Documentation](./info/BACKEND_API_COMPLETE.md)
+- [Testing Guide](./info/TESTING_GUIDE.md)
+- [Deployment Checklist](./info/DEPLOYMENT_CHECKLIST.md)
+- [Troubleshooting Guide](./info/TROUBLESHOOTING_CHUNK_ERRORS.md)
+- [Quick Summary](./info/QUICK_IMPLEMENTATION_SUMMARY.md)
+
+### Tax Information
+- [Zimbabwe Tax Rates 2025/2026](./info/ZIMBABWE_TAX_RATES_2025_2026.md)
 
 ### Modularization (In Progress)
-- [Modularization Index](./MODULARIZATION_INDEX.md)
-- [Developer Quick Start](./DEVELOPER_QUICK_START.md)
-- [Progress Tracker](./MODULARIZATION_PROGRESS.md)
+- [Modularization Index](./info/MODULARIZATION_INDEX.md)
+- [Developer Quick Start](./info/DEVELOPER_QUICK_START.md)
+- [Progress Tracker](./info/MODULARIZATION_PROGRESS.md)
 
 ## 🤝 Contributing
 
@@ -356,48 +411,67 @@ For support:
 
 ### Completed ✅
 - [x] User authentication system
-- [x] Company management
+- [x] Company management with logo upload
 - [x] Employee management
 - [x] Payroll calculation persistence
 - [x] Historical tracking
 - [x] Professional dashboard
 - [x] Responsive design
+- [x] Batch payroll processing (up to 20 employees)
+- [x] Three professional compliance reports
+- [x] Individual payslip generation
+- [x] NSSA Form P4 generation
+- [x] PAYE Report generation
+- [x] TaxCul branding and identity
+- [x] Navy blue theme implementation
+- [x] PDF generation with company branding
+- [x] ZIP file packaging for batch downloads
 
 ### Future Enhancements
-- [ ] Export to Excel/PDF
 - [ ] Email payslips to employees
 - [ ] Multi-currency support
-- [ ] Advanced reporting
+- [ ] Advanced reporting and analytics
 - [ ] Mobile app
 - [ ] API for third-party integrations
-- [ ] Bulk import employees
+- [ ] Bulk import employees (CSV/Excel)
 - [ ] Payroll templates
 - [ ] Tax filing integration
+- [ ] Payroll scheduling and automation
+- [ ] Employee self-service portal
+- [ ] Leave management integration
+- [ ] Overtime calculation automation
 
 ## 📊 Statistics
 
 - **Backend Endpoints**: 18+
 - **Frontend Pages**: 10+
-- **Components**: 20+
+- **Components**: 25+
 - **Database Tables**: 6
-- **Features**: 20+
-- **Lines of Code**: 10,000+
+- **Features**: 25+
+- **Lines of Code**: 15,000+
+- **PDF Report Types**: 3
+- **Batch Processing Capacity**: 20 employees
+- **Supported Tax Calculators**: 10+
 
 ## 🎊 What Makes This Special
 
-1. **Complete System**: Not just a calculator - full payroll management
-2. **Zimbabwe-Specific**: Accurate PAYE, NSSA, and tax calculations
-3. **Data Persistence**: All calculations saved and trackable
-4. **Professional UI**: Clean, modern, user-friendly interface
-5. **Scalable**: Built with best practices for future growth
-6. **Secure**: JWT authentication, row-level security
-7. **Responsive**: Works on desktop, tablet, and mobile
-8. **Well-Documented**: Comprehensive documentation
+1. **Complete System**: Not just a calculator - full payroll management with batch processing
+2. **Zimbabwe-Specific**: Accurate PAYE, NSSA, and tax calculations for 2025/2026
+3. **Batch Processing**: Process up to 20 employees simultaneously
+4. **Professional Reports**: Three compliance-ready reports (Payslip Summary, NSSA Form P4, PAYE Report)
+5. **Data Persistence**: All calculations saved and trackable
+6. **Professional UI**: Clean, modern navy blue theme with TaxCul branding
+7. **Company Branding**: Include your company logo on all reports
+8. **One-Click Downloads**: All reports packaged in ZIP files
+9. **Scalable**: Built with best practices for future growth
+10. **Secure**: JWT authentication, row-level security
+11. **Responsive**: Works on desktop, tablet, and mobile
+12. **Well-Documented**: Comprehensive documentation and troubleshooting guides
 
 ---
 
-**Built with ❤️ for Zimbabwe businesses**
+**Built with ❤️ for Zimbabwe businesses by TaxCul**
 
-*A complete payroll management solution that goes beyond simple calculations to provide comprehensive business tools.*
+*A complete payroll management solution that goes beyond simple calculations to provide comprehensive business tools with professional reporting.*
 
-**Version 2.0** - Complete Payroll Management System 🚀
+**Version 3.0** - Batch Payroll Processing & Professional Reports 🚀
