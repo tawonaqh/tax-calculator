@@ -815,6 +815,14 @@ const SimplePayroll = () => {
     pdfGenerator.generatePayrollReports(batchResults);
   };
 
+  const generateBatchReports = () => {
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const periodMonth = monthNames[currentMonth - 1];
+    const periodYear = currentYear.toString();
+    pdfGenerator.batchReportGenerator.generateAllBatchReports(batchResults, periodMonth, periodYear);
+  };
+
   const generatePayslipPDF = async () => {
     try {
       await pdfGenerator.generatePayslipPDF(formData);
@@ -1083,9 +1091,12 @@ const SimplePayroll = () => {
           employees={employees}
           generatePayrollReports={generatePayrollReports}
           generateBatchPayslips={generateBatchPayslips}
+          generateBatchReports={generateBatchReports}
           isGeneratingPayslips={isGeneratingPayslips}
           payslipProgress={payslipProgress}
           formatCurrency={formatCurrency}
+          currentMonth={currentMonth}
+          currentYear={currentYear}
         />
       )}
 

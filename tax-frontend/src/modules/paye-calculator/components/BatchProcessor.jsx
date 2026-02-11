@@ -9,9 +9,12 @@ const BatchProcessor = ({
   employees,
   generatePayrollReports,
   generateBatchPayslips,
+  generateBatchReports,
   isGeneratingPayslips,
   payslipProgress,
-  formatCurrency
+  formatCurrency,
+  currentMonth,
+  currentYear
 }) => {
   if (batchResults.length === 0) {
     return (
@@ -87,13 +90,23 @@ const BatchProcessor = ({
           <h3 className="text-lg font-semibold text-[#0F2F4E]">Payroll Breakdown</h3>
           <div className="flex gap-3">
             <button
+              onClick={generateBatchReports}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Batch Reports (3)
+            </button>
+            
+            <button
               onClick={generatePayrollReports}
               className="px-4 py-2 bg-[#1ED760] text-white rounded-lg hover:bg-[#1ED760]/90 transition flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h10a4 4 0 014 4v14a4 4 0 01-4 4z" />
               </svg>
-              Download Report
+              Summary Report
             </button>
             
             <button
@@ -117,7 +130,7 @@ const BatchProcessor = ({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  Download All Payslips ({batchResults.length})
+                  Individual Payslips ({batchResults.length})
                 </>
               )}
             </button>
@@ -183,30 +196,35 @@ const BatchProcessor = ({
                 </svg>
               </div>
               <div className="flex-1">
-                <h5 className="font-semibold text-blue-800 mb-1">Batch Payslips Download</h5>
-                <p className="text-sm text-blue-700 leading-relaxed">
-                  Click "Download All Payslips" to generate individual PDF payslips for all employees 
-                  and download them as a single ZIP file. Each payslip includes detailed earnings, allowances, and deductions breakdown.
+                <h5 className="font-semibold text-blue-800 mb-1">Batch Payroll Reports</h5>
+                <p className="text-sm text-blue-700 leading-relaxed mb-2">
+                  Generate comprehensive payroll reports with one click:
                 </p>
-                <div className="mt-2 flex items-center gap-4 text-xs text-blue-600">
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-blue-600">
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Individual PDFs
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div>
+                      <strong>Batch Reports (3):</strong> Payslip Summary, NSSA Form P4, and PAYE Report in one ZIP file
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    ZIP Format
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div>
+                      <strong>Summary Report:</strong> Comprehensive payroll analysis with totals and breakdowns
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Progress Tracking
-                  </span>
+                    <div>
+                      <strong>Individual Payslips:</strong> Separate PDF payslips for each employee in ZIP format
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

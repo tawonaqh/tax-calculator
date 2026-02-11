@@ -1,10 +1,13 @@
 'use client'
 
+import { BatchReportGenerator } from './BatchReportGenerator';
+
 // PDF Generation utilities for PAYE Calculator
 export class PDFGenerator {
   constructor(companyData, formatCurrency) {
     this.companyData = companyData;
     this.formatCurrency = formatCurrency;
+    this.batchReportGenerator = new BatchReportGenerator(companyData, formatCurrency);
   }
 
   // Generate batch payslips as ZIP file using beautiful HTML design
