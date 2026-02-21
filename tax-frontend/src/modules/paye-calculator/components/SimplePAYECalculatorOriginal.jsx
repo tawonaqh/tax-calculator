@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 /**
- * Simple PAYE Calculator - Non-FDS Method
+ * Simple Payroll - Non-FDS Method
  * Focuses on essential PAYE and NSSA calculations for SMEs
  * Supports both Gross Method and Net Method (grossing up)
  */

@@ -15,13 +15,46 @@ const EmployeeInputForm = ({
   setEmployees,
   calculateTotalGross,
   formatCurrency,
-  TAX_CONFIG
+  TAX_CONFIG,
+  availableEmployees,
+  onSelectEmployeeForBatch
 }) => {
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
       <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
         {payrollMode === 'batch' ? 'Add Employee to Batch' : 'Employee Information'}
       </h3>
+      
+      {/* Quick Select Employee for Batch Mode */}
+      {payrollMode === 'batch' && availableEmployees && availableEmployees.length > 0 && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Quick Select from Database (Optional)
+          </label>
+          <select
+            onChange={(e) => {
+              if (e.target.value && onSelectEmployeeForBatch) {
+                onSelectEmployeeForBatch(e.target.value);
+                e.target.value = ''; // Reset dropdown
+              }
+            }}
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ED760] focus:border-[#1ED760] transition-all"
+          >
+            <option value="">-- Select Employee to Auto-Fill --</option>
+            {availableEmployees.map(emp => (
+              <option key={emp.id} value={emp.id}>
+                {emp.first_name} {emp.last_name} ({emp.employee_number}) - ${emp.base_salary}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-600 mt-2 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Select an employee to auto-fill their details, then adjust salary/allowances if needed
+          </p>
+        </div>
+      )}
       
       {/* Calculation Method (Single Employee Only) */}
       {payrollMode === 'single' && (

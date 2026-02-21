@@ -202,22 +202,6 @@ const PayslipGenerator = ({
           </div>
         </div>
         
-        {/* Employer Costs */}
-        <div className="border-t pt-4">
-          <h4 className="font-medium text-gray-700 mb-2">EMPLOYER COSTS</h4>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p>Employee Salary: {formatCurrency(results.grossSalary)}</p>
-              <p>Employer NSSA (4.5%): {formatCurrency(results.nssaEmployer)}</p>
-            </div>
-            <div>
-              <p className="font-bold text-[#0F2F4E]">
-                Total Cost to Employer: {formatCurrency(results.totalCostToEmployer)}
-              </p>
-            </div>
-          </div>
-        </div>
-        
         {/* Footer */}
         <div className="text-center mt-6 pt-4 border-t text-xs text-gray-500">
           <p>This payslip is computer generated and does not require a signature.</p>
