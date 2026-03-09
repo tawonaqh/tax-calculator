@@ -39,6 +39,34 @@ class PayrollCalculation extends Model
         'net_salary' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'basic_salary',
+        'total_cost_to_employer',
+    ];
+
+    /**
+     * Get basic salary (gross salary minus allowances)
+     */
+    public function getBasicSalaryAttribute()
+    {
+        // If allowances are stored as array, sum them
+        if (is_array($this->allowances)) {
+            $totalAllowances = array_sum(array_values($this->allowances));
+            return max(0, $this->gross_salary - $totalAllowances);
+        }
+        
+        // Otherwise, basic salary equals gross salary
+        return $this->gross_salary;
+    }
+
+    /**
+     * Get total cost to employer (net salary + employer contributions)
+     */
+    public function getTotalCostToEmployerAttribute()
+    {
+        return $this->gross_salary + $this->nssa_employer;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

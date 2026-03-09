@@ -377,6 +377,69 @@ export default function Dashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* Enhanced Features Section - Compact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-white rounded-2xl p-6 shadow-xl mt-8"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-br from-[#1ED760] to-[#17b34f] p-2 rounded-lg">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-[#0F2F4E]">Enhanced Features</h2>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-[#1ED760] font-semibold bg-[#1ED760]/10 px-3 py-1 rounded-full">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Zimbabwe Tax Compliant</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">✅</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">PAYE Computations</h4>
+              <p className="text-xs text-gray-600">Accurate calculations</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">💰</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">Allowances</h4>
+              <p className="text-xs text-gray-600">7 types supported</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">👥</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">Batch Processing</h4>
+              <p className="text-xs text-gray-600">Up to 20 employees</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">📊</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">Reports</h4>
+              <p className="text-xs text-gray-600">NSSA & PAYE</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">📄</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">Payslips</h4>
+              <p className="text-xs text-gray-600">PDF & ZIP download</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 p-3 rounded-lg border border-[#0F2F4E]/10 hover:border-[#1ED760]/30 transition-all">
+              <div className="text-lg mb-1">⚡</div>
+              <h4 className="font-semibold text-[#0F2F4E] text-xs mb-1">Real-time</h4>
+              <p className="text-xs text-gray-600">Instant calculations</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

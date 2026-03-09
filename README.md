@@ -15,6 +15,7 @@ TaxCul has evolved from a simple calculator to a **complete payroll management s
 - ✅ **PAYE Report** - Tax summary for all employees
 - ✅ **Payslip Summary** - Multi-page detailed breakdown
 - ✅ **User Authentication** - Register, login, password reset with email
+- ✅ **Smart Redirects** - Remember URL feature returns users to their destination after login
 - ✅ **Company Management** - Store company info, upload logos
 - ✅ **Employee Management** - Full CRUD with search and filters
 - ✅ **Payroll Calculations** - Save and track all calculations
@@ -25,9 +26,10 @@ TaxCul has evolved from a simple calculator to a **complete payroll management s
 ### Quick Links
 - 📚 [Complete System Overview](./info/PAYROLL_SYSTEM_COMPLETE.md)
 - 📊 [Batch Reports Implementation](./info/BATCH_REPORTS_IMPLEMENTATION.md)
+- 🔄 [Redirect After Login Feature](./info/REDIRECT_AFTER_LOGIN_FEATURE.md)
 - 🧪 [Testing Guide](./info/TESTING_GUIDE.md)
 - 🚀 [Deployment Checklist](./info/DEPLOYMENT_CHECKLIST.md)
-- � [Implementation Status](./info/IMPLEMENTATION_STATUS.md)
+- 📋 [Implementation Status](./info/IMPLEMENTATION_STATUS.md)
 - 🔧 [Troubleshooting](./info/TROUBLESHOOTING_CHUNK_ERRORS.md)
 
 ## 🌟 Features
@@ -66,6 +68,7 @@ TaxCul has evolved from a simple calculator to a **complete payroll management s
 
 ### Key Features
 - 🔐 **Secure Authentication** - JWT tokens with Sanctum
+- 🔄 **Smart Redirects** - Remember URL feature for seamless navigation
 - 💾 **Data Persistence** - All calculations saved to database
 - 📊 **Analytics Dashboard** - Track payroll trends
 - 🎨 **Modern UI** - Beautiful navy blue theme with TaxCul branding

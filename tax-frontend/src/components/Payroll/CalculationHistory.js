@@ -29,16 +29,21 @@ const CalculationHistory = () => {
   const fetchCalculations = async () => {
     try {
       setLoading(true);
+      // Convert month number to month name for filtering
+      const monthName = filterMonth ? getMonthName(filterMonth) : '';
+      
       const response = await payrollApi.getAll({
         employee_id: filterEmployee,
         company_id: filterCompany,
-        month: filterMonth,
-        year: filterYear
+        period_month: monthName,
+        period_year: filterYear
       });
+      console.log('Payroll API Response:', response);
+      console.log('Calculations data:', response.data);
       setCalculations(response.data);
     } catch (err) {
       setError('Failed to load calculations');
-      console.error(err);
+      console.error('Error fetching calculations:', err);
     } finally {
       setLoading(false);
     }
@@ -85,11 +90,19 @@ const CalculationHistory = () => {
   };
 
   const formatCurrency = (amount) => {
-    return `$${parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const getMonthName = (month) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    // If it's already a month name, return abbreviated version
+    if (typeof month === 'string' && fullMonths.includes(month)) {
+      return month.substring(0, 3);
+    }
+    
+    // If it's a number, convert to abbreviated month name
     return months[parseInt(month) - 1] || '';
   };
 
@@ -166,8 +179,8 @@ const CalculationHistory = () => {
               className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1ED760] focus:border-transparent transition-all"
             >
               <option value="">All Months</option>
-              {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                <option key={month} value={month}>{getMonthName(month)}</option>
+              {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((monthName, index) => (
+                <option key={index + 1} value={index + 1}>{monthName}</option>
               ))}
             </select>
 
@@ -237,7 +250,7 @@ const CalculationHistory = () => {
                     <tr key={calc.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
-                          {getMonthName(calc.month)} {calc.year}
+                          {getMonthName(calc.period_month)} {calc.period_year}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -312,7 +325,7 @@ const CalculationHistory = () => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    {getMonthName(selectedCalculation.month)} {selectedCalculation.year}
+                    {getMonthName(selectedCalculation.period_month)} {selectedCalculation.period_year}
                   </p>
                 </div>
                 <button
