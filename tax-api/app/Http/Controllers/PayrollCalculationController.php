@@ -13,33 +13,50 @@ class PayrollCalculationController extends Controller
      */
     public function index(Request $request)
     {
-        $query = $request->user()->payrollCalculations()->with(['employee', 'company']);
+        $user = $request->user();
+        
+        // Debug: Check if user has any calculations at all
+        $totalCalculations = \App\Models\PayrollCalculation::where('user_id', $user->id)->count();
+        \Log::info('Total calculations for user', [
+            'user_id' => $user->id,
+            'total_calculations' => $totalCalculations
+        ]);
+        
+        $query = $user->payrollCalculations()->with(['employee', 'company']);
 
         // Filter by employee
-        if ($request->has('employee_id')) {
+        if ($request->has('employee_id') && $request->employee_id) {
             $query->where('employee_id', $request->employee_id);
         }
 
         // Filter by company
-        if ($request->has('company_id')) {
+        if ($request->has('company_id') && $request->company_id) {
             $query->where('company_id', $request->company_id);
         }
 
         // Filter by period
-        if ($request->has('period_year')) {
+        if ($request->has('period_year') && $request->period_year) {
             $query->where('period_year', $request->period_year);
         }
 
-        if ($request->has('period_month')) {
+        if ($request->has('period_month') && $request->period_month) {
             $query->where('period_month', $request->period_month);
         }
 
         // Filter by calculation type
-        if ($request->has('calculation_type')) {
+        if ($request->has('calculation_type') && $request->calculation_type) {
             $query->where('calculation_type', $request->calculation_type);
         }
 
         $calculations = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        \Log::info('Payroll calculations query result', [
+            'user_id' => $user->id,
+            'total' => $calculations->total(),
+            'count' => $calculations->count(),
+            'filters' => $request->only(['employee_id', 'company_id', 'period_year', 'period_month']),
+            'first_item' => $calculations->first()
+        ]);
 
         return response()->json($calculations);
     }

@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSignInAlt } from 'react-icons/fa';
 
-export default function LoginForm({ redirectTo = '/simple-payroll' }) {
+export default function LoginForm({ redirectTo = '/dashboard' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +15,16 @@ export default function LoginForm({ redirectTo = '/simple-payroll' }) {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get the redirect URL from query params, or use the default
+  const getRedirectUrl = () => {
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      return decodeURIComponent(redirectParam);
+    }
+    return redirectTo;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +34,8 @@ export default function LoginForm({ redirectTo = '/simple-payroll' }) {
     const result = await login(email, password);
 
     if (result.success) {
-      router.push(redirectTo);
+      const targetUrl = getRedirectUrl();
+      router.push(targetUrl);
     } else {
       setError(result.error);
     }

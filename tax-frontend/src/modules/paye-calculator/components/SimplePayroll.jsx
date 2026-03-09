@@ -1133,7 +1133,8 @@ const SimplePayroll = () => {
         getMonthName={getMonthName}
       />
 
-      {/* NSSA Information */}
+      {/* NSSA Information - HIDDEN per user request */}
+      {/* 
       <div className="bg-white rounded-xl p-6 shadow-lg mt-6">
         <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
           Zimbabwe Tax Rules & Contributions (2025/2026)
@@ -1166,8 +1167,10 @@ const SimplePayroll = () => {
           </p>
         </div>
       </div>
+      */}
 
-      {/* Tax Bands Reference */}
+      {/* Tax Bands Reference - HIDDEN per user request */}
+      {/*
       <div className="bg-white rounded-xl p-6 shadow-lg mt-6">
         <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
           PAYE Tax Bands 2025/2026 (Monthly USD) - Non-FDS Method
@@ -1210,8 +1213,10 @@ const SimplePayroll = () => {
           </p>
         </div>
       </div>
+      */}
 
-      {/* Enhanced Features Section */}
+      {/* Enhanced Features Section - MOVED TO DASHBOARD per user request */}
+      {/*
       <div className="bg-gradient-to-br from-[#0F2F4E]/5 to-[#0F2F4E]/10 rounded-xl p-6 shadow-lg mt-6 border border-[#0F2F4E]/20">
         <h3 className="text-lg font-semibold text-[#0F2F4E] mb-4">
           🚀 Enhanced Features
@@ -1262,12 +1267,9 @@ const SimplePayroll = () => {
         </div>
         
         <div className="mt-6 rounded-xl relative overflow-hidden">
-          {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 opacity-10 rounded-xl"></div>
           
-          {/* Main content */}
           <div className="relative bg-white/80 backdrop-blur-sm border-2 border-emerald-200 rounded-xl p-6 shadow-lg">
-            {/* Header with icon */}
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1282,14 +1284,12 @@ const SimplePayroll = () => {
               </div>
             </div>
             
-            {/* Content */}
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100">
               <p className="text-gray-700 leading-relaxed">
                 <span className="font-semibold text-emerald-700">This enhanced calculator provides all the functionality needed</span> for realistic payroll processing in Zimbabwe, 
                 including proper tax calculations, allowances management, comprehensive reporting, and batch payslip downloads (ZIP format).
               </p>
               
-              {/* Key benefits */}
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
@@ -1306,7 +1306,6 @@ const SimplePayroll = () => {
               </div>
             </div>
             
-            {/* Call to action */}
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1325,6 +1324,7 @@ const SimplePayroll = () => {
           </div>
         </div>
       </div>
+      */}
 
       {/* Tutorial functionality removed to prevent grey overlay issues */}
     </div>
