@@ -4,10 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import FeedbackModal from "./FeedbackModal";
 import { MdOutlineArrowDropDown } from "react-icons/md";
+import { useAuth } from "@/contexts/AuthContext";
+import { FaUser } from "react-icons/fa";
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +56,12 @@ const Header = () => {
               Home
             </Link>
 
+            {user && (
+              <Link href="/dashboard" className="text-white hover:text-[#1ED760] transition">
+                Dashboard
+              </Link>
+            )}
+
             {/* PAYE Dropdown */}
             <div className="relative group">
               <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1">
@@ -62,19 +71,21 @@ const Header = () => {
 
               {/* Dropdown Menu */}
               <div className="absolute left-0 top-full mt-3 w-56 rounded-xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+
+                <Link
+                  href="/simple-payroll"
+                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-b-xl"
+                >
+                  Simple Payroll
+                </Link>
+
                 <Link
                   href="/paye-calculator"
                   className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-t-xl"
                 >
                   PAYE Calculator
                 </Link>
-
-                <Link
-                  href="/simple-paye-calculator"
-                  className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-b-xl"
-                >
-                  Simple PAYE Calculator
-                </Link>
+                
               </div>
             </div>
 
@@ -116,13 +127,64 @@ const Header = () => {
           </div>
 
           {/* CTA */}
-          <div className="ml-4">
-            <Link
-              href="/#calculator-cards"
-              className="bg-[#1ED760] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#1ED760]/90 transition"
-            >
-              Get Started
-            </Link>
+          <div className="ml-4 flex items-center gap-3">
+            {user ? (
+              <div className="relative group">
+                <button className="flex items-center gap-2 text-white hover:text-[#1ED760] transition">
+                  <FaUser />
+                  <span className="text-sm">{user.name}</span>
+                  <MdOutlineArrowDropDown />
+                </button>
+                
+                <div className="absolute right-0 top-full mt-3 w-48 rounded-xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                  <Link
+                    href="/dashboard"
+                    className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-t-xl"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/employees"
+                    className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760]"
+                  >
+                    Employees
+                  </Link>
+                  <Link
+                    href="/payroll/history"
+                    className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760]"
+                  >
+                    Payroll History
+                  </Link>
+                  <Link
+                    href="/company/profile"
+                    className="block px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760]"
+                  >
+                    Company Profile
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="w-full text-left px-4 py-3 text-sm text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] rounded-b-xl"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-white hover:text-[#1ED760] transition text-sm font-medium"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/#calculator-cards"
+                  className="bg-[#1ED760] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#1ED760]/90 transition"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

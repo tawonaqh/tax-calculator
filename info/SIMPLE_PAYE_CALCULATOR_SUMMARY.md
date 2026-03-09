@@ -41,9 +41,9 @@ MIN BAND    NET EQUIV    RATE    GROSS TAX ADJ
 ## 🏗️ Architecture
 
 ### **Frontend Component**
-- **File**: `tax-frontend/src/modules/paye-calculator/components/SimplePAYECalculator.jsx`
-- **Page**: `tax-frontend/src/app/simple-paye-calculator/page.js`
-- **URL**: `http://localhost:3000/simple-paye-calculator`
+- **File**: `tax-frontend/src/modules/paye-calculator/components/SimplePayroll.jsx`
+- **Page**: `tax-frontend/src/app/simple-payroll/page.js`
+- **URL**: `http://localhost:3000/simple-payroll`
 
 ### **Backend API**
 - **Endpoint**: `POST /api/calculate/simple-paye`
@@ -229,7 +229,7 @@ Process: Iterative calculation to find gross
 cd tax-frontend
 npm run dev
 ```
-Visit: `http://localhost:3000/simple-paye-calculator`
+Visit: `http://localhost:3000/simple-payroll`
 
 ### **Backend API**
 ```bash
@@ -255,8 +255,8 @@ curl -X POST http://localhost:8000/api/calculate/simple-paye \
 ## 📁 Files Created
 
 ### **Frontend**
-1. `tax-frontend/src/modules/paye-calculator/components/SimplePAYECalculator.jsx`
-2. `tax-frontend/src/app/simple-paye-calculator/page.js`
+1. `tax-frontend/src/modules/paye-calculator/components/SimplePayroll.jsx`
+2. `tax-frontend/src/app/simple-payroll/page.js`
 
 ### **Backend**
 - Added methods to `tax-api/app/Http/Controllers/TaxCalculatorController.php`:

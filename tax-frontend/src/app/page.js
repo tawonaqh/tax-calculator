@@ -117,8 +117,8 @@ export default function Home() {
       featured: true
     },
     { 
-      href: "/simple-paye-calculator", 
-      label: "Simple PAYE Calculator", 
+      href: "/simple-payroll", 
+      label: "Simple Payroll", 
       description: "Quick PAYE & NSSA calculations for SMEs",
       icon: FaCalculator,
       featured: true
@@ -135,8 +135,8 @@ export default function Home() {
   // All general calculators (complete list)
   const allCalculators = [
     { 
-      href: "/simple-paye-calculator", 
-      label: "Simple PAYE Calculator", 
+      href: "/simple-payroll", 
+      label: "Simple Payroll", 
       description: "Quick PAYE & NSSA for SMEs",
       icon: FaCalculator,
     },

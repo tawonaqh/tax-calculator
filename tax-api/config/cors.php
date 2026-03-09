@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'register', 'logout', 'storage/*'],
 
     // Allow all HTTP methods
     'allowed_methods' => ['*'],
@@ -40,5 +40,5 @@ return [
     'max_age' => 3600,
 
     // Set to true if you plan to use cookies/auth in requests
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];
