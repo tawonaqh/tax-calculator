@@ -59,7 +59,7 @@ const Header = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-4 pt-2 sm:pt-2">
+      <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-4 pt-2 sm:pt-4">
         <nav
           className={`mx-auto transition-all duration-300 rounded-full ${
             scrolled
@@ -71,12 +71,12 @@ const Header = () => {
           }}
         >
           <div className="px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
-            {/* Logo - Made more compact on mobile */}
+            {/* Logo */}
             <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <Link href="/" className="hover:opacity-90 transition">
                 <img src="/img/taxcul.svg" alt="TaxCul Logo" className="w-auto h-[20px] sm:h-[24px]" />
               </Link>
-              {/* Beta pill - Smaller on mobile */}
+              {/* Beta pill */}
               <span className="bg-[#FFD700] text-[#0F2F4E] text-[9px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full uppercase leading-none">
                 Beta
               </span>
@@ -152,11 +152,11 @@ const Header = () => {
               </button>
             </div>
 
-            {/* CTA Section - Fixed mobile layout */}
+            {/* CTA Section - Fixed height for consistency */}
             <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
               {user ? (
                 <div className="relative group">
-                  <button className="flex items-center gap-1.5 sm:gap-2 text-white hover:text-[#1ED760] transition">
+                  <button className="flex items-center gap-1.5 sm:gap-2 text-white hover:text-[#1ED760] transition h-8 sm:h-9">
                     <FaUser className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span className="text-xs sm:text-sm hidden xs:inline">{user.name}</span>
                     <MdOutlineArrowDropDown className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -197,31 +197,31 @@ const Header = () => {
                 </div>
               ) : (
                 <>
-                  {/* Login Button - Responsive sizing */}
+                  {/* Login Button - Consistent height */}
                   <Link
                     href="/login"
-                    className="text-white hover:text-[#1ED760] transition text-xs sm:text-sm font-medium whitespace-nowrap px-1 sm:px-0"
+                    className="text-white hover:text-[#1ED760] transition text-xs sm:text-sm font-medium whitespace-nowrap px-1 sm:px-0 h-8 sm:h-9 flex items-center"
                   >
                     Login
                   </Link>
                   
-                  {/* Get Started Button - Responsive sizing with better touch target */}
+                  {/* Get Started Button - Fixed padding to match user button height */}
                   <Link
                     href="/#calculator-cards"
-                    className="bg-[#1ED760] text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm hover:bg-[#1ED760]/90 transition shadow-md whitespace-nowrap"
+                    className="bg-[#1ED760] text-white px-3 sm:px-5 rounded-full font-semibold text-xs sm:text-sm hover:bg-[#1ED760]/90 transition shadow-md whitespace-nowrap flex items-center h-8 sm:h-9"
                   >
                     Get Started
                   </Link>
                 </>
               )}
 
-              {/* Mobile Menu Button */}
+              {/* Mobile Menu Button - Consistent height */}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsMobileMenuOpen(!isMobileMenuOpen);
                 }}
-                className="md:hidden text-white p-1.5 hover:text-[#1ED760] transition ml-0.5 sm:ml-1"
+                className="md:hidden text-white hover:text-[#1ED760] transition flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? <HiX size={20} className="sm:w-6 sm:h-6" /> : <HiMenu size={20} className="sm:w-6 sm:h-6" />}
@@ -230,7 +230,7 @@ const Header = () => {
           </div>
         </nav>
 
-        {/* Mobile Menu - Full screen overlay with better navigation */}
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <>
             {/* Backdrop */}
