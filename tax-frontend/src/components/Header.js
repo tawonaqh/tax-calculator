@@ -23,6 +23,31 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const target = event.target;
+      if (isMobileMenuOpen && !target.closest('nav') && !target.closest('.mobile-menu')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   const openFeedbackModal = () => {
     setIsFeedbackModalOpen(true);
     setIsMobileMenuOpen(false);
@@ -34,7 +59,7 @@ const Header = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-full z-50 px-4 pt-2">
+      <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-4 pt-2 sm:pt-2">
         <nav
           className={`mx-auto transition-all duration-300 rounded-full ${
             scrolled
@@ -42,41 +67,40 @@ const Header = () => {
               : "bg-[#0F2F4E] shadow-md"
           }`}
           style={{
-            maxWidth: "min(90%, 1400px)",
+            maxWidth: "min(95%, 1400px)",
           }}
         >
-          <div className="px-8 py-3 flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
+          <div className="px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+            {/* Logo - Made more compact on mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
               <Link href="/" className="hover:opacity-90 transition">
-                <img src="/img/taxcul.svg" alt="TaxCul Logo" className="w-auto h-[24px]" />
+                <img src="/img/taxcul.svg" alt="TaxCul Logo" className="w-auto h-[20px] sm:h-[24px]" />
               </Link>
-              {/* Beta pill */}
-              <span className="bg-[#FFD700] text-[#0F2F4E] text-xs font-medium px-2 py-0.5 ml-1 rounded-full uppercase">
+              {/* Beta pill - Smaller on mobile */}
+              <span className="bg-[#FFD700] text-[#0F2F4E] text-[9px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full uppercase leading-none">
                 Beta
               </span>
             </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex gap-6 text-sm font-medium items-center">
-              <Link href="/" className="text-white hover:text-[#1ED760] transition">
+            <div className="hidden md:flex gap-4 lg:gap-6 text-sm font-medium items-center">
+              <Link href="/" className="text-white hover:text-[#1ED760] transition whitespace-nowrap">
                 Home
               </Link>
 
               {user && (
-                <Link href="/dashboard" className="text-white hover:text-[#1ED760] transition">
+                <Link href="/dashboard" className="text-white hover:text-[#1ED760] transition whitespace-nowrap">
                   Dashboard
                 </Link>
               )}
 
               {/* PAYE Dropdown */}
               <div className="relative group">
-                <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1">
+                <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1 whitespace-nowrap">
                   PAYE
                   <MdOutlineArrowDropDown />
                 </button>
 
-                {/* Dropdown Menu */}
                 <div className="absolute left-0 top-full mt-2 w-56 rounded-2xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
                   <Link
                     href="/simple-payroll"
@@ -95,12 +119,11 @@ const Header = () => {
 
               {/* Tax Planning Dropdown */}
               <div className="relative group">
-                <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1">
+                <button className="text-white hover:text-[#1ED760] transition flex items-center gap-1 whitespace-nowrap">
                   Tax Planning
                   <MdOutlineArrowDropDown />
                 </button>
 
-                {/* Dropdown Menu */}
                 <div className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
                   <Link
                     href="/income-tax-calculator-single"
@@ -117,26 +140,26 @@ const Header = () => {
                 </div>
               </div>
 
-              <Link href="/contact" className="text-white hover:text-[#1ED760] transition">
+              <Link href="/contact" className="text-white hover:text-[#1ED760] transition whitespace-nowrap">
                 Contact
               </Link>
 
               <button
                 onClick={openFeedbackModal}
-                className="text-white hover:text-[#1ED760] transition text-sm font-medium"
+                className="text-white hover:text-[#1ED760] transition text-sm font-medium whitespace-nowrap"
               >
                 Feedback
               </button>
             </div>
 
-            {/* CTA Section */}
-            <div className="flex items-center gap-3">
+            {/* CTA Section - Fixed mobile layout */}
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
               {user ? (
                 <div className="relative group">
-                  <button className="flex items-center gap-2 text-white hover:text-[#1ED760] transition">
-                    <FaUser />
-                    <span className="text-sm hidden sm:inline">{user.name}</span>
-                    <MdOutlineArrowDropDown />
+                  <button className="flex items-center gap-1.5 sm:gap-2 text-white hover:text-[#1ED760] transition">
+                    <FaUser className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm hidden xs:inline">{user.name}</span>
+                    <MdOutlineArrowDropDown className="w-4 h-4 sm:w-5 sm:h-5" />
                   </button>
                   
                   <div className="absolute right-0 top-full mt-2 w-48 rounded-2xl bg-[#0F2F4E] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 overflow-hidden">
@@ -174,15 +197,18 @@ const Header = () => {
                 </div>
               ) : (
                 <>
+                  {/* Login Button - Responsive sizing */}
                   <Link
                     href="/login"
-                    className="text-white hover:text-[#1ED760] transition text-sm font-medium"
+                    className="text-white hover:text-[#1ED760] transition text-xs sm:text-sm font-medium whitespace-nowrap px-1 sm:px-0"
                   >
                     Login
                   </Link>
+                  
+                  {/* Get Started Button - Responsive sizing with better touch target */}
                   <Link
                     href="/#calculator-cards"
-                    className="bg-[#1ED760] text-white px-5 py-2 rounded-full font-semibold hover:bg-[#1ED760]/90 transition shadow-md"
+                    className="bg-[#1ED760] text-white px-3 sm:px-5 py-1.5 sm:py-2 rounded-full font-semibold text-xs sm:text-sm hover:bg-[#1ED760]/90 transition shadow-md whitespace-nowrap"
                   >
                     Get Started
                   </Link>
@@ -191,85 +217,182 @@ const Header = () => {
 
               {/* Mobile Menu Button */}
               <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden text-white p-1 hover:text-[#1ED760] transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMobileMenuOpen(!isMobileMenuOpen);
+                }}
+                className="md:hidden text-white p-1.5 hover:text-[#1ED760] transition ml-0.5 sm:ml-1"
+                aria-label="Toggle menu"
               >
-                {isMobileMenuOpen ? <HiX size={24} /> : <HiMenu size={24} />}
+                {isMobileMenuOpen ? <HiX size={20} className="sm:w-6 sm:h-6" /> : <HiMenu size={20} className="sm:w-6 sm:h-6" />}
               </button>
             </div>
           </div>
         </nav>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Full screen overlay with better navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden mt-2 mx-auto rounded-2xl bg-[#0F2F4E]/95 backdrop-blur-md shadow-lg overflow-hidden" style={{ maxWidth: "min(90%, 1400px)" }}>
-            <div className="flex flex-col py-2">
-              <Link
-                href="/"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Home
-              </Link>
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            
+            {/* Menu Panel */}
+            <div className="mobile-menu fixed top-[60px] sm:top-[68px] left-0 right-0 bottom-0 z-50 md:hidden">
+              <div className="h-full overflow-y-auto bg-[#0F2F4E] shadow-xl">
+                <div className="flex flex-col py-4">
+                  {/* User info if logged in - show in mobile menu */}
+                  {user && (
+                    <div className="px-6 py-4 border-b border-white/20 mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-[#1ED760]/20 p-2 rounded-full">
+                          <FaUser className="w-5 h-5 text-[#1ED760]" />
+                        </div>
+                        <div>
+                          <div className="text-white font-semibold">{user.name}</div>
+                          <div className="text-white/60 text-xs">Logged in</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {user && (
-                <Link
-                  href="/dashboard"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-                >
-                  Dashboard
-                </Link>
-              )}
+                  <Link
+                    href="/"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-6 py-4 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    <span className="text-base font-medium">Home</span>
+                  </Link>
 
-              <Link
-                href="/simple-payroll"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Simple Payroll
-              </Link>
+                  {user && (
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-6 py-4 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                    >
+                      <span className="text-base font-medium">Dashboard</span>
+                    </Link>
+                  )}
 
-              <Link
-                href="/paye-calculator"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                PAYE Calculator
-              </Link>
+                  {/* PAYE Section */}
+                  <div className="px-6 py-3 text-[#1ED760] text-xs font-semibold uppercase tracking-wider mt-2">
+                    PAYE
+                  </div>
+                  <Link
+                    href="/simple-payroll"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    Simple Payroll
+                  </Link>
+                  <Link
+                    href="/paye-calculator"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    PAYE Calculator
+                  </Link>
 
-              <Link
-                href="/income-tax-calculator-single"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Single-Period Tax Planning
-              </Link>
+                  {/* Tax Planning Section */}
+                  <div className="px-6 py-3 text-[#1ED760] text-xs font-semibold uppercase tracking-wider mt-2">
+                    Tax Planning
+                  </div>
+                  <Link
+                    href="/income-tax-calculator-single"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    Single-Period Tax Planning
+                  </Link>
+                  <Link
+                    href="/income-tax-calculator"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    Multi-Period Tax Planning
+                  </Link>
 
-              <Link
-                href="/income-tax-calculator"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Multi-Period Tax Planning
-              </Link>
+                  <Link
+                    href="/contact"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-6 py-4 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    <span className="text-base font-medium">Contact</span>
+                  </Link>
 
-              <Link
-                href="/contact"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-6 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Contact
-              </Link>
+                  <button
+                    onClick={openFeedbackModal}
+                    className="px-6 py-4 text-left text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                  >
+                    <span className="text-base font-medium">Feedback</span>
+                  </button>
 
-              <button
-                onClick={openFeedbackModal}
-                className="px-6 py-3 text-left text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
-              >
-                Feedback
-              </button>
+                  {/* Show login/register in mobile menu if not logged in */}
+                  {!user && (
+                    <>
+                      <div className="mt-4 px-6 py-4 border-t border-white/20">
+                        <Link
+                          href="/login"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block w-full text-center bg-white/10 text-white px-4 py-3 rounded-xl font-semibold hover:bg-white/20 transition mb-3"
+                        >
+                          Login
+                        </Link>
+                        <Link
+                          href="/#calculator-cards"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="block w-full text-center bg-[#1ED760] text-white px-4 py-3 rounded-xl font-semibold hover:bg-[#1ED760]/90 transition"
+                        >
+                          Get Started
+                        </Link>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Account section for logged in users */}
+                  {user && (
+                    <>
+                      <div className="px-6 py-3 text-[#1ED760] text-xs font-semibold uppercase tracking-wider mt-2">
+                        Account
+                      </div>
+                      <Link
+                        href="/employees"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                      >
+                        Employees
+                      </Link>
+                      <Link
+                        href="/payroll/history"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                      >
+                        Payroll History
+                      </Link>
+                      <Link
+                        href="/company/profile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-8 py-3 text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition border-b border-white/10"
+                      >
+                        Company Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="px-8 py-3 text-left text-white hover:bg-[#1ED760]/10 hover:text-[#1ED760] transition"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
