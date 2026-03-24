@@ -59,7 +59,7 @@ const Header = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-4 pt-2 sm:pt-4">
+      <div className="fixed top-0 left-0 w-full z-50 px-3 sm:px-4 pt-2 sm:pt-2">
         <nav
           className={`mx-auto transition-all duration-300 rounded-full ${
             scrolled
