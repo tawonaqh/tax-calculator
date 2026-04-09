@@ -332,12 +332,13 @@ const FAQ = () => {
                       <div className="flex items-center gap-3">
                         <motion.span 
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-sm border ${
-                            faq.category === 'individual' ? 'bg-[#0F2F4E]/20 text-[#0F2F4E] border-[#0F2F4E]/30' :
+                            faq.category === 'individual' ? 'bg-blue-500/30 text-white border-blue-400/50' :
                             faq.category === 'business' ? 'bg-[#1ED760]/20 text-[#1ED760] border-[#1ED760]/30' :
-                            faq.category === 'vat' ? 'bg-[#FFD700]/20 text-[#0F2F4E] border-[#FFD700]/30' :
+                            faq.category === 'vat' ? 'bg-orange-500/30 text-white border-orange-400/50' :
                             faq.category === 'compliance' ? 'bg-[#1ED760]/20 text-[#1ED760] border-[#1ED760]/30' :
-                            faq.category === 'currency' ? 'bg-[#FFD700]/20 text-[#0F2F4E] border-[#FFD700]/30' :
-                            'bg-[#0F2F4E]/20 text-[#0F2F4E] border-[#0F2F4E]/30'
+                            faq.category === 'currency' ? 'bg-yellow-500/30 text-white border-yellow-400/50' :
+                            faq.category === 'paye' ? 'bg-red-500/30 text-white border-red-400/50' :
+                            'bg-white/20 text-white border-white/30'
                           }`}
                           whileHover={{ scale: 1.1 }}
                           transition={{ duration: 0.2 }}
