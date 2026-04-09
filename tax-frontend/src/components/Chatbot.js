@@ -15,9 +15,18 @@ import {
   Calculator,
   Scale,
   Zap,
+
+  //added - 01/04/2026 - Tested and Working
+  Download,   
+  FileText,   
+  FileJson,     
+  FileCode,
+  FileSpreadsheet,
+
 } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
+import { downloadConversation, containsTable, parseMarkdownTable, parseHtmlTable, tableToCSV, downloadFile } from "../modules/shared/utils/downloadUtils"; //added
 
 const ProfessionalChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,6 +44,7 @@ const ProfessionalChatbot = () => {
   const [lastQuestion, setLastQuestion] = useState("");
   const [lastAnswer, setLastAnswer] = useState("");
   const [userExpertise, setUserExpertise] = useState("professional");
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);  //added
 
   const inputRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -56,11 +66,6 @@ const ProfessionalChatbot = () => {
 
   const initializeProfessionalSession = async () => {
     try {
-      // const session = await professionalTaxAPI.startProfessionalSession({
-      //   expertise_level: "professional",
-      //   practice_area: "corporate_tax",
-      //   preferred_detail: "comprehensive",
-      // });
       const session = await eliteTaxAPI.startEliteSession({
         expertise_level: "expert_legal",
         practice_area: "complex_tax",
@@ -98,17 +103,11 @@ const ProfessionalChatbot = () => {
     setLastQuestion(userInput);
 
     try {
-      // const response = await professionalTaxAPI.askProfessionalQuestion(
-      //   userInput,
-      //   sessionId,
-      //   userExpertise
-      // );
-
       const response = await eliteTaxAPI.askEliteQuestion(
         userInput,
         sessionId,
-        "elite", // Always elite mode
-        "comprehensive" // Default mode
+        "elite",
+        "comprehensive"
       );
       if (
         !response ||
@@ -135,7 +134,6 @@ const ProfessionalChatbot = () => {
           text: responseText,
           sender: "bot",
           timestamp: new Date().toISOString(),
-          // Professional metadata
           expertiseLevel:
             response.user_expertise || (isFAQ ? "general" : "professional"),
           complexity: response.complexity || (isFAQ ? "low" : "medium"),
@@ -154,7 +152,6 @@ const ProfessionalChatbot = () => {
       setLastAnswer(responseText);
       setUserExpertise(response.user_expertise || "professional");
 
-      // Store context for advanced follow-ups
       if (response.has_follow_up || isTruncated) {
         setLastQuestion(userInput);
         setLastAnswer(responseText);
@@ -165,7 +162,6 @@ const ProfessionalChatbot = () => {
       let errorMessage =
         "I apologize, but the professional analysis system is currently experiencing high demand. ";
 
-      // Enhanced error handling
       if (error.message === "unsafe_content") {
         errorMessage =
           "I'm designed to provide professional tax guidance based on Zimbabwe legislation only. Please ask about specific tax laws, compliance requirements, calculations, or strategic tax matters.";
@@ -198,98 +194,95 @@ const ProfessionalChatbot = () => {
   const toggleChatbot = () => setIsOpen(!isOpen);
   const toggleExpand = () => setIsExpanded(!isExpanded);
 
-  // Enhanced KaTeX rendering with professional formatting
-  // const renderProfessionalText = (text, message) => {
-  //   if (!text) return null;
+  const handleDownload = async (format) => {
+  const conversationMessages = messages.filter(msg => 
+    msg.sender === 'user' || 
+    (msg.sender === 'bot' && msg.type !== 'professional_welcome')
+  );
 
-  //   // Enhanced LaTeX detection with professional formatting
-  //   const parts = text.split(/(\\\[.*?\\\]|\\\(.*?\\\)|```[\s\S]*?```)/g);
+  await downloadConversation(conversationMessages, format);
+  setShowDownloadMenu(false);
+};
+ 
+ 
+  // ========== ADDED 08-04-2026 ==========
 
-  //   return parts.map((part, index) => {
-  //     // Code blocks for professional content
-  //     if (part.startsWith("```") && part.endsWith("```")) {
-  //       const codeContent = part.slice(3, -3);
-  //       return (
-  //         <pre
-  //           key={index}
-  //           className="bg-gray-50 p-3 rounded-lg my-2 overflow-x-auto text-sm border"
-  //         >
-  //           <code>{codeContent}</code>
-  //         </pre>
-  //       );
-  //     }
-  //     // Display mode LaTeX
-  //     else if (part.startsWith("\\[") && part.endsWith("\\]")) {
-  //       const latexContent = part.slice(2, -2);
-  //       try {
-  //         const html = katex.renderToString(latexContent, {
-  //           displayMode: true,
-  //           throwOnError: false,
-  //           output: "html",
-  //         });
-  //         return (
-  //           <div
-  //             key={index}
-  //             className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200 overflow-x-auto"
-  //             dangerouslySetInnerHTML={{ __html: html }}
-  //           />
-  //         );
-  //       } catch (error) {
-  //         return (
-  //           <span key={index} className="text-red-500 text-sm font-mono">
-  //             [Math Error]
-  //           </span>
-  //         );
-  //       }
-  //     }
-  //     // Inline LaTeX
-  //     else if (part.startsWith("\\(") && part.endsWith("\\)")) {
-  //       const latexContent = part.slice(2, -2);
-  //       try {
-  //         const html = katex.renderToString(latexContent, {
-  //           displayMode: false,
-  //           throwOnError: false,
-  //           output: "html",
-  //         });
-  //         return (
-  //           <span
-  //             key={index}
-  //             className="inline-block mx-1 bg-yellow-50 px-1 rounded"
-  //             dangerouslySetInnerHTML={{ __html: html }}
-  //           />
-  //         );
-  //       } catch (error) {
-  //         return (
-  //           <span key={index} className="text-red-500 text-sm">
-  //             [Math]
-  //           </span>
-  //         );
-  //       }
-  //     }
-  //     // Regular text with professional formatting
-  //     else {
-  //       return (
-  //         <span key={index} className="whitespace-pre-wrap leading-relaxed">
-  //           {part}
-  //         </span>
-  //       );
-  //     }
-  //   });
-  // };
+const handleDownloadMessage = async (message, index) => {
+  if (typeof window === "undefined") return;
+
+  const { jsPDF } = await import("jspdf");
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const role = message.sender === 'user' ? 'User' : 'TANA Assistant';
+  const filename = `tana_message_${role}_${timestamp}`;
+
+  const doc = new jsPDF();
+
+  let y = 10;
+
+  // Title
+  doc.setFont("Helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text(role, 10, y);
+  y += 10;
+
+  // Message content
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(11);
+
+  const textLines = doc.splitTextToSize(message.text || "", 180);
+
+  doc.text(textLines, 10, y);
+
+  // Save
+  doc.save(`${filename}.pdf`);
+};
+  const DownloadMenu = () => (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      // className="absolute bottom-full right-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+      className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+      style={{ minWidth: '180px' }}
+    >
+      <div className="py-1">
+        
+        <button onClick={() => handleDownload('pdf')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-gray-100">
+          <FileCode size={16} className="text-red-600" />
+          <span>Download as PDF (.pdf)</span>
+        </button>
+        <button onClick={() => handleDownload('text')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2">
+          <FileText size={16} className="text-blue-600" />
+          <span>Download as Text (.txt)</span>
+        </button>
+        <button onClick={() => handleDownload('html')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-gray-100">
+          <FileCode size={16} className="text-purple-600" />
+          <span>Download as HTML (.html)</span>
+        </button>
+        <button onClick={() => handleDownload('csv')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2">
+          <FileSpreadsheet size={16} className="text-green-600" />
+          <span>Download as CSV (.csv)</span>
+        </button>
+        {/* <button onClick={() => handleDownload('json')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2">
+          <FileJson size={16} className="text-yellow-600" />
+          <span>Download as JSON (.json)</span>
+        </button> */}
+        
+      </div>
+    </motion.div>
+  );
 
   // Enhanced LaTeX rendering with KaTeX fallback
   const renderProfessionalText = (text, message) => {
     if (!text) return null;
 
-    // Check if KaTeX is available
     const isKatexAvailable =
       typeof katex !== "undefined" && katex.renderToString;
 
-    // Enhanced LaTeX detection
     const parts = text.split(/(\\\[.*?\\\]|\\\(.*?\\\)|```[\s\S]*?```)/g);
 
     return parts.map((part, index) => {
-      // Code blocks for professional content
       if (part.startsWith("```") && part.endsWith("```")) {
         const codeContent = part.slice(3, -3);
         return (
@@ -301,7 +294,6 @@ const ProfessionalChatbot = () => {
           </pre>
         );
       }
-      // Display mode LaTeX
       else if (part.startsWith("\\[") && part.endsWith("\\]")) {
         const latexContent = part.slice(2, -2);
 
@@ -317,7 +309,7 @@ const ProfessionalChatbot = () => {
             return (
               <div
                 key={index}
-                className="my-3 p-3 bg-[#0F2F4E]/5 rounded-lg border border-[#0F2F4E]/20 overflow-x-auto text-center"
+                className="my-3 p-3 bg-blue-50 rounded-lg border border-blue-200 overflow-x-auto text-center"
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             );
@@ -328,7 +320,6 @@ const ProfessionalChatbot = () => {
           return renderLatexFallback(latexContent, index, true);
         }
       }
-      // Inline LaTeX
       else if (part.startsWith("\\(") && part.endsWith("\\)")) {
         const latexContent = part.slice(2, -2);
 
@@ -353,7 +344,6 @@ const ProfessionalChatbot = () => {
           return renderLatexFallback(latexContent, index, false);
         }
       }
-      // Regular text with professional formatting
       else {
         return (
           <span key={index} className="whitespace-pre-wrap leading-relaxed">
@@ -366,9 +356,8 @@ const ProfessionalChatbot = () => {
 
   // Fallback rendering when KaTeX is not available
   const renderLatexFallback = (latexContent, index, isDisplayMode = false) => {
-    // Clean up the LaTeX for display
     const cleanContent = latexContent
-      .replace(/\\text\{([^}]*)\}/g, "$1") // Remove \text{}
+      .replace(/\\text\{([^}]*)\}/g, "$1")
       .replace(/\\times/g, "×")
       .replace(/\\div/g, "÷")
       .replace(/\\cdot/g, "·")
@@ -378,7 +367,7 @@ const ProfessionalChatbot = () => {
         /\\(?:mathrm|mathbf|mathit|mathsf|mathtt|mathfrak|mathbb|mathcal|mathscr|mathfrak|mathbb){([^}]*)}/g,
         "$1"
       )
-      .replace(/\\/g, ""); // Remove other backslashes
+      .replace(/\\/g, "");
 
     if (isDisplayMode) {
       return (
@@ -432,13 +421,6 @@ const ProfessionalChatbot = () => {
       const userResponse =
         followUpRequests[followUpType] || "I need more professional analysis";
 
-      // const response = await taxAPI.followUp(
-      //   userResponse,
-      //   lastQuestion,
-      //   lastAnswer,
-      //   sessionId
-      // );
-
       const response = await eliteTaxAPI.followUp(
         userResponse,
         lastQuestion,
@@ -480,19 +462,11 @@ const ProfessionalChatbot = () => {
     "Provisional tax calculation methodology",
   ];
 
-  // Use the emoji icons for professional follow-up options
   const professionalFollowUpOptions = [
-    // { type: "legal_depth", label: "⚖️ Legal Depth"},
-    {
-      type: "practical_application",
-      label: "💼 Implementation",
-      icon: BookOpen,
-    },
+    { type: "practical_application", label: "💼 Implementation" },
     { type: "calculation_detail", label: "🔢 Calculations" },
     { type: "case_references", label: "👨‍⚖️ Case Law" },
-    // { type: "amendments_tracker_analysis", label: "⚠️ Compliance" },
-    // { type: "strategic_advice", label: "🎯 Strategy" },
-    { type: "continue analysis", label: "⚡ Continue" },
+    { type: "continue", label: "⚡ Continue" },
   ];
 
   return (
@@ -517,7 +491,6 @@ const ProfessionalChatbot = () => {
           )}
         </div>
 
-        {/* Pulse animation for professional mode */}
         <motion.div
           className="absolute inset-0 rounded-full border-2 border-[#1ED760]"
           animate={{ scale: [1, 1.2, 1] }}
@@ -535,7 +508,7 @@ const ProfessionalChatbot = () => {
             className={`fixed z-50 ${
               isExpanded
                 ? "inset-4 md:inset-20 bg-white rounded-2xl border-2 border-[#FFD700] shadow-2xl"
-                : "bottom-24 right-6 w-96 h-[80%]"
+                : "bottom-24 right-6 w-96 h-[500px]"
             }`}
           >
             <div
@@ -560,6 +533,20 @@ const ProfessionalChatbot = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Download Button */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                      className="p-2 text-white/80 hover:text-[#FFD700] transition-colors"
+                      title="Download conversation"
+                    >
+                      <Download size={18} />
+                    </button>
+                    <AnimatePresence>
+                      {showDownloadMenu && <DownloadMenu />}
+                    </AnimatePresence>
+                  </div>
+                  
                   <button
                     onClick={toggleExpand}
                     className="p-2 text-white/80 hover:text-[#FFD700] transition-colors"
@@ -605,17 +592,21 @@ const ProfessionalChatbot = () => {
                     </div>
 
                     <div
-                      className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                      className={`max-w-[80%] px-4 py-3 rounded-2xl relative group ${
                         msg.sender === "user"
                           ? "bg-gradient-to-r from-[#1ED760] to-[#0F2F4E] text-white rounded-br-none shadow-lg"
                           : "bg-white text-[#0F2F4E] rounded-bl-none border-2 border-[#0F2F4E]/10 shadow-lg"
-                      } break-words overflow-hidden relative`}
+                      } break-words overflow-hidden`}
                     >
-                      {/* Expertise badge for bot messages */}
+                      {/* Download button for bot messages */}
                       {msg.sender === "bot" && (
-                        <div className="absolute -top-2 -left-2">
-                          {/* {getExpertiseBadge(msg.expertiseLevel)} */}
-                        </div>
+                        <button
+                          onClick={() => handleDownloadMessage(msg, idx)}
+                          className="absolute top-2 right-2 p-1 text-gray-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Download this message"
+                        >
+                          <Download size={14} />
+                        </button>
                       )}
 
                       {/* Visual indicator for follow-up analysis type */}
@@ -628,7 +619,6 @@ const ProfessionalChatbot = () => {
                       bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 
                       rounded-md border border-blue-200"
                             >
-                              {" "}
                               {msg.followUpType
                                 .split("_")
                                 .map(
@@ -661,24 +651,20 @@ const ProfessionalChatbot = () => {
                       {/* Enhanced follow-up buttons */}
                       {msg.sender === "bot" && msg.hasFollowUp && (
                         <div className="mt-3 flex flex-wrap gap-2">
-                          {professionalFollowUpOptions.map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <button
-                                key={option.type}
-                                onClick={() =>
-                                  handleProfessionalFollowUp(option.type)
-                                }
-                                disabled={loading}
-                                className="px-3 py-2 text-xs bg-white border border-[#0F2F4E] text-[#0F2F4E] 
+                          {professionalFollowUpOptions.map((option) => (
+                            <button
+                              key={option.type}
+                              onClick={() =>
+                                handleProfessionalFollowUp(option.type)
+                              }
+                              disabled={loading}
+                              className="px-3 py-2 text-xs bg-white border border-[#0F2F4E] text-[#0F2F4E] 
                                          rounded-lg hover:bg-[#0F2F4E] hover:text-white transition-all 
                                          disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                              >
-                                {/* <IconComponent size={12} /> */}
-                                {option.label}
-                              </button>
-                            );
-                          })}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
 
                           {/* Continue button for truncated responses */}
                           {msg.isTruncated && (
