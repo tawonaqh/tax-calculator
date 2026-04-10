@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { downloadConversation, containsTable, parseMarkdownTable, parseHtmlTable, tableToCSV, downloadFile } from "./downloadUtils"; //added
+import { downloadConversation, containsTable, parseMarkdownTable, parseHtmlTable, tableToCSV, downloadFile } from "../modules/shared/utils/downloadUtils"; //added
 import { FaFilePdf } from "react-icons/fa";
 
 const ProfessionalChatbot = () => {
