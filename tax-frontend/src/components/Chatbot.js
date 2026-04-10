@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { downloadConversation, containsTable, parseMarkdownTable, parseHtmlTable, tableToCSV, downloadFile } from "../modules/shared/utils/downloadUtils"; //added
+import { downloadConversation, containsTable, parseMarkdownTable, parseHtmlTable, tableToCSV, downloadFile } from "./downloadUtils"; //added
+import { FaFilePdf } from "react-icons/fa";
 
 const ProfessionalChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -248,19 +249,19 @@ const handleDownloadMessage = async (message, index) => {
     >
       <div className="py-1">
         
-        <button onClick={() => handleDownload('pdf')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-gray-100">
-          <FileCode size={16} className="text-red-600" />
+        <button onClick={() => handleDownload('pdf')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 ">
+          <FaFilePdf size={16} className="text-red-600" />
           <span>Download as PDF (.pdf)</span>
         </button>
-        <button onClick={() => handleDownload('text')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2">
+        <button onClick={() => handleDownload('text')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-black-100">
           <FileText size={16} className="text-blue-600" />
           <span>Download as Text (.txt)</span>
         </button>
-        <button onClick={() => handleDownload('html')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-gray-100">
+        <button onClick={() => handleDownload('html')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-black-100">
           <FileCode size={16} className="text-purple-600" />
           <span>Download as HTML (.html)</span>
         </button>
-        <button onClick={() => handleDownload('csv')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2">
+        <button onClick={() => handleDownload('csv')} className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 border-t border-black-100">
           <FileSpreadsheet size={16} className="text-green-600" />
           <span>Download as CSV (.csv)</span>
         </button>
@@ -457,7 +458,7 @@ const handleDownloadMessage = async (message, index) => {
   const professionalQuickQuestions = [
     "What is VAT?",
     "VAT compliance requirements for registered operators",
-    "What forms are used in submission of taxes?",
+    "List me VAT forms used to submit taxes",
     "Capital gains tax on property disposal",
     "Provisional tax calculation methodology",
   ];
@@ -508,7 +509,7 @@ const handleDownloadMessage = async (message, index) => {
             className={`fixed z-50 ${
               isExpanded
                 ? "inset-4 md:inset-20 bg-white rounded-2xl border-2 border-[#FFD700] shadow-2xl"
-                : "bottom-24 right-6 w-96 h-[500px]"
+                : "bottom-24 right-6 w-96 h-[535px]"
             }`}
           >
             <div
