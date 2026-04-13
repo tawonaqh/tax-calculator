@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/contexts/AuthContext";
+import MaintenancePage from "@/components/MaintenancePage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,7 +48,19 @@ export const metadata = {
   },
 };
 
+const isMaintenanceMode = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
+
 export default function RootLayout({ children }) {
+  if (isMaintenanceMode) {
+    return (
+      <html lang="en">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+          <MaintenancePage />
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>

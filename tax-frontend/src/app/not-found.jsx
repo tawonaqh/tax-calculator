@@ -2,130 +2,106 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calculator, Home } from 'lucide-react'
+import { Home, Calculator, Users, Building } from 'lucide-react'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen mt-2 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white text-center px-6 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#0F2F4E] via-[#1a4d6f] to-[#0F2F4E] flex flex-col items-center justify-center px-6 py-12 text-center">
+
+      {/* Logo */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-10"
+      >
+        <img src="/img/taxcul.svg" alt="TaxCul" className="h-10 w-auto mx-auto" />
+      </motion.div>
+
+      {/* 404 */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6 }}
-        className="mb-8"
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="relative mb-6"
       >
-        <div className="relative">
-          {/* Animated background element */}
-          <div className="absolute inset-0 bg-lime-400/10 rounded-full blur-3xl animate-pulse"></div>
-          
-          {/* Main 404 display */}
-          <div className="relative bg-gray-800/40 backdrop-blur-sm border border-lime-400/20 rounded-3xl p-12 shadow-2xl">
-            <motion.h1
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-8xl md:text-9xl font-extrabold mb-6 bg-gradient-to-r from-lime-400 to-green-400 bg-clip-text text-transparent"
-            >
-              404
-            </motion.h1>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="flex justify-center mb-6"
-            >
-              <div className="p-4 bg-lime-400/10 rounded-2xl border border-lime-400/20">
-                <Calculator className="w-12 h-12 text-lime-400" />
-              </div>
-            </motion.div>
-
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-2xl md:text-3xl font-bold text-lime-400 mb-4"
-            >
-              Tax Page Not Found
-            </motion.h2>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-lg text-gray-300 mb-8 max-w-md mx-auto leading-relaxed"
-            >
-              The tax calculator or page you're looking for seems to have gone on a break. 
-              Let's get you back to calculating taxes!
-            </motion.p>
-          </div>
-        </div>
+        <div className="absolute inset-0 bg-[#1ED760]/10 rounded-full blur-3xl" />
+        <h1 className="relative text-[120px] md:text-[160px] font-extrabold leading-none bg-gradient-to-r from-[#1ED760] to-[#0F2F4E] bg-clip-text text-transparent drop-shadow-2xl">
+          404
+        </h1>
       </motion.div>
 
+      {/* Message */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.6 }}
-        className="flex flex-col sm:flex-row gap-4 items-center"
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="mb-10"
+      >
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+          Page Not Found
+        </h2>
+        <p className="text-white/60 text-lg max-w-md mx-auto">
+          The page you're looking for doesn't exist or has been moved.
+        </p>
+      </motion.div>
+
+      {/* CTA Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="flex flex-col sm:flex-row gap-4 mb-12"
       >
         <Link
           href="/"
-          className="flex items-center gap-3 bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-300 hover:to-lime-400 text-gray-900 font-semibold px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-lime-400/25 group"
+          className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#1ED760] to-[#17b34f] text-white font-semibold px-8 py-3.5 rounded-xl hover:shadow-lg hover:shadow-[#1ED760]/25 transition-all duration-300"
         >
-          <Home className="w-5 h-5 transition-transform group-hover:scale-110" />
-          Back to Tax Hub
+          <Home className="w-5 h-5" />
+          Back to Home
         </Link>
-
         <Link
-          href="/income-tax-calculator"
-          className="flex items-center gap-3 bg-gray-800/60 hover:bg-gray-700/60 text-lime-400 font-semibold px-8 py-4 rounded-xl transition-all duration-300 border border-lime-400/30 hover:border-lime-400/50 group"
+          href="/dashboard"
+          className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white font-semibold px-8 py-3.5 rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300"
         >
-          <Calculator className="w-5 h-5 transition-transform group-hover:scale-110" />
-          Tax Planning
+          <Calculator className="w-5 h-5" />
+          Go to Dashboard
         </Link>
       </motion.div>
 
-      {/* Additional helpful links */}
+      {/* Quick Links */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="mt-12 p-6 bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 max-w-sm w-full"
       >
-        <h3 className="text-lime-400 font-semibold mb-3">Quick Tax Links</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <Link href="/self-employment-tax-calculator" className="text-gray-300 hover:text-lime-400 transition-colors">
-            • Income Tax
+        <p className="text-white/60 text-sm font-semibold uppercase tracking-wider mb-4">Quick Links</p>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <Link href="/simple-payroll" className="flex items-center gap-2 text-white/70 hover:text-[#1ED760] transition-colors">
+            <Calculator className="w-4 h-4" /> Simple Payroll
           </Link>
-          <Link href="/withholding-tax-interest" className="text-gray-300 hover:text-lime-400 transition-colors">
-            • Withholding Tax
+          <Link href="/paye-calculator" className="flex items-center gap-2 text-white/70 hover:text-[#1ED760] transition-colors">
+            <Calculator className="w-4 h-4" /> PAYE Calculator
           </Link>
-          <Link href="/agriculture-tax" className="text-gray-300 hover:text-lime-400 transition-colors">
-            • Agriculture Tax
+          <Link href="/employees" className="flex items-center gap-2 text-white/70 hover:text-[#1ED760] transition-colors">
+            <Users className="w-4 h-4" /> Employees
           </Link>
-          <Link href="/insurance-tax" className="text-gray-300 hover:text-lime-400 transition-colors">
-            • Insurance Tax
+          <Link href="/company/profile" className="flex items-center gap-2 text-white/70 hover:text-[#1ED760] transition-colors">
+            <Building className="w-4 h-4" /> Company
           </Link>
         </div>
       </motion.div>
 
-      {/* Floating elements for visual interest */}
-      <motion.div
+      {/* Error code */}
+      <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="fixed bottom-10 left-10 text-xs text-gray-500"
+        transition={{ delay: 0.6 }}
+        className="text-white/20 text-xs mt-8 font-mono"
       >
-        Error Code: TAX_404_NOT_FOUND
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.1 }}
-        transition={{ delay: 1.2 }}
-        className="fixed top-1/4 right-10 text-6xl text-lime-400/20 rotate-12 font-mono"
-      >
-        $ $ $
-      </motion.div>
+        ERROR: PAGE_NOT_FOUND
+      </motion.p>
     </div>
   )
 }
