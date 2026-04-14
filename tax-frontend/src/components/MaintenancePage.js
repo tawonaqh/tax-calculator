@@ -95,7 +95,7 @@ export default function MaintenancePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-white/30 text-sm mt-8"
+          className="text-white/30 text-sm mt-3"
         >
           © {new Date().getFullYear()} TaxCul. All rights reserved.
         </motion.p>
